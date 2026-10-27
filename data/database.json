@@ -1,0 +1,104 @@
+{
+  "system": {
+    "institutionName": "Sankara College of Science and Commerce",
+    "department": "Department of Computer Science with Data Analytics",
+    "batch": "2024-2027",
+    "semester": "Semester VI",
+    "staffPassword": "data sorcerers",
+    "lastUpdated": "2026-10-27T16:04:20.205Z"
+  },
+  "guidePortal": {
+    "isLive": false,
+    "targetStudents": 41,
+    "baseQuota": 8,
+    "slotCount": 8,
+    "lastSlotGuideMap": {},
+    "guides": [
+      {
+        "id": "g1",
+        "name": "",
+        "designation": "Assistant Professor, CS & DA",
+        "maxStudents": 8,
+        "assignedCount": 0
+      },
+      {
+        "id": "g2",
+        "name": "",
+        "designation": "Assistant Professor, CS & DA",
+        "maxStudents": 8,
+        "assignedCount": 0
+      },
+      {
+        "id": "g3",
+        "name": "",
+        "designation": "Assistant Professor, CS & DA",
+        "maxStudents": 8,
+        "assignedCount": 0
+      },
+      {
+        "id": "g4",
+        "name": "",
+        "designation": "Assistant Professor, CS & DA",
+        "maxStudents": 8,
+        "assignedCount": 0
+      },
+      {
+        "id": "g5",
+        "name": "",
+        "designation": "Assistant Professor, CS & DA",
+        "maxStudents": 8,
+        "assignedCount": 0
+      }
+    ],
+    "submissions": [],
+    "lastAllocatedGuideId": "g3"
+  },
+  "electivePortal": {
+    "targetStudents": 43,
+    "elective2Options": [
+      {
+        "code": "24BSD63E05",
+        "title": "5G & Future Network Technologies",
+        "option": "A"
+      },
+      {
+        "code": "24BSD63E06",
+        "title": "Predictive Analytics",
+        "option": "B"
+      },
+      {
+        "code": "24BSD63E07",
+        "title": "Software Engineering",
+        "option": "C"
+      },
+      {
+        "code": "24BSD63E08",
+        "title": "Market Analysis and Decision Making",
+        "option": "D"
+      }
+    ],
+    "elective3Options": [
+      {
+        "code": "24BSD63E09",
+        "title": "Internet of Things",
+        "option": "A"
+      },
+      {
+        "code": "24BSD63E10",
+        "title": "Natural Language Processing",
+        "option": "B"
+      },
+      {
+        "code": "24BSD63E11",
+        "title": "Mobile Application Development",
+        "option": "C"
+      },
+      {
+        "code": "24BSD63E12",
+        "title": "Block Chain Technology",
+        "option": "D"
+      }
+    ],
+    "submissions": []
+  }
+}

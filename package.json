@@ -1,0 +1,20 @@
+{
+  "name": "selection-portal",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "docx": "^9.15.0",
+    "express": "^5.3.0",
+    "qrcode": "^1.5.4",
+    "xlsx": "^0.18.5"
+  }
+}

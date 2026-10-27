@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sankara College of Science and Commerce | Project Guide & Elective Selection Portal</title>
+  <meta name="description" content="Official Semester VI Project Guide Allocation and Elective Course Selection System for Department of Computer Science with Data Analytics, Batch 2024-2027.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Canvas Confetti for Guide Allocation celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Main Styling -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="theme-light">
+  <!-- Top Academic Notification Bar -->
+  <aside class="top-nav-bar" aria-label="System announcements">
+    <div class="container nav-bar-inner">
+      <div class="nav-bar-left">
+        <span class="live-pulse"><i class="fa-solid fa-circle"></i> SYSTEM ONLINE</span>
+        <span class="divider">|</span>
+        <span><i class="fa-solid fa-graduation-cap"></i> Batch 2024–2027 • Semester VI</span>
+        <span class="divider">|</span>
+        <span>Dept. of CS with Data Analytics</span>
+      </div>
+      <div class="nav-bar-right">
+        <button id="btnNetworkShare" class="btn-network-badge" title="Connect from mobile phones / other devices">
+          <i class="fa-solid fa-qrcode"></i> Multi-Device Sync (LAN)
+        </button>
+        <button id="btnAdminAccess" class="btn-admin-badge" title="Staff & Faculty Access">
+          <i class="fa-solid fa-lock"></i> Staff Login
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Institutional Masthead -->
+  <header class="institution-header">
+    <div class="container header-content">
+      <div class="header-logo-left">
+        <img src="assets/sankara_logo.jpg" alt="Sankara Educational Institutions Logo" class="sankara-logo">
+      </div>
+      <div class="header-title-box">
+        <h1 class="college-name">SANKARA COLLEGE OF SCIENCE AND COMMERCE</h1>
+        <p class="college-affil">Affiliated to Bharathiar University, Coimbatore | Approved by AICTE, New Delhi</p>
+        <p class="college-accred">Re-Accredited by NAAC with 'A+' Grade (Cycle II) | An ISO 9001:2015 Certified Institution</p>
+        <p class="college-addr">Saravanampatty, Coimbatore, Tamil Nadu – 641035</p>
+        <div class="dept-badge">
+          <i class="fa-solid fa-chart-line"></i> DEPARTMENT OF COMPUTER SCIENCE WITH DATA ANALYTICS
+        </div>
+      </div>
+      <div class="header-logo-right">
+        <img src="assets/tuv_logo.jpg" alt="TÜV Rheinland Certified" class="tuv-logo">
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Portal Navigation Tabs -->
+  <nav class="portal-nav-container">
+    <div class="container portal-tabs">
+      <button class="nav-tab active" data-tab="tab-home" id="tabBtnHome">
+        <i class="fa-solid fa-house"></i> Overview Hub
+      </button>
+      <button class="nav-tab" data-tab="tab-guide" id="tabBtnGuide">
+        <i class="fa-solid fa-user-tie"></i> Project Guide Selection
+        <span class="tab-badge" id="guideCountBadge">0 / 41</span>
+      </button>
+      <button class="nav-tab" data-tab="tab-elective" id="tabBtnElective">
+        <i class="fa-solid fa-book-bookmark"></i> Elective Course Selection
+        <span class="tab-badge" id="electiveCountBadge">0 / 43</span>
+      </button>
+      <button class="nav-tab" data-tab="tab-circulars" id="tabBtnCirculars">
+        <i class="fa-solid fa-file-contract"></i> Official Circulars
+      </button>
+      <button class="nav-tab" data-tab="tab-report" id="tabBtnReport">
+        <i class="fa-solid fa-folder-open"></i> Submission Report & Gallery
+      </button>
+      <button class="nav-tab admin-tab-btn" data-tab="tab-admin" id="tabBtnAdmin">
+        <i class="fa-solid fa-shield-halved"></i> Staff Dashboard
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Application Body -->
+  <main class="main-content container">
+
+    <!-- TAB 1: OVERVIEW HUB -->
+    <section id="tab-home" class="tab-pane active fade-in">
+      <div class="hero-card">
+        <div class="hero-left">
+          <span class="hero-pill"><i class="fa-solid fa-sparkles"></i> Academic Year 2026–2027</span>
+          <h2 class="hero-title">Semester VI Academic Selection Suite</h2>
+          <p class="hero-desc">
+            A centralized, transparent, and cryptographically randomized allocation suite for 
+            <strong>Semester 6 Project Guides (41 Students)</strong> and <strong>Elective Courses (43 Students)</strong>.
+            Equipped with real-time multi-device shared storage, dynamic staff shuffle anti-collision engine, and instant university-standard exports.
+          </p>
+          <div class="hero-actions">
+            <button class="btn btn-primary btn-lg" onclick="switchTab('tab-guide')">
+              <i class="fa-solid fa-shuffle"></i> Choose Project Guide (Slot Shuffle)
+            </button>
+            <button class="btn btn-outline btn-lg" onclick="switchTab('tab-elective')">
+              <i class="fa-solid fa-list-check"></i> Select Elective Courses
+            </button>
+            <button class="btn btn-secondary btn-lg" onclick="openNetworkModal()">
+              <i class="fa-solid fa-mobile-screen-button"></i> Open on Mobile / Lab PCs
+            </button>
+          </div>
+        </div>
+        <div class="hero-right">
+          <div class="hero-watermark-card">
+            <img src="assets/data_sorcerers_logo.jpg" alt="Data Sorcerers Logo" class="hero-ds-logo">
+            <div class="hero-stats-grid">
+              <div class="stat-box">
+                <span class="stat-number" id="homeGuideTotal">41</span>
+                <span class="stat-label">Guide Selection Target</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-number" id="homeElectiveTotal">43</span>
+                <span class="stat-label">Elective Target</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-number">5</span>
+                <span class="stat-label">Project Guide Faculty</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-number"><i class="fa-solid fa-shuffle"></i> Dynamic</span>
+                <span class="stat-label">Anti-Collision Shuffle</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Feature Showcase Cards -->
+      <div class="feature-grid">
+        <div class="feature-card" onclick="switchTab('tab-guide')">
+          <div class="feature-icon"><i class="fa-solid fa-dice-d20"></i></div>
+          <h3>Project Guide Allocation</h3>
+          <p>Choose your mystery slot (1–8). Backside staff mapping is dynamically shuffled for every student, preventing collusion and ensuring completely fair, quota-balanced guide allocation.</p>
+          <div class="feature-link">Open Guide Portal <i class="fa-solid fa-arrow-right"></i></div>
+        </div>
+
+        <div class="feature-card" onclick="switchTab('tab-elective')">
+          <div class="feature-icon"><i class="fa-solid fa-cubes-stacked"></i></div>
+          <h3>Elective Course Selection</h3>
+          <p>Vote for Elective II (5G, Predictive Analytics, Software Engg, Market Analysis) and Elective III (IoT, NLP, Mobile App, Blockchain). High-interest winning electives are automatically calculated.</p>
+          <div class="feature-link">Open Elective Portal <i class="fa-solid fa-arrow-right"></i></div>
+        </div>
+
+        <div class="feature-card" onclick="switchTab('tab-circulars')">
+          <div class="feature-icon"><i class="fa-solid fa-stamp"></i></div>
+          <h3>Official Department Circulars</h3>
+          <p>Formatted matching official Sankara letterheads with TÜV Rheinland accreditation, NAAC A+ seals, Data Sorcerers watermark with custom opacity, and formal authorization blocks.</p>
+          <div class="feature-link">View Circulars <i class="fa-solid fa-arrow-right"></i></div>
+        </div>
+
+        <div class="feature-card" onclick="switchTab('tab-report')">
+          <div class="feature-icon"><i class="fa-solid fa-camera-retro"></i></div>
+          <h3>Submission Report & Photos</h3>
+          <p>Formal submission dossier with reserved spaces for attaching system screenshots and 41/43 student photos before final college presentation.</p>
+          <div class="feature-link">View Submission Report <i class="fa-solid fa-arrow-right"></i></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: PROJECT GUIDE SELECTION PORTAL -->
+    <section id="tab-guide" class="tab-pane fade-in">
+      <div class="section-header-banner">
+        <div>
+          <span class="sub-badge"><i class="fa-solid fa-users-viewfinder"></i> SEMESTER VI PROJECT GUIDE ALLOCATION</span>
+          <h2>Dynamic Slot Selection & Faculty Allocation</h2>
+          <p>Enter your credentials and pick any slot. Staff allocations behind the slots are dynamically rotated & shuffled for every student to guarantee impartiality.</p>
+        </div>
+        <div class="banner-stat-box">
+          <span class="stat-title">Registration Progress</span>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="guideProgressBar" style="width: 0%;"></div>
+          </div>
+          <span class="progress-text" id="guideProgressText">0 of 41 Students Registered</span>
+        </div>
+      <div class="guide-live-status-card" id="guideLiveStatusCard">
+        <div class="live-status-icon"><i class="fa-solid fa-lock" id="guideLiveStatusIcon"></i></div>
+        <div class="live-status-text">
+          <h4 id="guideLiveStatusTitle">Guide Selection Locked — Awaiting Faculty Guide Names</h4>
+          <p id="guideLiveStatusDesc">Slots will become live for students tomorrow once Faculty Guide names are officially configured by Staff.</p>
+        </div>
+        <span class="live-status-badge status-locked" id="guideLiveStatusBadge">LOCKED</span>
+      </div>
+
+      <div class="guide-selection-layout">
+        <!-- Student Info Form Column -->
+        <div class="student-input-card">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-id-card-clip"></i> Student Credentials</h3>
+            <span class="badge-pill">Step 1 of 2</span>
+          </div>
+          <form id="guideSelectionForm" onsubmit="event.preventDefault();">
+            <div class="form-group">
+              <label for="guideRegNo">Student Register Number <span class="required">*</span></label>
+              <div class="input-with-icon">
+                <i class="fa-solid fa-hashtag"></i>
+                <input type="text" id="guideRegNo" placeholder="e.g. 24BSD001" required autocomplete="off" maxlength="15">
+              </div>
+              <small class="field-hint">Enter your official college register number.</small>
+            </div>
+
+            <div class="form-group">
+              <label for="guideStudentName">Student Full Name <span class="required">*</span></label>
+              <div class="input-with-icon">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" id="guideStudentName" placeholder="e.g. Anand Kumar S" required autocomplete="off">
+              </div>
+              <small class="field-hint">Enter your name as registered in college records.</small>
+            </div>
+
+            <div class="anti-cheat-notice">
+              <div class="notice-icon"><i class="fa-solid fa-shield-halved"></i></div>
+              <div class="notice-body">
+                <strong>Dynamic Shuffling Active:</strong>
+                <p>Slot-to-Guide associations are not fixed. If another student told you they received a guide from Slot 2, picking Slot 2 will <em>NOT</em> yield the same guide. Slots dynamically re-shuffle on every attempt.</p>
+              </div>
+            </div>
+
+            <div class="ballot-guidelines-box">
+              <h4><i class="fa-solid fa-person-booth text-primary"></i> Confidential Election Ballot</h4>
+              <ul class="ballot-rules-list">
+                <li><i class="fa-solid fa-check text-success"></i> Each of the 5 Guide Faculty has a strict quota of <strong>8 students</strong> (1 guide receives 9th student).</li>
+                <li><i class="fa-solid fa-check text-success"></i> Slots dynamically rotate and shuffle behind the scenes for every student.</li>
+                <li><i class="fa-solid fa-shield-halved text-primary"></i> <strong>Secret Ballot:</strong> Your choice is saved confidentially at the backend. Official guide lists will be released by the department after all 41 students vote.</li>
+              </ul>
+              <div class="ballot-secure-tag">
+                <i class="fa-solid fa-lock"></i> Zero Information Leakage • 100% Impartial Allocation
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Slot Selection Grid Column -->
+        <div class="slots-selection-card">
+          <div class="card-header">
+            <div>
+              <h3><i class="fa-solid fa-box-archive"></i> Choose Your Mystery Slot</h3>
+              <p class="subtitle">Click any mystery slot number below to cast your confidential secret ballot.</p>
+            </div>
+            <span class="badge-pill">Step 2 of 2</span>
+          </div>
+
+          <div class="slots-grid-wrapper">
+            <div class="slots-grid slots-locked" id="slotsContainer">
+              <!-- 8 Dynamic Mystery Slot Cards -->
+              <div class="slot-card" data-slot="1" onclick="handleSlotClick(1)">
+                <div class="slot-badge">Slot #1</div>
+                <div class="slot-card-inner">
+                  <div class="slot-icon"><i class="fa-solid fa-cube"></i></div>
+                  <div class="slot-number">1</div>
+                  <div class="slot-shuffled-tag"><i class="fa-solid fa-shuffle"></i> Shuffled</div>
+                </div>
+              </div>
+
+              <div class="slot-card" data-slot="2" onclick="handleSlotClick(2)">
+                <div class="slot-badge">Slot #2</div>
+                <div class="slot-card-inner">
+                  <div class="slot-icon"><i class="fa-solid fa-cube"></i></div>
+                  <div class="slot-number">2</div>
+                  <div class="slot-shuffled-tag"><i class="fa-solid fa-shuffle"></i> Shuffled</div>
+                </div>
+              </div>
+
+              <div class="slot-card" data-slot="3" onclick="handleSlotClick(3)">
+                <div class="slot-badge">Slot #3</div>
+                <div class="slot-card-inner">
+                  <div class="slot-icon"><i class="fa-solid fa-cube"></i></div>
+                  <div class="slot-number">3</div>
+                  <div class="slot-shuffled-tag"><i class="fa-solid fa-shuffle"></i> Shuffled</div>
+                </div>
+              </div>
+
+              <div class="slot-card" data-slot="4" onclick="handleSlotClick(4)">
+                <div class="slot-badge">Slot #4</div>
+                <div class="slot-card-inner">
+                  <div class="slot-icon"><i class="fa-solid fa-cube"></i></div>
+                  <div class="slot-number">4</div>
+                  <div class="slot-shuffled-tag"><i class="fa-solid fa-shuffle"></i> Shuffled</div>
+                </div>
+              </div>
+
+              <div class="slot-card" data-slot="5" onclick="handleSlotClick(5)">
+                <div class="slot-badge">Slot #5</div>
+                <div class="slot-card-inner">
+                  <div class="slot-icon"><i class="fa-solid fa-cube"></i></div>
+                  <div class="slot-number">5</div>
+                  <div class="slot-shuffled-tag"><i class="fa-solid fa-shuffle"></i> Shuffled</div>
+                </div>
+              </div>
+
+              <div class="slot-card" data-slot="6" onclick="handleSlotClick(6)">
+                <div class="slot-badge">Slot #6</div>
+                <div class="slot-card-inner">
+                  <div class="slot-icon"><i class="fa-solid fa-cube"></i></div>
+                  <div class="slot-number">6</div>
+                  <div class="slot-shuffled-tag"><i class="fa-solid fa-shuffle"></i> Shuffled</div>
+                </div>
+              </div>
+
+              <div class="slot-card" data-slot="7" onclick="handleSlotClick(7)">
+                <div class="slot-badge">Slot #7</div>
+                <div class="slot-card-inner">
+                  <div class="slot-icon"><i class="fa-solid fa-cube"></i></div>
+                  <div class="slot-number">7</div>
+                  <div class="slot-shuffled-tag"><i class="fa-solid fa-shuffle"></i> Shuffled</div>
+                </div>
+              </div>
+
+              <div class="slot-card" data-slot="8" onclick="handleSlotClick(8)">
+                <div class="slot-badge">Slot #8</div>
+                <div class="slot-card-inner">
+                  <div class="slot-icon"><i class="fa-solid fa-cube"></i></div>
+                  <div class="slot-number">8</div>
+                  <div class="slot-shuffled-tag"><i class="fa-solid fa-shuffle"></i> Shuffled</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="slot-selection-status" id="slotStatusMessage">
+            <i class="fa-solid fa-circle-question"></i> Enter your Register Number and Name, then click any slot above to cast your confidential ballot.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: ELECTIVE COURSE SELECTION PORTAL -->
+    <section id="tab-elective" class="tab-pane fade-in">
+      <div class="section-header-banner">
+        <div>
+          <span class="sub-badge"><i class="fa-solid fa-layer-group"></i> SEMESTER VI ELECTIVE SELECTION</span>
+          <h2>Elective II & Elective III Preference Portal</h2>
+          <p>Official course selection as per Bharathiar University Curriculum for Department of CS with Data Analytics (Target: 43 Students).</p>
+        </div>
+        <div class="banner-stat-box">
+          <span class="stat-title">Elective Progress</span>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill elective-bar" id="electiveProgressBar" style="width: 0%;"></div>
+          </div>
+          <span class="progress-text" id="electiveProgressText">0 of 43 Students Submitted</span>
+        </div>
+      </div>
+
+      <div class="elective-layout">
+        <!-- Elective Submission Form -->
+        <div class="elective-form-card">
+          <form id="electiveSelectionForm" onsubmit="handleElectiveSubmit(event)">
+            <div class="form-header-row">
+              <h3><i class="fa-solid fa-pen-to-square"></i> Student Elective Registration</h3>
+              <span class="note-pill">1 Vote Per Student</span>
+            </div>
+
+            <div class="student-details-inline">
+              <div class="form-group">
+                <label for="electiveRegNo">Register Number <span class="required">*</span></label>
+                <div class="input-with-icon">
+                  <i class="fa-solid fa-hashtag"></i>
+                  <input type="text" id="electiveRegNo" placeholder="e.g. 24BSD001" required autocomplete="off" maxlength="15">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="electiveStudentName">Student Full Name <span class="required">*</span></label>
+                <div class="input-with-icon">
+                  <i class="fa-solid fa-user"></i>
+                  <input type="text" id="electiveStudentName" placeholder="e.g. Anand Kumar S" required autocomplete="off">
+                </div>
+              </div>
+            </div>
+
+            <!-- Elective II Choices -->
+            <div class="course-group-container">
+              <div class="course-group-header">
+                <div class="badge-tag">COURSE 1</div>
+                <h4>Elective II Selection (Choose One)</h4>
+              </div>
+              <div class="course-options-grid" id="e2OptionsContainer">
+                <!-- Dynamically populated or rendered -->
+                <label class="course-option-card" for="e2_24BSD63E05">
+                  <input type="radio" name="elective2" id="e2_24BSD63E05" value="24BSD63E05" required>
+                  <div class="course-card-content">
+                    <span class="opt-tag">Option A</span>
+                    <span class="course-code">24BSD63E05</span>
+                    <span class="course-name">5G & Future Network Technologies</span>
+                  </div>
+                </label>
+
+                <label class="course-option-card" for="e2_24BSD63E06">
+                  <input type="radio" name="elective2" id="e2_24BSD63E06" value="24BSD63E06">
+                  <div class="course-card-content">
+                    <span class="opt-tag">Option B</span>
+                    <span class="course-code">24BSD63E06</span>
+                    <span class="course-name">Predictive Analytics</span>
+                  </div>
+                </label>
+
+                <label class="course-option-card" for="e2_24BSD63E07">
+                  <input type="radio" name="elective2" id="e2_24BSD63E07" value="24BSD63E07">
+                  <div class="course-card-content">
+                    <span class="opt-tag">Option C</span>
+                    <span class="course-code">24BSD63E07</span>
+                    <span class="course-name">Software Engineering</span>
+                  </div>
+                </label>
+
+                <label class="course-option-card" for="e2_24BSD63E08">
+                  <input type="radio" name="elective2" id="e2_24BSD63E08" value="24BSD63E08">
+                  <div class="course-card-content">
+                    <span class="opt-tag">Option D</span>
+                    <span class="course-code">24BSD63E08</span>
+                    <span class="course-name">Market Analysis and Decision Making</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Elective III Choices -->
+            <div class="course-group-container">
+              <div class="course-group-header">
+                <div class="badge-tag">COURSE 2</div>
+                <h4>Elective III Selection (Choose One)</h4>
+              </div>
+              <div class="course-options-grid" id="e3OptionsContainer">
+                <label class="course-option-card" for="e3_24BSD63E09">
+                  <input type="radio" name="elective3" id="e3_24BSD63E09" value="24BSD63E09" required>
+                  <div class="course-card-content">
+                    <span class="opt-tag">Option A</span>
+                    <span class="course-code">24BSD63E09</span>
+                    <span class="course-name">Internet of Things (IoT)</span>
+                  </div>
+                </label>
+
+                <label class="course-option-card" for="e3_24BSD63E10">
+                  <input type="radio" name="elective3" id="e3_24BSD63E10" value="24BSD63E10">
+                  <div class="course-card-content">
+                    <span class="opt-tag">Option B</span>
+                    <span class="course-code">24BSD63E10</span>
+                    <span class="course-name">Natural Language Processing (NLP)</span>
+                  </div>
+                </label>
+
+                <label class="course-option-card" for="e3_24BSD63E11">
+                  <input type="radio" name="elective3" id="e3_24BSD63E11" value="24BSD63E11">
+                  <div class="course-card-content">
+                    <span class="opt-tag">Option C</span>
+                    <span class="course-code">24BSD63E11</span>
+                    <span class="course-name">Mobile Application Development</span>
+                  </div>
+                </label>
+
+                <label class="course-option-card" for="e3_24BSD63E12">
+                  <input type="radio" name="elective3" id="e3_24BSD63E12" value="24BSD63E12">
+                  <div class="course-card-content">
+                    <span class="opt-tag">Option D</span>
+                    <span class="course-code">24BSD63E12</span>
+                    <span class="course-name">Block Chain Technology</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnSubmitElective">
+              <i class="fa-solid fa-paper-plane"></i> Submit Elective Course Selection
+            </button>
+          </form>
+        </div>
+
+        <!-- Live Elective Popularity Tally & Winning Course Display -->
+        <div class="elective-analytics-sidebar">
+          <div class="analytics-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-chart-pie"></i> Real-time Popularity & Winner</h3>
+            </div>
+            <p class="subtitle">The course with the highest student votes will be declared the selected elective.</p>
+
+            <!-- Winner spotlight for Elective II -->
+            <div class="winner-card" id="e2WinnerCard">
+              <div class="winner-icon"><i class="fa-solid fa-trophy"></i></div>
+              <div class="winner-details">
+                <span class="winner-label">ELECTIVE II LEADING COURSE</span>
+                <h4 id="e2WinnerTitle">Awaiting votes...</h4>
+                <span class="winner-stats" id="e2WinnerVotes">0 votes</span>
+              </div>
+            </div>
+
+            <!-- Winner spotlight for Elective III -->
+            <div class="winner-card" id="e3WinnerCard">
+              <div class="winner-icon"><i class="fa-solid fa-trophy"></i></div>
+              <div class="winner-details">
+                <span class="winner-label">ELECTIVE III LEADING COURSE</span>
+                <h4 id="e3WinnerTitle">Awaiting votes...</h4>
+                <span class="winner-stats" id="e3WinnerVotes">0 votes</span>
+              </div>
+            </div>
+
+            <!-- Detailed breakdown list -->
+            <h4 class="mt-4"><i class="fa-solid fa-bars-progress"></i> Vote Distribution</h4>
+            <div id="electiveTallyList" class="tally-list">
+              <!-- Dynamically populated -->
+            </div>
+
+            <!-- Quick Export Buttons -->
+            <div class="export-quick-bar">
+              <a href="/api/elective/export/excel" class="btn btn-sm btn-outline" download>
+                <i class="fa-solid fa-file-excel text-success"></i> Download Excel
+              </a>
+              <a href="/api/elective/export/word" class="btn btn-sm btn-outline" download>
+                <i class="fa-solid fa-file-word text-primary"></i> Download Word
+              </a>
+              <button class="btn btn-sm btn-outline" onclick="printElectiveSummary()">
+                <i class="fa-solid fa-file-pdf text-danger"></i> Print PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: OFFICIAL CIRCULARS -->
+    <section id="tab-circulars" class="tab-pane fade-in">
+      <div class="circulars-control-bar">
+        <div class="circular-tabs">
+          <button class="btn-circ-tab active" id="btnCircGuide" onclick="toggleCircular('guide')">
+            <i class="fa-solid fa-user-tie"></i> Project Guide Selection Circular
+          </button>
+          <button class="btn-circ-tab" id="btnCircElective" onclick="toggleCircular('elective')">
+            <i class="fa-solid fa-book-bookmark"></i> Elective Course Selection Circular
+          </button>
+        </div>
+        <div class="circular-actions">
+          <button class="btn btn-outline" onclick="window.print()">
+            <i class="fa-solid fa-print"></i> Print Circular / Save PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Printable Official Circular Sheet -->
+      <div class="circular-page-wrapper" id="printableCircularArea">
+        <div class="circular-sheet">
+          <!-- Light Watermark: Data Sorcerers Logo -->
+          <div class="circular-watermark" id="circWatermark">
+            <img src="assets/data_sorcerers_logo.jpg" alt="Data Sorcerers Watermark Logo">
+          </div>
+
+          <!-- Official Sankara College Letterhead -->
+          <div class="circular-header">
+            <div class="circ-logo-col">
+              <img src="assets/sankara_logo.jpg" alt="Sankara Crest Logo" class="circ-crest">
+            </div>
+            <div class="circ-title-col">
+              <h2 class="inst-name">SANKARA COLLEGE OF SCIENCE AND COMMERCE</h2>
+              <p class="inst-affil">Affiliated to Bharathiar University, Coimbatore | Approved by AICTE, New Delhi</p>
+              <p class="inst-accred">Re-Accredited by NAAC with 'A+' Grade (Cycle II) | An ISO 9001:2015 Certified Institution</p>
+              <p class="inst-loc">Saravanampatty, Coimbatore, Tamilnadu | Pincode: 641035</p>
+              <p class="inst-contact">E-Mail: info@sankara.ac.in | Web: www.sankara.ac.in</p>
+            </div>
+            <div class="circ-tuv-col">
+              <img src="assets/tuv_logo.jpg" alt="TÜV Rheinland" class="circ-tuv">
+            </div>
+          </div>
+
+          <div class="circular-rule"></div>
+
+          <!-- Circular Metadata Row -->
+          <div class="circular-meta-row">
+            <span class="circ-dept-title">DEPARTMENT OF COMPUTER SCIENCE WITH DATA ANALYTICS</span>
+            <span class="circ-date" id="circularDateText">Date: 27.10.2026</span>
+          </div>
+
+          <div class="circular-heading-block">
+            <h3 class="circ-main-title">CIRCULAR</h3>
+            <span class="circ-ref" id="circRefNo">Ref: SCSC/CSDA/2026-27/SEM6/CIR-01</span>
+          </div>
+
+          <!-- Dynamic Circular Body Text -->
+          <div class="circular-body" id="circularBodyContent">
+            <!-- Populated via JavaScript according to selection (Guide or Elective) -->
+          </div>
+
+          <!-- Signature Block -->
+          <div class="circular-signatures">
+            <div class="sig-block">
+              <div class="sig-line"></div>
+              <p class="sig-title">Staff Coordinator</p>
+              <p class="sig-sub">Project In-Charge</p>
+            </div>
+            <div class="sig-block">
+              <div class="sig-line"></div>
+              <p class="sig-title">Class Tutor</p>
+              <p class="sig-sub">Dept. of CS with DA</p>
+            </div>
+            <div class="sig-block">
+              <div class="sig-line"></div>
+              <p class="sig-title">Head of Department</p>
+              <p class="sig-sub">Computer Science & DA</p>
+            </div>
+            <div class="sig-block">
+              <div class="sig-line"></div>
+              <p class="sig-title">Vice Principal</p>
+              <p class="sig-sub">SCSC</p>
+            </div>
+            <div class="sig-block">
+              <div class="sig-line"></div>
+              <p class="sig-title">Principal</p>
+              <p class="sig-sub">SCSC</p>
+            </div>
+          </div>
+
+          <!-- Footer Watermark Note -->
+          <div class="circular-footer-note">
+            <span>Powered by <strong>Data Sorcerers</strong> Software Suite • Academic Batch 2024–2027</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: FORMAL SUBMISSION REPORT & PHOTO GALLERY -->
+    <section id="tab-report" class="tab-pane fade-in">
+      <div class="report-controls-bar">
+        <div>
+          <h2><i class="fa-solid fa-file-invoice"></i> Departmental Report & Event Dossier</h2>
+          <p>Official 5-Page Event Report formatted as per Department of CS with Data Analytics presentation standards.</p>
+        </div>
+        <div class="report-actions">
+          <button class="btn btn-outline" onclick="window.print()">
+            <i class="fa-solid fa-print"></i> Print / Save 5-Page Report (PDF)
+          </button>
+        </div>
+      </div>
+
+      <div class="formal-report-paper">
+        <!-- ================= PAGE 1: OFFICIAL PRESENTATION COVER ================= -->
+        <div class="report-page page-1">
+          <div class="cover-header-logos">
+            <div class="cover-logo-left">
+              <img src="assets/sankara_logo.jpg" alt="Sankara Crest Logo" class="cover-inst-logo">
+            </div>
+            <div class="cover-inst-text">
+              <h1 class="cover-inst-title">SANKARA</h1>
+              <p class="cover-inst-sub">COLLEGE OF SCIENCE & COMMERCE</p>
+              <p class="cover-inst-auto">AUTONOMOUS INSTITUTION</p>
+              <p class="cover-inst-addr">Saravanampatty, Coimbatore - 641035</p>
+            </div>
+            <div class="cover-naac-badge">
+              <span class="naac-grade">NAAC A+ GRADE</span>
+              <span class="naac-cgpa">3.63 CGPA out of 4.0</span>
+            </div>
+          </div>
+
+          <div class="cover-affil-line">
+            Affiliated to Bharathiar University | UGC Recognized | Approved by AICTE | ISO 9001:2015 Certified
+          </div>
+
+          <div class="cover-gov-logos">
+            <div class="gov-logo-box">
+              <i class="fa-solid fa-lightbulb text-primary"></i>
+              <span>MHRD'S INNOVATION CELL<br><small>(GOVERNMENT OF INDIA)</small></span>
+            </div>
+            <div class="gov-logo-box">
+              <i class="fa-solid fa-atom text-danger"></i>
+              <span>INSTITUTION'S INNOVATION COUNCIL<br><small>(Ministry of Education Initiative)</small></span>
+            </div>
+          </div>
+
+          <div class="cover-dept-presents">
+            <h2 class="cover-dept-name">DEPARTMENT OF COMPUTER SCIENCE WITH DATA ANALYTICS</h2>
+            <span class="cover-presents-tag">PRESENTS</span>
+          </div>
+
+          <div class="cover-ds-watermark">
+            <img src="assets/data_sorcerers_logo.jpg" alt="Data Sorcerers Logo" class="cover-ds-img">
+            <span class="cover-ds-caption">DATA SORCERERS</span>
+          </div>
+
+          <div class="cover-main-title-box">
+            <h2 class="cover-event-title">PROJECT GUIDE ALLOCATION & ELECTIVE SELECTION</h2>
+            <div class="cover-for-badge">FOR III BSC CSDA (BATCH 2024–2027)</div>
+            <div class="cover-topic-line">
+              <strong>TOPIC:</strong> Semester VI Project Guide Allocation & Elective Selection Outcome
+            </div>
+            <div class="cover-date-line" id="reportCoverDate">Date: 28-10-2024</div>
+          </div>
+
+          <!-- Two Circular Portrait Holders for Student Coordinators / Project Leads -->
+          <div class="cover-leads-container">
+            <div class="cover-lead-card" onclick="triggerLeadPhotoUpload(1)">
+              <input type="file" id="leadPhotoInput1" accept="image/*" class="d-none" onchange="previewLeadPhoto(event, 1)">
+              <div class="lead-avatar-circle" id="leadPhotoPreview1">
+                <i class="fa-solid fa-user-tie fa-3x text-muted"></i>
+                <span class="lead-upload-hint"><i class="fa-solid fa-camera"></i> Attach Photo</span>
+              </div>
+              <h4 class="lead-name" contenteditable="true" title="Click to edit name">JOEL THOMAS T</h4>
+              <p class="lead-deg">III BSc CSDA</p>
+            </div>
+
+            <div class="cover-lead-card" onclick="triggerLeadPhotoUpload(2)">
+              <input type="file" id="leadPhotoInput2" accept="image/*" class="d-none" onchange="previewLeadPhoto(event, 2)">
+              <div class="lead-avatar-circle" id="leadPhotoPreview2">
+                <i class="fa-solid fa-user-tie fa-3x text-muted"></i>
+                <span class="lead-upload-hint"><i class="fa-solid fa-camera"></i> Attach Photo</span>
+              </div>
+              <h4 class="lead-name" contenteditable="true" title="Click to edit name">VISHALINI S</h4>
+              <p class="lead-deg">III BSc CSDA</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= PAGE 2: OFFICIAL LETTERHEAD & SUMMARY ================= -->
+        <div class="report-page page-2">
+          <div class="rep-letterhead">
+            <img src="assets/sankara_logo.jpg" alt="Sankara Crest" class="rep-logo-crest">
+            <div class="rep-head-text">
+              <h2>SANKARA COLLEGE OF SCIENCE AND COMMERCE</h2>
+              <span class="auto-tag">(AUTONOMOUS)</span>
+              <p class="rep-affil">Affiliated to Bharathiar University, Coimbatore | Approved by AICTE, New Delhi</p>
+              <p class="rep-accred">Re-Accredited by NAAC with A+ Grade (Cycle II) | An ISO 9001:2015 Certified Institution</p>
+              <p class="rep-addr">Saravanampatty, Coimbatore, Tamilnadu | Pincode: 641035</p>
+              <p class="rep-contact">E-Mail: info@sankara.ac.in | Web: www.sankara.ac.in</p>
+            </div>
+            <img src="assets/tuv_logo.jpg" alt="TÜV Rheinland" class="rep-logo-tuv">
+          </div>
+
+          <div class="rep-title-strip">
+            <h3>PROJECT GUIDE ALLOCATION & ELECTIVE SELECTION</h3>
+            <h4>DEPARTMENT OF COMPUTER SCIENCE WITH DATA ANALYTICS</h4>
+          </div>
+
+          <div class="rep-meta-grid">
+            <div><strong>DATE:</strong> <span id="repDateText">28/10/2024</span></div>
+            <div><strong>TIME:</strong> 10:00 AM</div>
+            <div><strong>VENUE:</strong> III B.Sc CSDA Lab / Hall</div>
+          </div>
+
+          <div class="rep-content-block">
+            <h4 class="rep-block-title">REPORT SUMMARY</h4>
+            <p>
+              The Department of Computer Science with Data Analytics organized the official digital selection process for 
+              <strong>Semester VI Project Guide Allocation</strong> and <strong>Elective Courses</strong> exclusively for the 
+              students of III B.Sc CSDA (Batch 2024–2027). The selection was conducted via custom-designed software engineered 
+              by <strong>Data Sorcerers</strong>. The event was aimed at equipping the department with an automated, 
+              impartial, and transparent system for allocating 41 project students across four faculty guide members and 
+              determining the most preferred elective courses for 43 students.
+            </p>
+          </div>
+
+          <div class="rep-content-block">
+            <h4 class="rep-block-title">INTRODUCTION</h4>
+            <p>
+              An automated, cryptographically randomized allocation initiative was conducted by the Department of Computer Science 
+              with Data Analytics as a part of its academic curriculum enrichment programs. The session focused on executing 
+              project guide allotment with high fairness and zero preferential bias through a 
+              <strong>Dynamic Anti-Collision Slot Shuffling Engine</strong>, ensuring that students selecting identical slots 
+              receive rotated guide mappings.
+            </p>
+          </div>
+        </div>
+
+        <!-- ================= PAGE 3: PARTICIPANTS, METHODOLOGY & GLIMPSE 1 ================= -->
+        <div class="report-page page-3">
+          <div class="rep-content-block">
+            <h4 class="rep-block-title">PARTICIPANTS</h4>
+            <p>
+              The target audience was the <strong>III B.Sc CSDA students</strong> (enrolled strength of 41 students for 
+              Project Guide Selection and 43 students for Elective Selection). The process saw active, enthusiastic, and 
+              100% transparent participation across multiple devices connected via local network Wi-Fi.
+            </p>
+          </div>
+
+          <div class="rep-content-block">
+            <h4 class="rep-block-title">PROGRAM FLOW & METHODOLOGY</h4>
+            <p>
+              The session began with an orientation on the software architecture and dynamic shuffling rules. Students registered 
+              using their official college Register Number and Full Name. Upon clicking a mystery slot, the underlying engine 
+              dynamically mapped an eligible faculty guide whose quota was not yet saturated. Real-time anti-collision rules 
+              guaranteed that if a previous student received a guide from a specific slot, the very next student clicking that 
+              same slot received a dynamically varied guide.
+            </p>
+          </div>
+
+          <div class="rep-content-block">
+            <h4 class="rep-block-title">GLIMPSE OF THE EVENT</h4>
+            <div class="event-glimpse-box" onclick="triggerGlimpseUpload(1)">
+              <input type="file" id="glimpseInput1" accept="image/*" class="d-none" onchange="previewGlimpse(event, 1)">
+              <div class="glimpse-preview" id="glimpsePreview1">
+                <i class="fa-solid fa-camera fa-2x text-muted"></i>
+                <span class="glimpse-title">Glimpse 1: Portal Operation & Student Allocation In Progress</span>
+                <span class="glimpse-hint">Click to attach classroom photo / portal screenshot</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= PAGE 4: EVENT VISUALS & CONCLUSION ================= -->
+        <div class="report-page page-4">
+          <div class="event-glimpse-grid">
+            <div class="event-glimpse-box" onclick="triggerGlimpseUpload(2)">
+              <input type="file" id="glimpseInput2" accept="image/*" class="d-none" onchange="previewGlimpse(event, 2)">
+              <div class="glimpse-preview" id="glimpsePreview2">
+                <i class="fa-solid fa-camera fa-2x text-muted"></i>
+                <span class="glimpse-title">Glimpse 2: Classroom & Multi-Device Participation</span>
+                <span class="glimpse-hint">Click to attach photo / screenshot</span>
+              </div>
+            </div>
+
+            <div class="event-glimpse-box" onclick="triggerGlimpseUpload(3)">
+              <input type="file" id="glimpseInput3" accept="image/*" class="d-none" onchange="previewGlimpse(event, 3)">
+              <div class="glimpse-preview" id="glimpsePreview3">
+                <i class="fa-solid fa-camera fa-2x text-muted"></i>
+                <span class="glimpse-title">Glimpse 3: Real-Time Results & Elective Voting Display</span>
+                <span class="glimpse-hint">Click to attach photo / screenshot</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="rep-content-block mt-4">
+            <h4 class="rep-block-title">CONCLUSION</h4>
+            <p>
+              The Project Guide Allocation and Elective Selection was concluded successfully. Feedback from students and 
+              faculty was exceptionally positive, validating that the digital slot shuffling mechanism completely eliminated 
+              disputes and established a streamlined, equitable platform for final year project supervision.
+            </p>
+          </div>
+        </div>
+
+        <!-- ================= PAGE 5: OUTCOME & SIGNATURES ================= -->
+        <div class="report-page page-5">
+          <div class="rep-content-block">
+            <p>
+              The real-time multi-device sync and transparent vote counting provided an exemplary benchmark for departmental 
+              governance, digital efficiency, and collaborative skill enhancement.
+            </p>
+          </div>
+
+          <!-- Official Departmental Signatures matching sample report -->
+          <div class="rep-official-signatures">
+            <div class="rep-sig-col">
+              <div class="rep-sig-space"></div>
+              <strong>STAFFS IN-CHARGE</strong>
+              <p>Dept. of CS with Data Analytics</p>
+            </div>
+            <div class="rep-sig-col text-right">
+              <div class="rep-sig-space"></div>
+              <strong>HOD</strong>
+              <p>Dept. of CS with Data Analytics</p>
+            </div>
+          </div>
+
+          <hr class="report-divider">
+
+          <!-- Complete Live Allocation Audit Table Appendix -->
+          <div class="rep-content-block">
+            <h4 class="rep-block-title">APPENDIX: LIVE ALLOCATION & SELECTION ROSTER</h4>
+            <div id="reportGuideTableContainer" class="table-responsive">
+              <p class="text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Awaiting student registrations tomorrow...</p>
+            </div>
+            <div id="reportElectiveTableContainer" class="table-responsive mt-4">
+              <p class="text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Awaiting elective submissions...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 6: STAFF & FACULTY ADMIN DASHBOARD -->
+    <section id="tab-admin" class="tab-pane fade-in">
+      <!-- Admin Login State (If locked) -->
+      <div id="adminLockState" class="admin-login-wrapper">
+        <div class="admin-login-card">
+          <div class="admin-login-icon">
+            <i class="fa-solid fa-user-shield"></i>
+          </div>
+          <h3>Staff & Faculty Authentication</h3>
+          <p>Please enter the staff security passkey to manage guide faculty names, capacities, and access master administrative exports.</p>
+          
+          <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+            <div class="form-group">
+              <label for="adminPasswordInput">Security Passkey</label>
+              <div class="input-with-icon">
+                <i class="fa-solid fa-key"></i>
+                <input type="password" id="adminPasswordInput" placeholder="Enter staff password" required autocomplete="current-password">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block btn-lg">
+              <i class="fa-solid fa-unlock-keyhole"></i> Unlock Staff Console
+            </button>
+            <div class="login-feedback text-danger" id="adminLoginFeedback"></div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Admin Unlocked Console -->
+      <div id="adminDashboardState" class="d-none">
+        <div class="admin-console-header">
+          <div>
+            <span class="admin-active-badge"><i class="fa-solid fa-circle-check"></i> STAFF CONSOLE UNLOCKED</span>
+            <h2>Faculty Administration & Master Control</h2>
+            <p>Configure Faculty Guide names, adjust student quota limits, and download Excel/Word sheets.</p>
+          </div>
+          <div class="admin-header-actions">
+            <button class="btn btn-outline" onclick="openNetworkModal()">
+              <i class="fa-solid fa-qrcode"></i> Multi-Device Sync QR
+            </button>
+            <button class="btn btn-danger" onclick="handleAdminLogout()">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i> Lock Console
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Slots Status & Activation Banner -->
+        <div class="admin-live-toggle-banner">
+          <div class="live-toggle-info">
+            <span class="live-pill" id="adminLivePill"><i class="fa-solid fa-lock"></i> SLOTS STATUS: LOCKED</span>
+            <h4>Student Slot Selection Status: <span id="adminLiveText" class="text-danger">LOCKED (Awaiting Guide Names)</span></h4>
+            <p>Students currently cannot click slots. Enter the 5 Guide Faculty (Ma'am) names below and click <strong>"Save Guide Names & Make Slots LIVE"</strong> to open slots for students tomorrow.</p>
+          </div>
+          <div class="live-toggle-btns">
+            <button class="btn btn-success btn-lg" onclick="activateGuideSlotsLive()">
+              <i class="fa-solid fa-bolt"></i> Make Slots LIVE for Students
+            </button>
+            <button class="btn btn-secondary" onclick="deactivateGuideSlotsLive()">
+              <i class="fa-solid fa-lock"></i> Lock Slots
+            </button>
+          </div>
+        </div>
+
+        <!-- Faculty Names Editor (Crucial requirement: Ma'am will announce names tomorrow) -->
+        <div class="admin-card">
+          <div class="card-header">
+            <div>
+              <h3><i class="fa-solid fa-user-pen"></i> Guide Faculty Names & Quotas Configuration</h3>
+              <p class="subtitle">Update the 5 Project Guide Ma'ams names once announced by the department. Changes reflect instantly across all student screens and exports.</p>
+            </div>
+            <button class="btn btn-primary" onclick="saveGuideConfiguration(true)">
+              <i class="fa-solid fa-floppy-disk"></i> Save & Make Slots LIVE
+            </button>
+          </div>
+
+          <div class="faculty-config-grid" id="facultyConfigList">
+            <!-- 4 Editable Guide Cards -->
+          </div>
+        </div>
+
+        <!-- Master Exports Bar -->
+        <div class="admin-card">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-file-export"></i> Master Excel & Word Document Exports</h3>
+          </div>
+          <div class="exports-action-grid">
+            <div class="export-box">
+              <div class="export-icon"><i class="fa-solid fa-file-excel text-success"></i></div>
+              <div class="export-info">
+                <h4>Project Guide Selection (Excel)</h4>
+                <p>Includes Master Student Allocation and Guide-wise Distribution with student counts.</p>
+              </div>
+              <a href="/api/guide/export/excel" class="btn btn-outline" download>
+                <i class="fa-solid fa-download"></i> Download .xlsx
+              </a>
+            </div>
+
+            <div class="export-box">
+              <div class="export-icon"><i class="fa-solid fa-file-excel text-success"></i></div>
+              <div class="export-info">
+                <h4>Elective Selection (Excel)</h4>
+                <p>Student choices plus Elective Popularity Analytics and Highest-Chosen highlight.</p>
+              </div>
+              <a href="/api/elective/export/excel" class="btn btn-outline" download>
+                <i class="fa-solid fa-download"></i> Download .xlsx
+              </a>
+            </div>
+
+            <div class="export-box">
+              <div class="export-icon"><i class="fa-solid fa-file-word text-primary"></i></div>
+              <div class="export-info">
+                <h4>Elective Selection Report (Word)</h4>
+                <p>Official resolution formatted Word document (.docx) with signatures.</p>
+              </div>
+              <a href="/api/elective/export/word" class="btn btn-outline" download>
+                <i class="fa-solid fa-download"></i> Download .docx
+              </a>
+            </div>
+
+            <div class="export-box">
+              <div class="export-icon"><i class="fa-solid fa-database text-warning"></i></div>
+              <div class="export-info">
+                <h4>Full System Data Backup</h4>
+                <p>Export all submissions and configurations in JSON format for offline record.</p>
+              </div>
+              <a href="/api/system/backup" class="btn btn-outline" download>
+                <i class="fa-solid fa-download"></i> Download Backup
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Submissions Tables -->
+        <div class="admin-grid-2col">
+          <!-- Guide Submissions -->
+          <div class="admin-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-list-ol"></i> Live Guide Submissions (<span id="adminGuideCount">0</span>)</h3>
+              <button class="btn btn-sm btn-danger-outline" onclick="promptResetGuide()">
+                <i class="fa-solid fa-rotate-left"></i> Reset Guide Data
+              </button>
+            </div>
+            <div class="table-responsive table-scrollable" id="adminGuideSubmissionsTable">
+              <!-- Submissions populated here -->
+            </div>
+          </div>
+
+          <!-- Elective Submissions -->
+          <div class="admin-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-list-check"></i> Live Elective Submissions (<span id="adminElectiveCount">0</span>)</h3>
+              <button class="btn btn-sm btn-danger-outline" onclick="promptResetElective()">
+                <i class="fa-solid fa-rotate-left"></i> Reset Elective Data
+              </button>
+            </div>
+            <div class="table-responsive table-scrollable" id="adminElectiveSubmissionsTable">
+              <!-- Submissions populated here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL 1: GUIDE ALLOCATION CONFIDENTIAL BALLOT RECEIPT -->
+  <div class="modal-backdrop d-none" id="guideRevealModal">
+    <div class="modal-dialog celebration-modal">
+      <div class="modal-card">
+        <div class="celebration-badge"><i class="fa-solid fa-check-to-slot"></i> SELECTION CAST SUCCESSFULLY</div>
+        <h2 class="modal-title">Vote Recorded!</h2>
+        
+        <div class="allocation-msg-banner">
+          <p class="congrats-text">
+            Thank you, <strong id="modalStudentName">Student Name</strong> (<span id="modalRegNo">24BSD001</span>)!
+          </p>
+          <p class="congrats-sub">
+            Your slot choice has been securely cast and recorded in the departmental vault.
+          </p>
+        </div>
+
+        <div class="ballot-receipt-box">
+          <div class="receipt-row">
+            <span class="receipt-label"><i class="fa-solid fa-hashtag"></i> Register Number:</span>
+            <strong class="receipt-val" id="receiptRegNo">24BSD001</strong>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-label"><i class="fa-solid fa-user"></i> Student Name:</span>
+            <strong class="receipt-val" id="receiptStudentName">Student Name</strong>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-label"><i class="fa-solid fa-cube"></i> Mystery Slot Chosen:</span>
+            <span class="slot-chosen-badge" id="modalSlotChosen">Slot #1 Selected</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-label"><i class="fa-solid fa-shield-halved"></i> Allocation Status:</span>
+            <span class="receipt-badge-vault"><i class="fa-solid fa-lock"></i> Secured in Secret Ballot</span>
+          </div>
+        </div>
+
+        <div class="modal-instruction-box">
+          <i class="fa-solid fa-circle-info text-primary"></i>
+          <span>As per college election procedure, final faculty guide lists will be officially published after all 41 students complete voting.</span>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-primary btn-block btn-lg" onclick="closeGuideModal()">
+            <i class="fa-solid fa-user-check"></i> Next Student
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: MULTI-DEVICE NETWORK SYNC & QR CODE -->
+  <div class="modal-backdrop d-none" id="networkModal">
+    <div class="modal-dialog">
+      <div class="modal-card">
+        <div class="modal-header-row">
+          <h3><i class="fa-solid fa-network-wired"></i> Multi-Device Shared Storage</h3>
+          <button class="btn-close" onclick="closeNetworkModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p class="modal-subtitle">
+          Connect from smartphones, tablets, or other college lab computers on the same network. All submissions sync to the shared database in real-time.
+        </p>
+
+        <div class="qr-code-box">
+          <img id="networkQrImage" src="" alt="Scan QR Code to Connect" class="qr-code-img">
+          <span class="qr-caption">Scan with Phone Camera to Open Portal</span>
+        </div>
+
+        <div class="network-url-box">
+          <label>Local Network URL (Wi-Fi / LAN):</label>
+          <div class="url-copy-row">
+            <input type="text" id="networkUrlInput" readonly value="Loading...">
+            <button class="btn btn-outline" onclick="copyNetworkUrl()">
+              <i class="fa-solid fa-copy"></i> Copy
+            </button>
+          </div>
+        </div>
+
+        <div class="network-status-alert">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>Make sure your phone is connected to the same Wi-Fi network as this computer to access.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="container footer-content">
+      <div class="footer-left">
+        <strong>Sankara College of Science and Commerce</strong> • Department of Computer Science with Data Analytics
+        <br>
+        <span class="footer-sub">Semester VI Project Guide Allocation & Elective Selection System | Batch 2024–2027</span>
+      </div>
+      <div class="footer-right">
+        <span class="badge-ds"><i class="fa-solid fa-wand-magic-sparkles"></i> Data Sorcerers Portal Engine</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Logic -->
+  <script src="js/app.js"></script>
+</body>
+</html>
