@@ -56,6 +56,8 @@ function switchTab(tabId) {
     }
   });
 
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
   if (tabId === 'tab-report') {
     populateReportTables();
   }
