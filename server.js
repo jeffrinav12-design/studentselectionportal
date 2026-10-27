@@ -9,14 +9,17 @@ const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthT
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DB_PATH = path.join(__dirname, 'data', 'database.json');
+const SEED_DB_PATH = path.join(__dirname, 'data', 'database.json');
+const DB_PATH = process.env.VERCEL
+  ? path.join('/tmp', 'database.json')
+  : SEED_DB_PATH;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Ensure data folder exists
-if (!fs.existsSync(path.join(__dirname, 'data'))) {
+// Ensure data folder exists locally
+if (!process.env.VERCEL && !fs.existsSync(path.join(__dirname, 'data'))) {
   fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
 }
 
@@ -24,6 +27,11 @@ if (!fs.existsSync(path.join(__dirname, 'data'))) {
 function loadDB() {
   try {
     if (!fs.existsSync(DB_PATH)) {
+      if (fs.existsSync(SEED_DB_PATH)) {
+        const seedData = fs.readFileSync(SEED_DB_PATH, 'utf-8');
+        fs.writeFileSync(DB_PATH, seedData, 'utf-8');
+        return JSON.parse(seedData);
+      }
       throw new Error('Database not found');
     }
     const data = fs.readFileSync(DB_PATH, 'utf-8');
@@ -890,11 +898,15 @@ app.post('/api/system/restore', (req, res) => {
   res.json({ success: true, message: 'System state restored successfully!' });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`====================================================`);
-  console.log(`Sankara College Selection Portal Suite is running!`);
-  console.log(`Local Access:   http://localhost:${PORT}`);
-  console.log(`Network Access: http://${getLocalIP()}:${PORT}`);
-  console.log(`Staff Password: data sorcerers`);
-  console.log(`====================================================`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`====================================================`);
+    console.log(`Sankara College Selection Portal Suite is running!`);
+    console.log(`Local Access:   http://localhost:${PORT}`);
+    console.log(`Network Access: http://${getLocalIP()}:${PORT}`);
+    console.log(`Staff Password: data sorcerers`);
+    console.log(`====================================================`);
+  });
+}
+
+module.exports = app;
