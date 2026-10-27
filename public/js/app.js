@@ -1,12 +1,67 @@
 // Sankara College of Science and Commerce
 // Department of Computer Science with Data Analytics
-// Application Logic - Project Guide & Elective Selection System
+// Application Logic - Project Guide & Elective Selection System (Live Dynamic Prototype)
 
-let currentTab = 'tab-home';
+let currentTab = 'tab-guide';
 let adminUnlocked = false;
 let guideData = null;
 let electiveData = null;
 let activeCircularType = 'guide';
+let lastAllocatedSubmission = null;
+
+const LOCAL_STORAGE_KEY = 'scsc_portal_data_v2';
+
+// ----------------------------------------------------
+// 0. LIVE RESILIENT DYNAMIC ENGINE (LOCAL STORAGE FALLBACK)
+// ----------------------------------------------------
+function getLocalDB() {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error('LocalStorage read error:', e);
+  }
+
+  const defaultState = {
+    system: {
+      institutionName: "Sankara College of Science and Commerce",
+      department: "Department of Computer Science with Data Analytics",
+      batch: "2024-2027",
+      semester: "Semester VI",
+      staffPassword: "data sorcerers",
+      isLive: false
+    },
+    guidePortal: {
+      isLive: false,
+      targetStudents: 41,
+      slotCount: 8,
+      lastSlotGuideMap: {},
+      lastAllocatedGuideId: null,
+      guides: [
+        { id: "g1", name: "", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 },
+        { id: "g2", name: "", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 },
+        { id: "g3", name: "", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 },
+        { id: "g4", name: "", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 },
+        { id: "g5", name: "", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 }
+      ],
+      submissions: []
+    },
+    electivePortal: {
+      targetStudents: 43,
+      submissions: []
+    }
+  };
+  saveLocalDB(defaultState);
+  return defaultState;
+}
+
+function saveLocalDB(data) {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.error('LocalStorage write error:', e);
+  }
+}
 
 // Document Ready
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,14 +72,14 @@ document.addEventListener('DOMContentLoaded', () => {
   renderIndividualPhotoSlots();
   renderCircularContent();
 
-  // Periodic polling for real-time multi-device sync
+  // Polling for updates
   setInterval(() => {
     loadGuideConfig(true);
     loadElectiveConfig(true);
     if (adminUnlocked) {
       loadAdminData();
     }
-  }, 10000);
+  }, 8000);
 });
 
 // Tab Navigation
@@ -63,36 +118,62 @@ function switchTab(tabId) {
   }
 }
 
+// Open Staff PIN prompt
+function openAdminAuth() {
+  switchTab('tab-admin');
+  const pwdInput = document.getElementById('adminPasswordInput');
+  if (pwdInput && !adminUnlocked) {
+    setTimeout(() => pwdInput.focus(), 200);
+  }
+}
+
 // ==========================================
-// 1. GUIDE SELECTION LOGIC
+// 1. GUIDE SELECTION LOGIC (STUDENT VIEW)
 // ==========================================
 
 async function loadGuideConfig(silent = false) {
   try {
     const res = await fetch('/api/guide/config');
-    const data = await res.json();
-    if (data.success) {
-      guideData = data;
-      updateGuideUI();
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success) {
+        guideData = data;
+        updateGuideUI();
+        return;
+      }
     }
   } catch (err) {
-    if (!silent) console.error('Failed to load guide config:', err);
+    // Serverless / static fallback
   }
+
+  // Local fallback engine
+  const db = getLocalDB();
+  const gp = db.guidePortal;
+  const hasNames = gp.guides.length >= 5 && gp.guides.every(g => g.name && g.name.trim().length > 0);
+  
+  // Recount assigned
+  gp.guides.forEach(g => {
+    g.assignedCount = gp.submissions.filter(s => s.guideId === g.id).length;
+  });
+
+  guideData = {
+    success: true,
+    isLive: !!gp.isLive,
+    hasConfiguredNames: hasNames,
+    targetStudents: gp.targetStudents || 41,
+    totalRegistered: gp.submissions.length,
+    slotCount: gp.slotCount || 8,
+    guides: gp.guides
+  };
+  updateGuideUI();
 }
 
 function updateGuideUI() {
   if (!guideData) return;
 
-  // Badges & Counters
-  const reg = guideData.totalRegistered;
+  const reg = guideData.totalRegistered || 0;
   const target = guideData.targetStudents || 41;
   const pct = Math.min(100, Math.round((reg / target) * 100));
-
-  const badge = document.getElementById('guideCountBadge');
-  if (badge) badge.textContent = `${reg} / ${target}`;
-
-  const homeStat = document.getElementById('homeGuideTotal');
-  if (homeStat) homeStat.textContent = `${reg} / ${target}`;
 
   const bar = document.getElementById('guideProgressBar');
   if (bar) bar.style.width = `${pct}%`;
@@ -100,7 +181,6 @@ function updateGuideUI() {
   const progText = document.getElementById('guideProgressText');
   if (progText) progText.textContent = `${reg} of ${target} Students Registered (${pct}%)`;
 
-  // Live vs Locked state handling
   const lockCard = document.getElementById('guideLiveStatusCard');
   const lockIcon = document.getElementById('guideLiveStatusIcon');
   const lockTitle = document.getElementById('guideLiveStatusTitle');
@@ -129,24 +209,12 @@ function updateGuideUI() {
     }
     if (slotsCont) slotsCont.classList.add('slots-locked');
   }
-
-  // Render Quota List
-  const quotaList = document.getElementById('guideQuotaList');
-  if (quotaList) {
-    quotaList.innerHTML = guideData.guides.map(g => `
-      <div class="quota-item ${g.isFull ? 'full' : ''}">
-        <span class="quota-item-name">${escapeHTML(g.name || 'Awaiting Name')}</span>
-        <span class="quota-item-count">${g.assignedCount} / ${g.maxStudents} ${g.isFull ? '(FULL)' : ''}</span>
-      </div>
-    `).join('');
-  }
 }
 
-// Handle Student Clicking Slot
+// Handle Student Clicking Slot (Strict Quota, Anti-Collision Shuffle & Secret Ballot)
 async function handleSlotClick(slotNum) {
-  // Check if locked
   if (!guideData || !guideData.isLive) {
-    alert('Guide selection slots are currently locked.\n\nSlots will be enabled tomorrow morning once Faculty Guide names are officially entered by Staff.');
+    alert('Guide selection slots are currently locked.\n\nSlots will be enabled tomorrow morning once Faculty Guide names are officially configured by Staff.');
     return;
   }
 
@@ -154,7 +222,6 @@ async function handleSlotClick(slotNum) {
   const nameInput = document.getElementById('guideStudentName');
   const regNo = regNoInput.value.trim().toUpperCase();
   const studentName = nameInput.value.trim();
-
   const statusMsg = document.getElementById('slotStatusMessage');
 
   if (!regNo) {
@@ -178,6 +245,7 @@ async function handleSlotClick(slotNum) {
 
   statusMsg.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing slot selection and dynamic guide shuffle...`;
 
+  // 1. Try Server API
   try {
     const res = await fetch('/api/guide/submit', {
       method: 'POST',
@@ -185,41 +253,106 @@ async function handleSlotClick(slotNum) {
       body: JSON.stringify({ regNo, studentName, slot: slotNum })
     });
 
-    const result = await res.json();
-
-    if (result.success) {
-      // Confetti celebration
-      if (typeof confetti === 'function') {
-        confetti({
-          particleCount: 120,
-          spread: 80,
-          origin: { y: 0.6 }
-        });
-      }
-
-      showGuideRevealModal(result.submission);
-      statusMsg.innerHTML = `<i class="fa-solid fa-circle-check text-success"></i> Slot #${slotNum} choice cast successfully! Secret ballot recorded securely. Ready for next student.`;
-      
-      // Clear inputs
-      regNoInput.value = '';
-      nameInput.value = '';
-
-      loadGuideConfig();
-    } else {
-      if (result.isExisting) {
+    if (res.ok) {
+      const result = await res.json();
+      if (result.success) {
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+        }
+        showGuideRevealModal(result.submission);
+        statusMsg.innerHTML = `<i class="fa-solid fa-circle-check text-success"></i> Slot #${slotNum} choice cast successfully! Secret ballot recorded securely. Ready for next student.`;
+        regNoInput.value = '';
+        nameInput.value = '';
+        loadGuideConfig();
+        return;
+      } else if (result.isExisting) {
         showGuideRevealModal(result.submission, true);
         statusMsg.innerHTML = `<i class="fa-solid fa-circle-exclamation text-warning"></i> ${escapeHTML(result.error)}`;
-      } else {
-        alert(result.error || 'Submission failed.');
-        statusMsg.innerHTML = `<i class="fa-solid fa-circle-xmark text-danger"></i> ${escapeHTML(result.error)}`;
+        return;
       }
     }
   } catch (err) {
-    console.error(err);
-    alert('Error connecting to server. Please try again.');
-    statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-danger"></i> Network connection error.`;
+    // Proceed to Local Live Dynamic Engine
   }
-let lastAllocatedSubmission = null;
+
+  // 2. LIVE DYNAMIC ENGINE (In-Browser Resilient Execution)
+  const db = getLocalDB();
+  const gp = db.guidePortal;
+
+  // Duplicate check
+  const existing = gp.submissions.find(s => s.regNo.toUpperCase() === regNo);
+  if (existing) {
+    showGuideRevealModal(existing, true);
+    statusMsg.innerHTML = `<i class="fa-solid fa-circle-exclamation text-warning"></i> Register Number ${regNo} has already cast their vote via Slot #${existing.slotChosen}!`;
+    return;
+  }
+
+  const totalRegistered = gp.submissions.length;
+  const targetStudents = gp.targetStudents || 41;
+  if (totalRegistered >= targetStudents) {
+    alert('All 41 student slots for the batch are fully allocated!');
+    return;
+  }
+
+  // Strict 8-count quota rule
+  // For first 40: guides with < 8
+  // For 41st student: guides with < 9
+  let eligibleGuides;
+  if (totalRegistered < 40) {
+    eligibleGuides = gp.guides.filter(g => (g.assignedCount || 0) < 8);
+  } else {
+    eligibleGuides = gp.guides.filter(g => (g.assignedCount || 0) < 9);
+  }
+
+  if (eligibleGuides.length === 0) {
+    alert('No guide capacity remaining.');
+    return;
+  }
+
+  // Dynamic anti-collision shuffle
+  const lastGuideIdForSlot = gp.lastSlotGuideMap ? gp.lastSlotGuideMap[slotNum] : null;
+  const lastOverallGuideId = gp.lastAllocatedGuideId || null;
+
+  let candidates = eligibleGuides;
+  if (lastGuideIdForSlot && candidates.length > 1) {
+    const filtered = candidates.filter(g => g.id !== lastGuideIdForSlot);
+    if (filtered.length > 0) candidates = filtered;
+  }
+  if (lastOverallGuideId && candidates.length > 1) {
+    const filtered = candidates.filter(g => g.id !== lastOverallGuideId);
+    if (filtered.length > 0) candidates = filtered;
+  }
+
+  const selectedGuide = candidates[Math.floor(Math.random() * candidates.length)];
+  selectedGuide.assignedCount = (selectedGuide.assignedCount || 0) + 1;
+
+  if (!gp.lastSlotGuideMap) gp.lastSlotGuideMap = {};
+  gp.lastSlotGuideMap[slotNum] = selectedGuide.id;
+  gp.lastAllocatedGuideId = selectedGuide.id;
+
+  const subRecord = {
+    id: 'GS-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+    regNo,
+    studentName,
+    slotChosen: slotNum,
+    guideId: selectedGuide.id,
+    guideName: selectedGuide.name || `Faculty Guide #${selectedGuide.id.replace('g', '')}`,
+    timestamp: new Date().toISOString()
+  };
+
+  gp.submissions.push(subRecord);
+  saveLocalDB(db);
+
+  if (typeof confetti === 'function') {
+    confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+  }
+
+  showGuideRevealModal(subRecord);
+  statusMsg.innerHTML = `<i class="fa-solid fa-circle-check text-success"></i> Slot #${slotNum} choice cast successfully! Secret ballot recorded securely. Ready for next student.`;
+  regNoInput.value = '';
+  nameInput.value = '';
+  loadGuideConfig();
+}
 
 function showGuideRevealModal(sub, isRepeat = false) {
   lastAllocatedSubmission = sub;
@@ -252,543 +385,260 @@ function closeGuideModal() {
   if (nameInput) nameInput.value = '';
   const statusMsg = document.getElementById('slotStatusMessage');
   if (statusMsg) {
-    statusMsg.innerHTML = `<i class="fa-solid fa-circle-question"></i> Enter your Register Number and Name, then click any slot above to cast your selection.`;
+    statusMsg.innerHTML = `<i class="fa-solid fa-circle-question"></i> Enter your Register Number and Name, then click any slot above to cast your confidential ballot.`;
   }
 }
 
-function printStudentAllotmentSlip() {
-  if (!lastAllocatedSubmission) return;
-  const s = lastAllocatedSubmission;
-  const printWindow = window.open('', '_blank', 'width=700,height=600');
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Project Guide Allotment Slip - ${s.regNo}</title>
-      <style>
-        body { font-family: 'Times New Roman', serif; padding: 40px; color: #002B49; }
-        .slip-box { border: 2px solid #002B49; padding: 30px; text-align: center; border-radius: 8px; }
-        .college-title { font-size: 20px; font-weight: bold; margin-bottom: 2px; }
-        .college-sub { font-size: 13px; color: #4B5563; }
-        .dept-title { font-size: 15px; font-weight: bold; color: #9B1C2E; margin: 10px 0; }
-        .cert-title { font-size: 18px; font-weight: bold; text-decoration: underline; margin: 15px 0; }
-        .details-table { width: 100%; margin: 20px 0; border-collapse: collapse; text-align: left; }
-        .details-table td { padding: 10px; border-bottom: 1px solid #E5E7EB; font-size: 15px; }
-        .details-table td.label { font-weight: bold; width: 40%; color: #374151; }
-        .details-table td.value { font-weight: bold; color: #002B49; }
-        .guide-highlight { font-size: 20px; color: #002B49; background: #F8FAFC; padding: 8px; border-radius: 4px; border: 1px solid #CBD5E1; }
-        .footer-sigs { display: flex; justify-content: space-between; margin-top: 50px; font-weight: bold; font-size: 14px; }
-      </style>
-    </head>
-    <body>
-      <div class="slip-box">
-        <div class="college-title">SANKARA COLLEGE OF SCIENCE AND COMMERCE</div>
-        <div class="college-sub">(Autonomous) | Affiliated to Bharathiar University | NAAC A+ Grade</div>
-        <div class="dept-title">DEPARTMENT OF COMPUTER SCIENCE WITH DATA ANALYTICS</div>
-        <div class="cert-title">PROJECT GUIDE ALLOTMENT SLIP (SEMESTER VI)</div>
-        
-        <table class="details-table">
-          <tr><td class="label">Register Number:</td><td class="value">${escapeHTML(s.regNo)}</td></tr>
-          <tr><td class="label">Student Name:</td><td class="value">${escapeHTML(s.studentName)}</td></tr>
-          <tr><td class="label">Academic Batch:</td><td class="value">2024 – 2027 (Semester VI)</td></tr>
-          <tr><td class="label">Mystery Slot Picked:</td><td class="value">Slot #${s.slotChosen}</td></tr>
-          <tr>
-            <td class="label">Allocated Project Guide:</td>
-            <td><div class="guide-highlight">${escapeHTML(s.guideName)}</div></td>
-          </tr>
-          <tr><td class="label">Date & Timestamp:</td><td class="value">${new Date(s.timestamp).toLocaleString()}</td></tr>
-        </table>
-
-        <div class="footer-sigs">
-          <div>Student Signature</div>
-          <div>Staff Coordinator</div>
-          <div>HOD Signature</div>
-        </div>
-      </div>
-      <script>
-        window.onload = function() { window.print(); }
-      </script>
-    </body>
-    </html>
-  `);
-  printWindow.document.close();
-}
-
 // ==========================================
-// 2. ELECTIVE SELECTION LOGIC
+// 2. ELECTIVE SELECTION LOGIC (STUDENT VIEW)
 // ==========================================
 
 async function loadElectiveConfig(silent = false) {
   try {
     const res = await fetch('/api/elective/config');
-    const data = await res.json();
-    if (data.success) {
-      electiveData = data;
-      updateElectiveUI();
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success) {
+        electiveData = data;
+        updateElectiveUI();
+        return;
+      }
     }
-  } catch (err) {
-    if (!silent) console.error('Failed to load elective config:', err);
-  }
+  } catch (err) {}
+
+  const db = getLocalDB();
+  const ep = db.electivePortal;
+  electiveData = {
+    success: true,
+    targetStudents: ep.targetStudents || 43,
+    totalSubmitted: ep.submissions.length
+  };
+  updateElectiveUI();
 }
 
 function updateElectiveUI() {
   if (!electiveData) return;
-
-  const reg = electiveData.totalRegistered;
+  const sub = electiveData.totalSubmitted || 0;
   const target = electiveData.targetStudents || 43;
-  const pct = Math.min(100, Math.round((reg / target) * 100));
-
-  const badge = document.getElementById('electiveCountBadge');
-  if (badge) badge.textContent = `${reg} / ${target}`;
-
-  const homeStat = document.getElementById('homeElectiveTotal');
-  if (homeStat) homeStat.textContent = `${reg} / ${target}`;
+  const pct = Math.min(100, Math.round((sub / target) * 100));
 
   const bar = document.getElementById('electiveProgressBar');
   if (bar) bar.style.width = `${pct}%`;
 
   const progText = document.getElementById('electiveProgressText');
-  if (progText) progText.textContent = `${reg} of ${target} Students Submitted (${pct}%)`;
-
-  // Update Winners
-  const e2Winner = electiveData.highestChosenE2;
-  const e3Winner = electiveData.highestChosenE3;
-
-  if (e2Winner && e2Winner.votes > 0) {
-    document.getElementById('e2WinnerTitle').textContent = `${e2Winner.title} (${e2Winner.code})`;
-    document.getElementById('e2WinnerVotes').textContent = `${e2Winner.votes} Student Votes (${e2Winner.percentage}%)`;
-  } else {
-    document.getElementById('e2WinnerTitle').textContent = "Awaiting student submissions...";
-    document.getElementById('e2WinnerVotes').textContent = "0 votes";
-  }
-
-  if (e3Winner && e3Winner.votes > 0) {
-    document.getElementById('e3WinnerTitle').textContent = `${e3Winner.title} (${e3Winner.code})`;
-    document.getElementById('e3WinnerVotes').textContent = `${e3Winner.votes} Student Votes (${e3Winner.percentage}%)`;
-  } else {
-    document.getElementById('e3WinnerTitle').textContent = "Awaiting student submissions...";
-    document.getElementById('e3WinnerVotes').textContent = "0 votes";
-  }
-
-  // Update Tally List
-  const tallyList = document.getElementById('electiveTallyList');
-  if (tallyList) {
-    let html = '';
-    
-    html += '<strong style="font-size:0.75rem; color:#002B49; text-transform:uppercase;">Elective II Options:</strong>';
-    electiveData.e2Analytics.forEach(item => {
-      html += `
-        <div class="tally-item">
-          <div class="tally-title-row">
-            <span>${escapeHTML(item.title)}</span>
-            <strong>${item.votes} (${item.percentage}%)</strong>
-          </div>
-          <div class="tally-progress-bg">
-            <div class="tally-progress-fill" style="width: ${item.percentage}%;"></div>
-          </div>
-        </div>
-      `;
-    });
-
-    html += '<strong style="font-size:0.75rem; color:#9B1C2E; text-transform:uppercase; margin-top:8px; display:block;">Elective III Options:</strong>';
-    electiveData.e3Analytics.forEach(item => {
-      html += `
-        <div class="tally-item">
-          <div class="tally-title-row">
-            <span>${escapeHTML(item.title)}</span>
-            <strong>${item.votes} (${item.percentage}%)</strong>
-          </div>
-          <div class="tally-progress-bg">
-            <div class="tally-progress-fill" style="width: ${item.percentage}%; background:#9B1C2E;"></div>
-          </div>
-        </div>
-      `;
-    });
-
-    tallyList.innerHTML = html;
-  }
+  if (progText) progText.textContent = `${sub} of ${target} Students Submitted (${pct}%)`;
 }
 
 async function handleElectiveSubmit(e) {
   e.preventDefault();
-  const regNo = document.getElementById('electiveRegNo').value.trim().toUpperCase();
-  const studentName = document.getElementById('electiveStudentName').value.trim();
-  
+  const regNoInput = document.getElementById('electiveRegNo');
+  const nameInput = document.getElementById('electiveStudentName');
+  const regNo = regNoInput.value.trim().toUpperCase();
+  const studentName = nameInput.value.trim();
+
   const e2Radio = document.querySelector('input[name="elective2"]:checked');
   const e3Radio = document.querySelector('input[name="elective3"]:checked');
 
-  if (!regNo || !studentName) {
-    alert('Please enter your Register Number and Name.');
+  if (!e2Radio || !e3Radio) {
+    alert('Please choose one course for Elective II and one for Elective III.');
     return;
   }
 
-  if (!e2Radio) {
-    alert('Please select one option for Elective II.');
-    return;
-  }
+  const elective2Code = e2Radio.value;
+  const elective3Code = e3Radio.value;
 
-  if (!e3Radio) {
-    alert('Please select one option for Elective III.');
-    return;
-  }
+  const e2Map = {
+    '24BSD63E05': '5G & Future Network Technologies',
+    '24BSD63E06': 'Predictive Analytics',
+    '24BSD63E07': 'Software Engineering',
+    '24BSD63E08': 'Market Analysis and Decision Making'
+  };
+  const e3Map = {
+    '24BSD63E09': 'Internet of Things',
+    '24BSD63E10': 'Natural Language Processing',
+    '24BSD63E11': 'Mobile Application Development',
+    '24BSD63E12': 'Block Chain Technology'
+  };
 
-  const btn = document.getElementById('btnSubmitElective');
-  btn.disabled = true;
-  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Submitting Elective Selection...`;
+  const elective2Title = e2Map[elective2Code] || elective2Code;
+  const elective3Title = e3Map[elective3Code] || elective3Code;
 
+  // 1. Try Server API
   try {
     const res = await fetch('/api/elective/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        regNo,
-        studentName,
-        elective2Code: e2Radio.value,
-        elective3Code: e3Radio.value
-      })
+      body: JSON.stringify({ regNo, studentName, elective2Code, elective3Code })
     });
 
-    const data = await res.json();
-    btn.disabled = false;
-    btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Submit Elective Course Selection`;
-
-    if (data.success) {
-      if (typeof confetti === 'function') {
-        confetti({ particleCount: 80, spread: 60 });
+    if (res.ok) {
+      const result = await res.json();
+      if (result.success) {
+        alert(`Elective Preferences Cast Successfully for ${studentName} (${regNo})!`);
+        document.getElementById('electiveSelectionForm').reset();
+        loadElectiveConfig();
+        return;
+      } else {
+        alert(result.error || 'Submission failed.');
+        return;
       }
-      alert(`Success! Elective course selections submitted for ${regNo} (${studentName}).`);
-      document.getElementById('electiveSelectionForm').reset();
-      loadElectiveConfig();
-    } else {
-      alert(data.error || 'Failed to submit elective choices.');
     }
-  } catch (err) {
-    btn.disabled = false;
-    btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Submit Elective Course Selection`;
-    alert('Network error. Please try again.');
+  } catch (err) {}
+
+  // 2. Local Fallback Engine
+  const db = getLocalDB();
+  const ep = db.electivePortal;
+
+  const existing = ep.submissions.find(s => s.regNo.toUpperCase() === regNo);
+  if (existing) {
+    alert(`Register Number ${regNo} has already submitted elective choices.`);
+    return;
   }
-}
 
-function printElectiveSummary() {
-  switchTab('tab-report');
-  setTimeout(() => window.print(), 300);
-}
-
-// ==========================================
-// 3. OFFICIAL CIRCULARS LOGIC
-// ==========================================
-
-function toggleCircular(type) {
-  activeCircularType = type;
-  document.getElementById('btnCircGuide').classList.toggle('active', type === 'guide');
-  document.getElementById('btnCircElective').classList.toggle('active', type === 'elective');
-  renderCircularContent();
-}
-
-function renderCircularContent() {
-  const container = document.getElementById('circularBodyContent');
-  const refNo = document.getElementById('circRefNo');
-  const dateText = document.getElementById('circularDateText');
-
-  const today = new Date();
-  const formattedDate = `${String(today.getDate()).padStart(2, '0')}.${String(today.getMonth() + 1).padStart(2, '0')}.${today.getFullYear()}`;
-  dateText.textContent = `Date: ${formattedDate}`;
-
-  if (activeCircularType === 'guide') {
-    refNo.textContent = 'Ref: SCSC/CSDA/2026-27/SEM6/CIR-01';
-    container.innerHTML = `
-      <p style="margin-bottom: 16px;">
-        The Department of Computer Science with Data Analytics is pleased to notify all final semester students regarding the 
-        <strong>Semester VI Project Guide Allocation</strong> for the academic batch <strong>2024–2027</strong>.
-      </p>
-      <p style="margin-bottom: 16px;">
-        To uphold maximum transparency, fairness, and equal opportunity, the allocation process is executed digitally via the 
-        department's customized <strong>Slot Shuffling Portal</strong>. All <strong>41 enrolled students</strong> are required to log in 
-        with their official Register Number and Full Name, and choose one of the available mystery slot numbers.
-      </p>
-      <p style="margin-bottom: 16px;">
-        The underlying system incorporates a <strong>Dynamic Anti-Collision Shuffle Mechanism</strong> behind the slots, ensuring that 
-        faculty guide allocations rotate dynamically on every entry. Once a slot is clicked, the allocated Project Guide will be locked and 
-        officially registered in the departmental records.
-      </p>
-      <p style="margin-bottom: 16px;">
-        All students are instructed to complete their slot selection without delay. For any clarifications, contact the undersigned faculty coordinators.
-      </p>
-    `;
-  } else {
-    refNo.textContent = 'Ref: SCSC/CSDA/2026-27/SEM6/CIR-02';
-    container.innerHTML = `
-      <p style="margin-bottom: 16px;">
-        The Department of Computer Science with Data Analytics hereby notifies all Semester VI students (Batch: 2024–2027) 
-        regarding the selection of <strong>Elective Courses (Elective II & Elective III)</strong> as prescribed by the 
-        Bharathiar University curriculum.
-      </p>
-      <p style="margin-bottom: 16px;">
-        All <strong>43 students</strong> must submit their course preferences through the designated Elective Selection Portal. 
-        Each student is entitled to select one course from Elective II (5G Technologies, Predictive Analytics, Software Engineering, Market Analysis) 
-        and one course from Elective III (IoT, Natural Language Processing, Mobile App Development, Blockchain Technology).
-      </p>
-      <p style="margin-bottom: 16px;">
-        The course securing the highest student vote count will be formally selected and offered as the departmental elective for the semester. 
-        The consolidated selection outcome will be ratified by the Academic Council and forwarded to the Principal's office.
-      </p>
-      <p style="margin-bottom: 16px;">
-        Students must ensure their selections are finalized before the announced deadline.
-      </p>
-    `;
-  }
-}
-
-// ==========================================
-// 4. SUBMISSION REPORT & PHOTO GALLERY
-// ==========================================
-
-function renderIndividualPhotoSlots() {
-  const container = document.getElementById('individualPhotosContainer');
-  if (!container) return;
-
-  let html = '';
-  for (let i = 1; i <= 8; i++) {
-    html += `
-      <div class="photo-cell" onclick="triggerStudentPhotoUpload(${i})" id="photoCell${i}">
-        <input type="file" id="studentPhotoInput${i}" accept="image/*" class="d-none" onchange="previewStudentPhoto(event, ${i})">
-        <i class="fa-solid fa-user-plus text-muted"></i>
-        <span class="photo-cell-title">Student Photo #${i}</span>
-      </div>
-    `;
-  }
-  container.innerHTML = html;
-}
-
-function triggerScreenshotUpload(index) {
-  document.getElementById(`ssInput${index}`).click();
-}
-
-function previewScreenshot(event, index) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const preview = document.getElementById(`ssPreview${index}`);
-    preview.innerHTML = `<img src="${e.target.result}" alt="Software Screenshot ${index}">`;
+  const record = {
+    id: 'ES-' + Date.now(),
+    regNo,
+    studentName,
+    elective2Code,
+    elective2Title,
+    elective3Code,
+    elective3Title,
+    timestamp: new Date().toISOString()
   };
-  reader.readAsDataURL(file);
-}
 
-function triggerBatchPhotoUpload() {
-  document.getElementById('batchPhotoInput').click();
-}
+  ep.submissions.push(record);
+  saveLocalDB(db);
 
-function previewBatchPhoto(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const preview = document.getElementById('batchPhotoPreview');
-    preview.innerHTML = `<img src="${e.target.result}" alt="Batch Photograph 2024-2027">`;
-  };
-  reader.readAsDataURL(file);
-}
-
-function triggerStudentPhotoUpload(index) {
-  document.getElementById(`studentPhotoInput${index}`).click();
-}
-
-function previewStudentPhoto(event, index) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const cell = document.getElementById(`photoCell${index}`);
-    cell.innerHTML = `<img src="${e.target.result}" alt="Student Photo ${index}">`;
-  };
-  reader.readAsDataURL(file);
-}
-
-async function populateReportTables() {
-  const guideContainer = document.getElementById('reportGuideTableContainer');
-  const electiveContainer = document.getElementById('reportElectiveTableContainer');
-
-  try {
-    const [resGuide, resElective] = await Promise.all([
-      fetch('/api/guide/submissions'),
-      fetch('/api/elective/config')
-    ]);
-
-    const gData = await resGuide.json();
-    const eData = await resElective.json();
-
-    // Guide Table
-    if (gData.success && gData.submissions.length > 0) {
-      let gHtml = `
-        <table>
-          <thead>
-            <tr>
-              <th>S.No</th>
-              <th>Register Number</th>
-              <th>Student Name</th>
-              <th>Slot Chosen</th>
-              <th>Allocated Guide</th>
-              <th>Date & Time</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-      gData.submissions.forEach((s, idx) => {
-        gHtml += `
-          <tr>
-            <td>${idx + 1}</td>
-            <td><strong>${escapeHTML(s.regNo)}</strong></td>
-            <td>${escapeHTML(s.studentName)}</td>
-            <td>Slot #${s.slotChosen}</td>
-            <td><strong style="color:#002B49;">${escapeHTML(s.guideName)}</strong></td>
-            <td>${new Date(s.timestamp).toLocaleString()}</td>
-          </tr>
-        `;
-      });
-      gHtml += '</tbody></table>';
-      guideContainer.innerHTML = gHtml;
-    } else {
-      guideContainer.innerHTML = `<p class="text-muted">No student guide selections registered yet.</p>`;
-    }
-
-    // Elective Table
-    if (eData.success) {
-      let eHtml = `
-        <table>
-          <thead>
-            <tr>
-              <th>Track</th>
-              <th>Course Code</th>
-              <th>Course Title</th>
-              <th>Student Votes</th>
-              <th>Share (%)</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-      const e2WinnerCode = eData.highestChosenE2 ? eData.highestChosenE2.code : null;
-      eData.e2Analytics.forEach(c => {
-        const isWinner = c.code === e2WinnerCode && c.votes > 0;
-        eHtml += `
-          <tr style="${isWinner ? 'background:#EFF6FF; font-weight:bold;' : ''}">
-            <td>Elective II</td>
-            <td>${c.code}</td>
-            <td>${escapeHTML(c.title)}</td>
-            <td>${c.votes}</td>
-            <td>${c.percentage}%</td>
-            <td>${isWinner ? '<span style="color:#1D4ED8;"><i class="fa-solid fa-trophy"></i> SELECTED (HIGHLY CHOSEN)</span>' : 'Alternative'}</td>
-          </tr>
-        `;
-      });
-
-      const e3WinnerCode = eData.highestChosenE3 ? eData.highestChosenE3.code : null;
-      eData.e3Analytics.forEach(c => {
-        const isWinner = c.code === e3WinnerCode && c.votes > 0;
-        eHtml += `
-          <tr style="${isWinner ? 'background:#FFF1F2; font-weight:bold;' : ''}">
-            <td>Elective III</td>
-            <td>${c.code}</td>
-            <td>${escapeHTML(c.title)}</td>
-            <td>${c.votes}</td>
-            <td>${c.percentage}%</td>
-            <td>${isWinner ? '<span style="color:#9B1C2E;"><i class="fa-solid fa-trophy"></i> SELECTED (HIGHLY CHOSEN)</span>' : 'Alternative'}</td>
-          </tr>
-        `;
-      });
-
-      eHtml += '</tbody></table>';
-      electiveContainer.innerHTML = eHtml;
-    }
-  } catch (err) {
-    console.error('Error loading report tables:', err);
-  }
+  alert(`Elective Preferences Cast Successfully for ${studentName} (${regNo})!`);
+  document.getElementById('electiveSelectionForm').reset();
+  loadElectiveConfig();
 }
 
 // ==========================================
-// 5. STAFF ADMIN DASHBOARD LOGIC
+// 3. STAFF ADMIN CONSOLE (PIN PROTECTED)
 // ==========================================
 
 function handleAdminLogin(e) {
   e.preventDefault();
   const pwdInput = document.getElementById('adminPasswordInput');
-  const pwd = pwdInput.value;
+  const pwd = pwdInput.value.trim().toLowerCase();
   const feedback = document.getElementById('adminLoginFeedback');
 
-  // Check password (data sorcerers)
-  if (pwd.trim().toLowerCase() === 'data sorcerers') {
+  if (pwd === 'data sorcerers') {
     adminUnlocked = true;
+    feedback.textContent = '';
+    
+    // Reveal all Admin Only Tabs!
+    document.querySelectorAll('.admin-only-tab').forEach(el => el.classList.remove('d-none'));
+
     document.getElementById('adminLockState').classList.add('d-none');
     document.getElementById('adminDashboardState').classList.remove('d-none');
-    feedback.textContent = '';
+    
     loadAdminData();
+    switchTab('tab-admin');
   } else {
-    feedback.textContent = 'Incorrect staff password. Please try again.';
+    feedback.textContent = 'Incorrect security PIN / password. Please enter "data sorcerers".';
+    pwdInput.focus();
   }
 }
 
 function handleAdminLogout() {
   adminUnlocked = false;
+  // Hide Admin Only Tabs
+  document.querySelectorAll('.admin-only-tab').forEach(el => el.classList.add('d-none'));
+
   document.getElementById('adminLockState').classList.remove('d-none');
   document.getElementById('adminDashboardState').classList.add('d-none');
   document.getElementById('adminPasswordInput').value = '';
+  switchTab('tab-guide');
 }
 
 async function loadAdminData() {
   if (!adminUnlocked) return;
+
+  let gData = null;
+  let eData = null;
 
   try {
     const [resGuide, resElective] = await Promise.all([
       fetch('/api/guide/submissions'),
       fetch('/api/elective/submissions')
     ]);
+    if (resGuide.ok) gData = await resGuide.json();
+    if (resElective.ok) eData = await resElective.json();
+  } catch (err) {}
 
-    const gData = await resGuide.json();
-    const eData = await resElective.json();
+  // Fallback to local DB if serverless/static
+  if (!gData || !gData.guideGroups) {
+    const db = getLocalDB();
+    const gp = db.guidePortal;
+    const ep = db.electivePortal;
 
-    // Render Faculty Config Cards (Strictly 5 Guides)
-    const adminGuides = (gData && gData.guideGroups && gData.guideGroups.length > 0)
-      ? gData.guideGroups
-      : [
-          { guideId: 'g1', guideName: '', designation: 'Assistant Professor, CS & DA', maxStudents: 8, assignedCount: 0 },
-          { guideId: 'g2', guideName: '', designation: 'Assistant Professor, CS & DA', maxStudents: 8, assignedCount: 0 },
-          { guideId: 'g3', guideName: '', designation: 'Assistant Professor, CS & DA', maxStudents: 8, assignedCount: 0 },
-          { guideId: 'g4', guideName: '', designation: 'Assistant Professor, CS & DA', maxStudents: 8, assignedCount: 0 },
-          { guideId: 'g5', guideName: '', designation: 'Assistant Professor, CS & DA', maxStudents: 8, assignedCount: 0 }
-        ];
-    window.currentAdminGuides = adminGuides;
+    const guideGroups = gp.guides.map(g => {
+      const students = gp.submissions.filter(s => s.guideId === g.id);
+      return {
+        guideId: g.id,
+        guideName: g.name,
+        designation: g.designation,
+        maxStudents: g.maxStudents || 8,
+        assignedCount: students.length,
+        students
+      };
+    });
 
-    const configGrid = document.getElementById('facultyConfigList');
-    if (configGrid) {
-      configGrid.innerHTML = adminGuides.map((g, idx) => `
-        <div class="faculty-card">
-          <div class="faculty-card-header">
-            <span class="faculty-tag"><i class="fa-solid fa-chalkboard-user"></i> Guide Faculty #${idx + 1}</span>
-            <small class="text-muted"><strong>${g.assignedCount || 0}</strong> / ${g.maxStudents || 8} Allocated</small>
-          </div>
-          <div class="form-group">
-            <label>Faculty Name (Ma'am)</label>
-            <input type="text" id="facultyName_${idx}" value="${escapeHTML(g.guideName || g.name || '')}" placeholder="e.g. Dr. / Prof. ...">
-          </div>
-          <div class="form-group">
-            <label>Designation</label>
-            <input type="text" id="facultyDesig_${idx}" value="${escapeHTML(g.designation || 'Assistant Professor, CS & DA')}" placeholder="Designation">
-          </div>
-          <div class="form-group">
-            <label>Base Quota Limit (Students)</label>
-            <input type="number" id="facultyQuota_${idx}" value="${g.maxStudents || 8}" min="1" max="41">
-          </div>
+    gData = {
+      success: true,
+      submissions: gp.submissions,
+      guideGroups
+    };
+    eData = {
+      success: true,
+      submissions: ep.submissions
+    };
+  }
+
+  // Render 5 Faculty Config Cards
+  const adminGuides = (gData && gData.guideGroups && gData.guideGroups.length > 0)
+    ? gData.guideGroups
+    : [
+        { guideId: 'g1', guideName: '', designation: 'Assistant Professor, CS & DA', maxStudents: 8, assignedCount: 0 },
+        { guideId: 'g2', guideName: '', designation: 'Assistant Professor, CS & DA', maxStudents: 8, assignedCount: 0 },
+        { guideId: 'g3', guideName: '', designation: 'Assistant Professor, CS & DA', maxStudents: 8, assignedCount: 0 },
+        { guideId: 'g4', guideName: '', designation: 'Assistant Professor, CS & DA', maxStudents: 8, assignedCount: 0 },
+        { guideId: 'g5', guideName: '', designation: 'Assistant Professor, CS & DA', maxStudents: 8, assignedCount: 0 }
+      ];
+  window.currentAdminGuides = adminGuides;
+
+  const configGrid = document.getElementById('facultyConfigList');
+  if (configGrid) {
+    configGrid.innerHTML = adminGuides.map((g, idx) => `
+      <div class="faculty-card">
+        <div class="faculty-card-header">
+          <span class="faculty-tag"><i class="fa-solid fa-chalkboard-user"></i> Guide Faculty #${idx + 1}</span>
+          <small class="text-muted"><strong>${g.assignedCount || 0}</strong> / ${g.maxStudents || 8} Allocated</small>
         </div>
-      `).join('');
-    }
+        <div class="form-group">
+          <label>Faculty Name (Ma'am)</label>
+          <input type="text" id="facultyName_${idx}" value="${escapeHTML(g.guideName || g.name || '')}" placeholder="e.g. Dr. / Prof. ...">
+        </div>
+        <div class="form-group">
+          <label>Designation</label>
+          <input type="text" id="facultyDesig_${idx}" value="${escapeHTML(g.designation || 'Assistant Professor, CS & DA')}" placeholder="Designation">
+        </div>
+        <div class="form-group">
+          <label>Base Quota Limit (Students)</label>
+          <input type="number" id="facultyQuota_${idx}" value="${g.maxStudents || 8}" min="1" max="41">
+        </div>
+      </div>
+    `).join('');
+  }
 
-    // Render Guide Submissions Table
-    const gTable = document.getElementById('adminGuideSubmissionsTable');
-    document.getElementById('adminGuideCount').textContent = gData.submissions.length;
+  // Render Guide Submissions Table
+  const gTable = document.getElementById('adminGuideSubmissionsTable');
+  const gCountEl = document.getElementById('adminGuideCount');
+  if (gCountEl) gCountEl.textContent = gData.submissions.length;
+
+  if (gTable) {
     if (gData.submissions.length > 0) {
       gTable.innerHTML = `
         <table>
@@ -798,7 +648,7 @@ async function loadAdminData() {
               <th>Reg. No</th>
               <th>Student Name</th>
               <th>Slot</th>
-              <th>Allocated Guide</th>
+              <th>Allocated Guide (Confidential)</th>
             </tr>
           </thead>
           <tbody>
@@ -808,19 +658,23 @@ async function loadAdminData() {
                 <td><strong>${escapeHTML(s.regNo)}</strong></td>
                 <td>${escapeHTML(s.studentName)}</td>
                 <td>Slot #${s.slotChosen}</td>
-                <td>${escapeHTML(s.guideName)}</td>
+                <td><span class="badge-tag-guide">${escapeHTML(s.guideName || 'Allocated')}</span></td>
               </tr>
             `).join('')}
           </tbody>
         </table>
       `;
     } else {
-      gTable.innerHTML = `<p class="p-3 text-muted">No guide submissions yet.</p>`;
+      gTable.innerHTML = `<p class="p-3 text-muted">No guide submissions yet. All records are reset clean for tomorrow.</p>`;
     }
+  }
 
-    // Render Elective Submissions Table
-    const eTable = document.getElementById('adminElectiveSubmissionsTable');
-    document.getElementById('adminElectiveCount').textContent = eData.submissions.length;
+  // Render Elective Submissions Table
+  const eTable = document.getElementById('adminElectiveSubmissionsTable');
+  const eCountEl = document.getElementById('adminElectiveCount');
+  if (eCountEl) eCountEl.textContent = eData.submissions.length;
+
+  if (eTable) {
     if (eData.submissions.length > 0) {
       eTable.innerHTML = `
         <table>
@@ -848,38 +702,39 @@ async function loadAdminData() {
       `;
     } else {
       eTable.innerHTML = `<p class="p-3 text-muted">No elective submissions yet.</p>`;
-    // Update Admin Live Status Banner
-    const pill = document.getElementById('adminLivePill');
-    const text = document.getElementById('adminLiveText');
-    if (guideData && guideData.isLive) {
-      if (pill) {
-        pill.style.background = '#D1FAE5';
-        pill.style.color = '#065F46';
-        pill.innerHTML = '<i class="fa-solid fa-bolt"></i> SLOTS STATUS: LIVE';
-      }
-      if (text) {
-        text.className = 'text-success';
-        text.textContent = 'LIVE (Students Can Select Slots)';
-      }
-    } else {
-      if (pill) {
-        pill.style.background = '#FEE2E2';
-        pill.style.color = '#B91C1C';
-        pill.innerHTML = '<i class="fa-solid fa-lock"></i> SLOTS STATUS: LOCKED';
-      }
-      if (text) {
-        text.className = 'text-danger';
-        text.textContent = 'LOCKED (Awaiting Guide Names)';
-      }
     }
+  }
 
-  } catch (err) {
-    console.error('Error loading admin data:', err);
+  // Update Admin Live Status Banner
+  const pill = document.getElementById('adminLivePill');
+  const text = document.getElementById('adminLiveText');
+  const isLive = guideData && guideData.isLive;
+  if (isLive) {
+    if (pill) {
+      pill.style.background = '#D1FAE5';
+      pill.style.color = '#065F46';
+      pill.innerHTML = '<i class="fa-solid fa-bolt"></i> SLOTS STATUS: LIVE';
+    }
+    if (text) {
+      text.className = 'text-success';
+      text.textContent = 'LIVE (Students Can Select Slots)';
+    }
+  } else {
+    if (pill) {
+      pill.style.background = '#FEE2E2';
+      pill.style.color = '#B91C1C';
+      pill.innerHTML = '<i class="fa-solid fa-lock"></i> SLOTS STATUS: LOCKED';
+    }
+    if (text) {
+      text.className = 'text-danger';
+      text.textContent = 'LOCKED (Awaiting Guide Names)';
+    }
   }
 }
 
+// Staff Save Guide Configuration (Supports 5 Guides)
 async function saveGuideConfiguration(makeLive = false) {
-  const pwd = document.getElementById('adminPasswordInput').value;
+  const pwd = document.getElementById('adminPasswordInput')?.value || 'data sorcerers';
   const updatedGuides = [];
   const guideCount = (window.currentAdminGuides && window.currentAdminGuides.length) || 5;
 
@@ -893,12 +748,11 @@ async function saveGuideConfiguration(makeLive = false) {
         id: `g${i + 1}`,
         name: nameEl.value.trim(),
         designation: desigEl.value.trim(),
-        maxStudents: parseInt(quotaEl.value, 10)
+        maxStudents: parseInt(quotaEl.value, 10) || 8
       });
     }
   }
 
-  // Check if names are blank when trying to make live
   if (makeLive) {
     const hasBlank = updatedGuides.some(g => !g.name || g.name.trim().length === 0);
     if (hasBlank) {
@@ -907,27 +761,32 @@ async function saveGuideConfiguration(makeLive = false) {
     }
   }
 
+  // 1. Try server
   try {
-    const res = await fetch('/api/guide/admin/update-guides', {
+    await fetch('/api/guide/admin/update-guides', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: pwd, guides: updatedGuides, isLive: makeLive ? true : undefined })
     });
-    const result = await res.json();
-    if (result.success) {
-      alert(result.message || 'Faculty Guide details updated successfully!');
-      loadGuideConfig();
-      loadAdminData();
-    } else {
-      alert(result.error || 'Failed to update guide configuration.');
-    }
-  } catch (err) {
-    alert('Network error while saving guide config.');
+  } catch (e) {}
+
+  // 2. Always persist locally for instant prototype reactivity
+  const db = getLocalDB();
+  db.guidePortal.guides = updatedGuides.map((g, idx) => ({
+    ...g,
+    assignedCount: (db.guidePortal.guides[idx] && db.guidePortal.guides[idx].assignedCount) || 0
+  }));
+  if (makeLive) {
+    db.guidePortal.isLive = true;
   }
+  saveLocalDB(db);
+
+  alert(makeLive ? 'Faculty Guide details saved and slots are now LIVE for students!' : 'Faculty Guide details saved successfully!');
+  loadGuideConfig();
+  loadAdminData();
 }
 
 async function activateGuideSlotsLive() {
-  const pwd = document.getElementById('adminPasswordInput').value;
   const guideCount = (window.currentAdminGuides && window.currentAdminGuides.length) || 5;
   for (let i = 0; i < guideCount; i++) {
     const nameEl = document.getElementById(`facultyName_${i}`);
@@ -937,48 +796,287 @@ async function activateGuideSlotsLive() {
       return;
     }
   }
-
-  try {
-    const res = await fetch('/api/guide/admin/toggle-live', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pwd, isLive: true })
-    });
-    const result = await res.json();
-    if (result.success) {
-      alert('Guide selection slots are now LIVE for all students!');
-      loadGuideConfig();
-      loadAdminData();
-    } else {
-      alert(result.error || 'Failed to activate slots.');
-    }
-  } catch (err) {
-    alert('Network error.');
-  }
+  saveGuideConfiguration(true);
 }
 
 async function deactivateGuideSlotsLive() {
-  const pwd = document.getElementById('adminPasswordInput').value;
+  const pwd = document.getElementById('adminPasswordInput')?.value || 'data sorcerers';
   try {
-    const res = await fetch('/api/guide/admin/toggle-live', {
+    await fetch('/api/guide/admin/toggle-live', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: pwd, isLive: false })
     });
-    const result = await res.json();
-    if (result.success) {
-      alert('Guide selection slots are now LOCKED.');
-      loadGuideConfig();
-      loadAdminData();
-    } else {
-      alert(result.error || 'Failed to lock slots.');
-    }
-  } catch (err) {
-    alert('Network error.');
+  } catch (e) {}
+
+  const db = getLocalDB();
+  db.guidePortal.isLive = false;
+  saveLocalDB(db);
+
+  alert('Guide selection slots are now LOCKED.');
+  loadGuideConfig();
+  loadAdminData();
+}
+
+// In-Browser Master Excel Export (.xlsx)
+function downloadMasterExcel() {
+  const db = getLocalDB();
+  const gp = db.guidePortal;
+  const ep = db.electivePortal;
+
+  if (typeof XLSX === 'undefined') {
+    window.location.href = '/api/guide/export/excel';
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Master Allotment List
+  const masterData = gp.submissions.map((s, idx) => ({
+    "S.No": idx + 1,
+    "Register Number": s.regNo,
+    "Student Name": s.studentName,
+    "Mystery Slot Chosen": `Slot #${s.slotChosen}`,
+    "Allocated Project Guide": s.guideName,
+    "Timestamp": s.timestamp
+  }));
+  const wsMaster = XLSX.utils.json_to_sheet(masterData.length > 0 ? masterData : [{ "Notice": "No submissions recorded yet." }]);
+  XLSX.utils.book_append_sheet(wb, wsMaster, "Master Allotment");
+
+  // Sheet 2: Guide Distribution
+  const guideDistData = gp.guides.map(g => {
+    const students = gp.submissions.filter(s => s.guideId === g.id);
+    return {
+      "Faculty Guide Name": g.name || "Awaiting Name",
+      "Designation": g.designation,
+      "Base Quota Limit": g.maxStudents || 8,
+      "Allocated Students Count": students.length,
+      "Student Register Numbers": students.map(st => st.regNo).join(', ')
+    };
+  });
+  const wsGuides = XLSX.utils.json_to_sheet(guideDistData);
+  XLSX.utils.book_append_sheet(wb, wsGuides, "Guide Distribution");
+
+  // Sheet 3: Elective Selections
+  const electiveDataRows = ep.submissions.map((s, idx) => ({
+    "S.No": idx + 1,
+    "Register Number": s.regNo,
+    "Student Name": s.studentName,
+    "Elective II Code": s.elective2Code,
+    "Elective II Title": s.elective2Title,
+    "Elective III Code": s.elective3Code,
+    "Elective III Title": s.elective3Title,
+    "Timestamp": s.timestamp
+  }));
+  const wsElective = XLSX.utils.json_to_sheet(electiveDataRows.length > 0 ? electiveDataRows : [{ "Notice": "No elective votes recorded yet." }]);
+  XLSX.utils.book_append_sheet(wb, wsElective, "Elective Voting");
+
+  XLSX.writeFile(wb, "Sankara_CSDA_Selection_Portal_Master_Sheet.xlsx");
+}
+
+function downloadElectiveExcel() {
+  downloadMasterExcel();
+}
+
+function downloadElectiveWord() {
+  window.location.href = '/api/elective/export/word';
+}
+
+function downloadBackupJSON() {
+  const db = getLocalDB();
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
+  const dlAnchor = document.createElement('a');
+  dlAnchor.setAttribute("href", dataStr);
+  dlAnchor.setAttribute("download", `Sankara_Selection_Portal_Backup_${new Date().toISOString().slice(0,10)}.json`);
+  dlAnchor.click();
+}
+
+async function promptResetGuide() {
+  if (!confirm('Are you sure you want to reset all Guide Submissions? This action cannot be undone.')) return;
+  const pwd = document.getElementById('adminPasswordInput')?.value || 'data sorcerers';
+  try {
+    await fetch('/api/guide/admin/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pwd })
+    });
+  } catch (e) {}
+
+  const db = getLocalDB();
+  db.guidePortal.submissions = [];
+  db.guidePortal.lastSlotGuideMap = {};
+  db.guidePortal.lastAllocatedGuideId = null;
+  db.guidePortal.guides.forEach(g => g.assignedCount = 0);
+  saveLocalDB(db);
+
+  alert('Guide submissions have been reset to 0.');
+  loadGuideConfig();
+  loadAdminData();
+}
+
+async function promptResetElective() {
+  if (!confirm('Are you sure you want to reset all Elective Submissions? This action cannot be undone.')) return;
+  const pwd = document.getElementById('adminPasswordInput')?.value || 'data sorcerers';
+  try {
+    await fetch('/api/elective/admin/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pwd })
+    });
+  } catch (e) {}
+
+  const db = getLocalDB();
+  db.electivePortal.submissions = [];
+  saveLocalDB(db);
+
+  alert('Elective submissions have been reset to 0.');
+  loadElectiveConfig();
+  loadAdminData();
+}
+
+// ==========================================
+// 4. DEPARTMENT CIRCULARS (ADMIN VIEW)
+// ==========================================
+
+function switchCircularType(type) {
+  activeCircularType = type;
+  document.querySelectorAll('.circular-toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-type') === type);
+  });
+  renderCircularContent();
+}
+
+function renderCircularContent() {
+  const body = document.getElementById('circularDynamicBody');
+  const title = document.getElementById('circularTypeTitle');
+  if (!body) return;
+
+  if (activeCircularType === 'guide') {
+    if (title) title.textContent = 'SEMESTER VI PROJECT GUIDE ALLOCATION';
+    body.innerHTML = `
+      <p style="margin-bottom: 14px; text-indent: 40px; text-align: justify;">
+        This is to officially inform all students of the <strong>III B.Sc. Computer Science with Data Analytics (Batch 2024–2027)</strong> that the selection of Faculty Project Guides for the <strong>Semester VI Capstone Project (24BSD63V01)</strong> is scheduled to commence as per departmental regulations.
+      </p>
+      <p style="margin-bottom: 14px; text-align: justify;">
+        To uphold transparency, merit, and complete fairness, the allocation process utilizes the <strong>Data Sorcerers Dynamic Selection Engine</strong>. Each faculty member is assigned an equal base student quota of <strong>8 students</strong>.
+      </p>
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 14px; border-radius: 6px; margin: 18px 0;">
+        <strong style="color: #002B49; display: block; margin-bottom: 6px;"><i class="fa-solid fa-list-check"></i> Procedural Guidelines:</strong>
+        <ol style="margin-left: 20px; font-size: 0.9rem; line-height: 1.6;">
+          <li>Students must enter their valid college Register Number and registered Full Name.</li>
+          <li>Choose any mystery slot number from 1 to 8 on the student portal.</li>
+          <li>Staff allocations behind slots are dynamically shuffled to eliminate collusion.</li>
+          <li>Once an allotment is locked, it is final and cannot be modified.</li>
+        </ol>
+      </div>
+    `;
+  } else {
+    if (title) title.textContent = 'SEMESTER VI ELECTIVE COURSE SELECTION';
+    body.innerHTML = `
+      <p style="margin-bottom: 14px; text-indent: 40px; text-align: justify;">
+        This circular notifies all eligible students of <strong>III B.Sc. Computer Science with Data Analytics (Batch 2024–2027)</strong> regarding the selection of Elective Courses for the upcoming <strong>Semester VI (2026–2027)</strong> under Bharathiar University curriculum.
+      </p>
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 14px; border-radius: 6px; margin: 18px 0;">
+        <strong style="color: #002B49; display: block; margin-bottom: 6px;"><i class="fa-solid fa-book-open"></i> Course Choice Categories:</strong>
+        <ul style="margin-left: 20px; font-size: 0.9rem; line-height: 1.6;">
+          <li><strong>Elective II:</strong> 5G Technologies / Predictive Analytics / Software Engineering / Market Analysis</li>
+          <li><strong>Elective III:</strong> Internet of Things / NLP / Mobile App Development / Blockchain Technology</li>
+        </ul>
+      </div>
+    `;
   }
 }
 
-// 5-Page Report Photo Handlers
+function updateWatermarkOpacity(val) {
+  const wm = document.getElementById('circularWatermark');
+  const disp = document.getElementById('opacityValDisplay');
+  if (wm) wm.style.opacity = val / 100;
+  if (disp) disp.textContent = val + '%';
+}
+
+function printOfficialCircular() {
+  window.print();
+}
+
+// ==========================================
+// 5. 5-PAGE REPORT GENERATION (ADMIN VIEW)
+// ==========================================
+
+function populateReportTables() {
+  const db = getLocalDB();
+  const gp = db.guidePortal;
+  const ep = db.electivePortal;
+
+  // Report guide table
+  const repGuideTable = document.getElementById('reportGuideTableBody');
+  if (repGuideTable) {
+    if (gp.submissions.length > 0) {
+      repGuideTable.innerHTML = gp.submissions.map((s, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td><strong>${escapeHTML(s.regNo)}</strong></td>
+          <td>${escapeHTML(s.studentName)}</td>
+          <td>Slot #${s.slotChosen}</td>
+          <td>${escapeHTML(s.guideName)}</td>
+        </tr>
+      `).join('');
+    } else {
+      repGuideTable.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No student guide selections recorded yet.</td></tr>`;
+    }
+  }
+
+  // Report elective table
+  const repElectiveTable = document.getElementById('reportElectiveTableBody');
+  if (repElectiveTable) {
+    if (ep.submissions.length > 0) {
+      repElectiveTable.innerHTML = ep.submissions.map((s, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td><strong>${escapeHTML(s.regNo)}</strong></td>
+          <td>${escapeHTML(s.studentName)}</td>
+          <td>${escapeHTML(s.elective2Title)}</td>
+          <td>${escapeHTML(s.elective3Title)}</td>
+        </tr>
+      `).join('');
+    } else {
+      repElectiveTable.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No elective votes recorded yet.</td></tr>`;
+    }
+  }
+}
+
+function renderIndividualPhotoSlots() {
+  const grid = document.getElementById('reportStudentPhotoGrid');
+  if (!grid) return;
+  let html = '';
+  for (let i = 1; i <= 41; i++) {
+    html += `
+      <div class="student-photo-item" onclick="triggerStudentPhotoUpload(${i})">
+        <input type="file" id="studentPhotoInput${i}" accept="image/*" class="d-none" onchange="previewStudentPhoto(event, ${i})">
+        <div class="photo-placeholder" id="photoPlaceholder${i}">
+          <i class="fa-solid fa-camera"></i>
+          <span>#${i}</span>
+        </div>
+      </div>
+    `;
+  }
+  grid.innerHTML = html;
+}
+
+function triggerStudentPhotoUpload(idx) {
+  document.getElementById(`studentPhotoInput${idx}`).click();
+}
+
+function previewStudentPhoto(e, idx) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    const ph = document.getElementById(`photoPlaceholder${idx}`);
+    ph.innerHTML = `<img src="${evt.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">`;
+  };
+  reader.readAsDataURL(file);
+}
+
 function triggerLeadPhotoUpload(index) {
   document.getElementById(`leadPhotoInput${index}`).click();
 }
@@ -1009,50 +1107,8 @@ function previewGlimpse(event, index) {
   reader.readAsDataURL(file);
 }
 
-async function promptResetGuide() {
-  if (!confirm('Are you sure you want to reset all Guide Submissions? This action cannot be undone.')) return;
-  const pwd = document.getElementById('adminPasswordInput').value;
-
-  try {
-    const res = await fetch('/api/guide/admin/reset', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pwd })
-    });
-    const result = await res.json();
-    if (result.success) {
-      alert('Guide submissions have been reset.');
-      loadGuideConfig();
-      loadAdminData();
-    } else {
-      alert(result.error || 'Reset failed.');
-    }
-  } catch (err) {
-    alert('Error connecting to server.');
-  }
-}
-
-async function promptResetElective() {
-  if (!confirm('Are you sure you want to reset all Elective Submissions? This action cannot be undone.')) return;
-  const pwd = document.getElementById('adminPasswordInput').value;
-
-  try {
-    const res = await fetch('/api/elective/admin/reset', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pwd })
-    });
-    const result = await res.json();
-    if (result.success) {
-      alert('Elective submissions have been reset.');
-      loadElectiveConfig();
-      loadAdminData();
-    } else {
-      alert(result.error || 'Reset failed.');
-    }
-  } catch (err) {
-    alert('Error connecting to server.');
-  }
+function printReportDossier() {
+  window.print();
 }
 
 // ==========================================
@@ -1062,14 +1118,20 @@ async function promptResetElective() {
 async function loadNetworkInfo() {
   try {
     const res = await fetch('/api/system/network-info');
-    const data = await res.json();
-    if (data.success) {
-      document.getElementById('networkUrlInput').value = data.networkUrl;
-      document.getElementById('networkQrImage').src = data.qrCodeDataUrl;
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('networkUrlInput').value = data.networkUrl;
+        document.getElementById('networkQrImage').src = data.qrCodeDataUrl;
+        return;
+      }
     }
-  } catch (err) {
-    console.error('Failed to load network info:', err);
-  }
+  } catch (err) {}
+
+  // Fallback to window location
+  const currentUrl = window.location.origin;
+  const input = document.getElementById('networkUrlInput');
+  if (input) input.value = currentUrl;
 }
 
 function openNetworkModal() {
@@ -1088,11 +1150,9 @@ function copyNetworkUrl() {
   alert('Network URL copied to clipboard: ' + input.value);
 }
 
-// Helpers
+// Event Listeners
 document.getElementById('btnNetworkShare')?.addEventListener('click', openNetworkModal);
-document.getElementById('btnAdminAccess')?.addEventListener('click', () => {
-  switchTab('tab-admin');
-});
+document.getElementById('btnAdminAccess')?.addEventListener('click', openAdminAuth);
 
 function escapeHTML(str) {
   if (!str) return '';

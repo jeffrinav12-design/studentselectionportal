@@ -17,6 +17,9 @@
   <!-- Canvas Confetti for Guide Allocation celebration -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
+  <!-- SheetJS for In-Browser Excel Generation -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <!-- Main Styling -->
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -63,28 +66,25 @@
     </div>
   </header>
 
-  <!-- Main Portal Navigation Tabs -->
+  <!-- Main Portal Navigation Tabs (Clean Student Interface) -->
   <nav class="portal-nav-container">
     <div class="container portal-tabs">
-      <button class="nav-tab active" data-tab="tab-home" id="tabBtnHome">
-        <i class="fa-solid fa-house"></i> Overview Hub
-      </button>
-      <button class="nav-tab" data-tab="tab-guide" id="tabBtnGuide">
-        <i class="fa-solid fa-user-tie"></i> Project Guide Selection
-        <span class="tab-badge" id="guideCountBadge">0 / 41</span>
+      <button class="nav-tab active" data-tab="tab-guide" id="tabBtnGuide">
+        <i class="fa-solid fa-users-viewfinder"></i> Project Guide Selection
       </button>
       <button class="nav-tab" data-tab="tab-elective" id="tabBtnElective">
-        <i class="fa-solid fa-book-bookmark"></i> Elective Course Selection
-        <span class="tab-badge" id="electiveCountBadge">0 / 43</span>
+        <i class="fa-solid fa-layer-group"></i> Elective Course Selection
       </button>
-      <button class="nav-tab" data-tab="tab-circulars" id="tabBtnCirculars">
+      
+      <!-- Admin Only Tabs: Unlocked strictly upon Staff PIN verification -->
+      <button class="nav-tab admin-only-tab d-none" data-tab="tab-admin" id="tabBtnAdmin">
+        <i class="fa-solid fa-shield-halved"></i> Staff Console
+      </button>
+      <button class="nav-tab admin-only-tab d-none" data-tab="tab-circulars" id="tabBtnCirculars">
         <i class="fa-solid fa-file-contract"></i> Official Circulars
       </button>
-      <button class="nav-tab" data-tab="tab-report" id="tabBtnReport">
-        <i class="fa-solid fa-folder-open"></i> Submission Report & Gallery
-      </button>
-      <button class="nav-tab admin-tab-btn" data-tab="tab-admin" id="tabBtnAdmin">
-        <i class="fa-solid fa-shield-halved"></i> Staff Dashboard
+      <button class="nav-tab admin-only-tab d-none" data-tab="tab-report" id="tabBtnReport">
+        <i class="fa-solid fa-folder-open"></i> Formal Department Report
       </button>
     </div>
   </nav>
@@ -92,88 +92,8 @@
   <!-- Main Application Body -->
   <main class="main-content container">
 
-    <!-- TAB 1: OVERVIEW HUB -->
-    <section id="tab-home" class="tab-pane active fade-in">
-      <div class="hero-card">
-        <div class="hero-left">
-          <span class="hero-pill"><i class="fa-solid fa-sparkles"></i> Academic Year 2026–2027</span>
-          <h2 class="hero-title">Semester VI Academic Selection Suite</h2>
-          <p class="hero-desc">
-            A centralized, transparent, and cryptographically randomized allocation suite for 
-            <strong>Semester 6 Project Guides (41 Students)</strong> and <strong>Elective Courses (43 Students)</strong>.
-            Equipped with real-time multi-device shared storage, dynamic staff shuffle anti-collision engine, and instant university-standard exports.
-          </p>
-          <div class="hero-actions">
-            <button class="btn btn-primary btn-lg" onclick="switchTab('tab-guide')">
-              <i class="fa-solid fa-shuffle"></i> Choose Project Guide (Slot Shuffle)
-            </button>
-            <button class="btn btn-outline btn-lg" onclick="switchTab('tab-elective')">
-              <i class="fa-solid fa-list-check"></i> Select Elective Courses
-            </button>
-            <button class="btn btn-secondary btn-lg" onclick="openNetworkModal()">
-              <i class="fa-solid fa-mobile-screen-button"></i> Open on Mobile / Lab PCs
-            </button>
-          </div>
-        </div>
-        <div class="hero-right">
-          <div class="hero-watermark-card">
-            <img src="assets/data_sorcerers_logo.jpg" alt="Data Sorcerers Logo" class="hero-ds-logo">
-            <div class="hero-stats-grid">
-              <div class="stat-box">
-                <span class="stat-number" id="homeGuideTotal">41</span>
-                <span class="stat-label">Guide Selection Target</span>
-              </div>
-              <div class="stat-box">
-                <span class="stat-number" id="homeElectiveTotal">43</span>
-                <span class="stat-label">Elective Target</span>
-              </div>
-              <div class="stat-box">
-                <span class="stat-number">5</span>
-                <span class="stat-label">Project Guide Faculty</span>
-              </div>
-              <div class="stat-box">
-                <span class="stat-number"><i class="fa-solid fa-shuffle"></i> Dynamic</span>
-                <span class="stat-label">Anti-Collision Shuffle</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Feature Showcase Cards -->
-      <div class="feature-grid">
-        <div class="feature-card" onclick="switchTab('tab-guide')">
-          <div class="feature-icon"><i class="fa-solid fa-dice-d20"></i></div>
-          <h3>Project Guide Allocation</h3>
-          <p>Choose your mystery slot (1–8). Backside staff mapping is dynamically shuffled for every student, preventing collusion and ensuring completely fair, quota-balanced guide allocation.</p>
-          <div class="feature-link">Open Guide Portal <i class="fa-solid fa-arrow-right"></i></div>
-        </div>
-
-        <div class="feature-card" onclick="switchTab('tab-elective')">
-          <div class="feature-icon"><i class="fa-solid fa-cubes-stacked"></i></div>
-          <h3>Elective Course Selection</h3>
-          <p>Vote for Elective II (5G, Predictive Analytics, Software Engg, Market Analysis) and Elective III (IoT, NLP, Mobile App, Blockchain). High-interest winning electives are automatically calculated.</p>
-          <div class="feature-link">Open Elective Portal <i class="fa-solid fa-arrow-right"></i></div>
-        </div>
-
-        <div class="feature-card" onclick="switchTab('tab-circulars')">
-          <div class="feature-icon"><i class="fa-solid fa-stamp"></i></div>
-          <h3>Official Department Circulars</h3>
-          <p>Formatted matching official Sankara letterheads with TÜV Rheinland accreditation, NAAC A+ seals, Data Sorcerers watermark with custom opacity, and formal authorization blocks.</p>
-          <div class="feature-link">View Circulars <i class="fa-solid fa-arrow-right"></i></div>
-        </div>
-
-        <div class="feature-card" onclick="switchTab('tab-report')">
-          <div class="feature-icon"><i class="fa-solid fa-camera-retro"></i></div>
-          <h3>Submission Report & Photos</h3>
-          <p>Formal submission dossier with reserved spaces for attaching system screenshots and 41/43 student photos before final college presentation.</p>
-          <div class="feature-link">View Submission Report <i class="fa-solid fa-arrow-right"></i></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 2: PROJECT GUIDE SELECTION PORTAL -->
-    <section id="tab-guide" class="tab-pane fade-in">
+    <!-- TAB 1: PROJECT GUIDE SELECTION PORTAL (DEFAULT ACTIVE FOR STUDENTS) -->
+    <section id="tab-guide" class="tab-pane active fade-in">
       <div class="section-header-banner">
         <div>
           <span class="sub-badge"><i class="fa-solid fa-users-viewfinder"></i> SEMESTER VI PROJECT GUIDE ALLOCATION</span>
@@ -965,9 +885,9 @@
                 <h4>Project Guide Selection (Excel)</h4>
                 <p>Includes Master Student Allocation and Guide-wise Distribution with student counts.</p>
               </div>
-              <a href="/api/guide/export/excel" class="btn btn-outline" download>
+              <button class="btn btn-outline" onclick="downloadMasterExcel()">
                 <i class="fa-solid fa-download"></i> Download .xlsx
-              </a>
+              </button>
             </div>
 
             <div class="export-box">
@@ -976,9 +896,9 @@
                 <h4>Elective Selection (Excel)</h4>
                 <p>Student choices plus Elective Popularity Analytics and Highest-Chosen highlight.</p>
               </div>
-              <a href="/api/elective/export/excel" class="btn btn-outline" download>
+              <button class="btn btn-outline" onclick="downloadElectiveExcel()">
                 <i class="fa-solid fa-download"></i> Download .xlsx
-              </a>
+              </button>
             </div>
 
             <div class="export-box">
@@ -987,9 +907,9 @@
                 <h4>Elective Selection Report (Word)</h4>
                 <p>Official resolution formatted Word document (.docx) with signatures.</p>
               </div>
-              <a href="/api/elective/export/word" class="btn btn-outline" download>
+              <button class="btn btn-outline" onclick="downloadElectiveWord()">
                 <i class="fa-solid fa-download"></i> Download .docx
-              </a>
+              </button>
             </div>
 
             <div class="export-box">
@@ -998,9 +918,9 @@
                 <h4>Full System Data Backup</h4>
                 <p>Export all submissions and configurations in JSON format for offline record.</p>
               </div>
-              <a href="/api/system/backup" class="btn btn-outline" download>
+              <button class="btn btn-outline" onclick="downloadBackupJSON()">
                 <i class="fa-solid fa-download"></i> Download Backup
-              </a>
+              </button>
             </div>
           </div>
         </div>
