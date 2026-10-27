@@ -2711,17 +2711,28 @@ tbody tr:hover {
   }
 }
 
-/* RESPONSIVE DESIGN */
-@media (max-width: 900px) {
+/* ==========================================
+   COMPREHENSIVE MOBILE RESPONSIVE DESIGN
+   Optimized for Smartphones, Tablets & Touch Screens
+   ========================================== */
+
+/* TABLETS & MEDIUM SCREENS (<= 992px) */
+@media (max-width: 992px) {
   .guide-selection-layout,
   .elective-layout,
   .hero-card,
   .admin-grid-2col {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
-  
+
+  .hero-grid-2col {
+    grid-template-columns: 1fr;
+  }
+
   .slots-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
   }
 
   .course-options-grid {
@@ -2729,6 +2740,520 @@ tbody tr:hover {
   }
 
   .screenshot-gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stats-counter-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* SMARTPHONES & MOBILE TABLETS (<= 768px) */
+@media (max-width: 768px) {
+  :root {
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  body {
+    font-size: 14px;
+  }
+
+  .container {
+    padding: 0 14px;
+  }
+
+  /* Top Academic Notification Bar */
+  .top-nav-bar {
+    padding: 6px 0;
+    font-size: 0.76rem;
+  }
+
+  .nav-bar-inner {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .nav-bar-left {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .nav-bar-right {
+    justify-content: center;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .btn-network-badge, .btn-admin-badge {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    flex: 1;
+    justify-content: center;
+    min-height: 36px;
+  }
+
+  /* Institutional Header */
+  .institution-header {
+    padding: 12px 0;
+  }
+
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .header-logos-mobile-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+  }
+
+  .header-logo-left .sankara-logo {
+    height: 60px;
+    max-width: 160px;
+  }
+
+  .header-logo-right .tuv-logo {
+    height: 48px;
+  }
+
+  .college-name {
+    font-size: 1.15rem;
+    line-height: 1.3;
+  }
+
+  .college-affil, .college-accred, .college-addr {
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .dept-badge {
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    margin-top: 6px;
+  }
+
+  /* Mobile Touch Scrollable Tabs */
+  .portal-nav-container {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #FFFFFF;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .portal-tabs {
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 8px 10px;
+    gap: 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .portal-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-tab {
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+    min-height: 40px;
+    border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--border-color);
+  }
+
+  .nav-tab.active {
+    background: var(--primary-navy);
+    color: #FFFFFF;
+    border-color: var(--primary-navy);
+  }
+
+  .tab-badge {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+  }
+
+  /* Section Header Banners */
+  .section-header-banner {
+    padding: 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    border-radius: var(--radius-md);
+  }
+
+  .section-header-banner h2 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+
+  .section-header-banner p {
+    font-size: 0.8rem;
+  }
+
+  .banner-stat-box {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 14px;
+  }
+
+  /* Guide Selection Status Card */
+  .guide-live-status-card {
+    padding: 14px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .live-status-badge {
+    align-self: flex-start;
+  }
+
+  /* Student Form Inputs - Prevent iOS Auto-Zoom */
+  .form-group input,
+  .input-with-icon input,
+  .form-group select {
+    font-size: 16px !important;
+    min-height: 44px;
+    padding: 10px 12px 10px 38px;
+  }
+
+  .student-input-card,
+  .slots-selection-card,
+  .elective-form-card {
+    padding: 18px 14px;
+    border-radius: var(--radius-md);
+  }
+
+  /* 2-Column Responsive Slot Cards for Mobile */
+  .slots-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .slot-card {
+    padding: 16px 10px;
+    border-radius: 12px;
+    min-height: 115px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slot-card:active {
+    transform: scale(0.94);
+    border-color: var(--primary-navy);
+    background: #EFF6FF;
+  }
+
+  .slot-badge {
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    top: 6px;
+    right: 6px;
+  }
+
+  .slot-number {
+    font-size: 1.9rem;
+    font-weight: 800;
+    margin: 4px 0 2px;
+  }
+
+  .slot-icon i {
+    font-size: 1.25rem;
+  }
+
+  .slot-shuffled-tag {
+    font-size: 0.62rem;
+    padding: 2px 6px;
+  }
+
+  /* Anti-Cheat & Guidelines Cards */
+  .anti-cheat-notice,
+  .ballot-guidelines-box {
+    padding: 12px;
+    font-size: 0.78rem;
+  }
+
+  .ballot-rules-list {
+    font-size: 0.76rem;
+    gap: 6px;
+  }
+
+  /* Modals on Mobile Phones */
+  .modal-backdrop {
+    padding: 12px;
+    align-items: center;
+  }
+
+  .modal-dialog {
+    max-width: 100%;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .modal-card {
+    padding: 20px 16px;
+    border-radius: var(--radius-lg);
+    max-height: 92vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modal-title {
+    font-size: 1.4rem;
+  }
+
+  .ballot-receipt-box {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .receipt-row {
+    font-size: 0.82rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    padding-bottom: 6px;
+  }
+
+  .receipt-val {
+    font-size: 0.95rem;
+  }
+
+  .modal-actions button {
+    min-height: 48px;
+    font-size: 1rem;
+    width: 100%;
+  }
+
+  /* Elective Form Mobile Details */
+  .student-details-inline {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .course-option-card {
+    padding: 12px;
+    min-height: 56px;
+  }
+
+  .course-name {
+    font-size: 0.88rem;
+  }
+
+  .course-code {
+    font-size: 0.75rem;
+  }
+
+  /* Admin Console on Mobile */
+  .admin-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .admin-header-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .admin-header-actions .btn {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .admin-live-toggle-banner {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .live-toggle-btns {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .live-toggle-btns .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .faculty-config-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .exports-action-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .export-box {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .export-box .btn {
+    width: 100%;
+  }
+
+  /* Table Mobile Scroll */
+  .table-responsive,
+  .table-scrollable {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-sm);
+  }
+
+  table {
+    min-width: 540px;
+    font-size: 0.8rem;
+  }
+
+  th, td {
+    padding: 8px 10px;
+  }
+
+  /* Department Circulars & Report Paper on Mobile */
+  .circulars-control-bar,
+  .report-controls-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .report-controls-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .report-controls-actions .btn {
+    width: 100%;
+    min-height: 40px;
+  }
+
+  .formal-report-paper {
+    padding: 10px 0;
+    gap: 20px;
+  }
+
+  .report-page {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: auto !important;
+    padding: 20px 14px !important;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto;
+  }
+
+  .circular-paper {
+    width: 100%;
+    min-width: 0;
+    padding: 20px 14px;
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+  }
+
+  .rep-student-leads {
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .event-glimpse-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .rep-official-signatures {
+    flex-direction: column;
+    gap: 24px;
+    text-align: center;
+  }
+
+  .rep-sig-col {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .rep-sig-space {
+    height: 35px;
+  }
+
+  /* Footer */
+  .app-footer {
+    padding: 20px 0;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .footer-left, .footer-right {
+    text-align: center;
+  }
+}
+
+/* COMPACT SMARTPHONES (<= 480px) */
+@media (max-width: 480px) {
+  .slots-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .slot-card {
+    padding: 14px 8px;
+    min-height: 105px;
+  }
+
+  .slot-number {
+    font-size: 1.7rem;
+  }
+
+  .college-name {
+    font-size: 1.05rem;
+  }
+
+  .header-logo-left .sankara-logo {
+    height: 52px;
+  }
+
+  .header-logo-right .tuv-logo {
+    height: 42px;
+  }
+
+  .feature-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-counter-grid {
     grid-template-columns: 1fr;
   }
 }
+
