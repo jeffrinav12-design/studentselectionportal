@@ -938,51 +938,87 @@ async function promptResetElective() {
 // 4. DEPARTMENT CIRCULARS (ADMIN VIEW)
 // ==========================================
 
-function switchCircularType(type) {
+function toggleCircular(type) {
   activeCircularType = type;
-  document.querySelectorAll('.circular-toggle-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.getAttribute('data-type') === type);
-  });
+  const btnGuide = document.getElementById('btnCircGuide');
+  const btnElective = document.getElementById('btnCircElective');
+  if (btnGuide && btnElective) {
+    btnGuide.classList.toggle('active', type === 'guide');
+    btnElective.classList.toggle('active', type === 'elective');
+  }
   renderCircularContent();
 }
 
+// Alias for backwards compatibility
+const switchCircularType = toggleCircular;
+
 function renderCircularContent() {
-  const body = document.getElementById('circularDynamicBody');
-  const title = document.getElementById('circularTypeTitle');
+  const body = document.getElementById('circularBodyContent') || document.getElementById('circularDynamicBody');
+  const refEl = document.getElementById('circRefNo');
   if (!body) return;
 
   if (activeCircularType === 'guide') {
-    if (title) title.textContent = 'SEMESTER VI PROJECT GUIDE ALLOCATION';
+    if (refEl) refEl.textContent = 'Ref: SCSC/CSDA/2026-27/SEM6/CIR-01';
     body.innerHTML = `
-      <p style="margin-bottom: 14px; text-indent: 40px; text-align: justify;">
-        This is to officially inform all students of the <strong>III B.Sc. Computer Science with Data Analytics (Batch 2024–2027)</strong> that the selection of Faculty Project Guides for the <strong>Semester VI Capstone Project (24BSD63V01)</strong> is scheduled to commence as per departmental regulations.
+      <p style="margin-bottom: 16px; text-indent: 40px; text-align: justify;">
+        This is to officially inform all students of the <strong>III B.Sc. Computer Science with Data Analytics (Academic Batch 2024–2027)</strong> that the selection and allotment of Faculty Project Guides for the <strong>Semester VI Capstone Project (Course Code: 24BSD63V01)</strong> is scheduled to commence as per departmental autonomy regulations.
       </p>
-      <p style="margin-bottom: 14px; text-align: justify;">
-        To uphold transparency, merit, and complete fairness, the allocation process utilizes the <strong>Data Sorcerers Dynamic Selection Engine</strong>. Each faculty member is assigned an equal base student quota of <strong>8 students</strong>.
+      <p style="margin-bottom: 16px; text-align: justify;">
+        To ensure absolute merit, transparency, and complete fairness, the allotment process is conducted via the <strong>Data Sorcerers Dynamic Selection Suite</strong>. Each of the 5 Faculty Guide members (Ma'ams) is assigned an equal base student quota of strictly <strong>8 students</strong> (with exactly one faculty receiving the 41st student).
       </p>
-      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 14px; border-radius: 6px; margin: 18px 0;">
-        <strong style="color: #002B49; display: block; margin-bottom: 6px;"><i class="fa-solid fa-list-check"></i> Procedural Guidelines:</strong>
-        <ol style="margin-left: 20px; font-size: 0.9rem; line-height: 1.6;">
-          <li>Students must enter their valid college Register Number and registered Full Name.</li>
-          <li>Choose any mystery slot number from 1 to 8 on the student portal.</li>
-          <li>Staff allocations behind slots are dynamically shuffled to eliminate collusion.</li>
-          <li>Once an allotment is locked, it is final and cannot be modified.</li>
+      <div style="background: #F8FAFC; border: 1px solid #CBD5E1; padding: 18px; border-radius: 6px; margin: 20px 0;">
+        <strong style="color: #002B49; display: block; margin-bottom: 8px; font-size: 1.05rem;">
+          <i class="fa-solid fa-list-check"></i> Procedural Guidelines for Students:
+        </strong>
+        <ol style="margin-left: 24px; font-size: 0.95rem; line-height: 1.7;">
+          <li>Students must enter their official College Register Number and registered Full Name on the selection terminal.</li>
+          <li>Choose any mystery slot number from <strong>1 to 8</strong> on the interactive selection terminal.</li>
+          <li>Faculty mappings behind slots are dynamically rotated and shuffled for every student to eliminate collusion or pre-arranged slot trading.</li>
+          <li>All selections are recorded via <strong>confidential secret ballot</strong>. Official allotment lists will be released by the department after all 41 students have cast their choices.</li>
+          <li>Allocations once confirmed by the system are final and strictly non-transferable.</li>
         </ol>
       </div>
+      <p style="text-align: justify; margin-top: 14px;">
+        All students are required to complete their slot selection strictly within the designated schedule. Non-compliance will result in direct administrative allocation.
+      </p>
     `;
   } else {
-    if (title) title.textContent = 'SEMESTER VI ELECTIVE COURSE SELECTION';
+    if (refEl) refEl.textContent = 'Ref: SCSC/CSDA/2026-27/SEM6/CIR-02';
     body.innerHTML = `
-      <p style="margin-bottom: 14px; text-indent: 40px; text-align: justify;">
-        This circular notifies all eligible students of <strong>III B.Sc. Computer Science with Data Analytics (Batch 2024–2027)</strong> regarding the selection of Elective Courses for the upcoming <strong>Semester VI (2026–2027)</strong> under Bharathiar University curriculum.
+      <p style="margin-bottom: 16px; text-indent: 40px; text-align: justify;">
+        This circular notifies all eligible students of the <strong>III B.Sc. Computer Science with Data Analytics (Academic Batch 2024–2027)</strong> regarding the selection of Elective Courses for the upcoming <strong>Semester VI (2026–2027)</strong> under the autonomous Bharathiar University curriculum framework.
       </p>
-      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 14px; border-radius: 6px; margin: 18px 0;">
-        <strong style="color: #002B49; display: block; margin-bottom: 6px;"><i class="fa-solid fa-book-open"></i> Course Choice Categories:</strong>
-        <ul style="margin-left: 20px; font-size: 0.9rem; line-height: 1.6;">
-          <li><strong>Elective II:</strong> 5G Technologies / Predictive Analytics / Software Engineering / Market Analysis</li>
-          <li><strong>Elective III:</strong> Internet of Things / NLP / Mobile App Development / Blockchain Technology</li>
-        </ul>
+      <p style="margin-bottom: 16px; text-align: justify;">
+        Students are required to register their academic preferences for both <strong>Elective II</strong> and <strong>Elective III</strong> papers through the college Selection Portal. The courses receiving majority student preference will be offered as the department core electives.
+      </p>
+      <div style="background: #F8FAFC; border: 1px solid #CBD5E1; padding: 18px; border-radius: 6px; margin: 20px 0;">
+        <strong style="color: #002B49; display: block; margin-bottom: 8px; font-size: 1.05rem;">
+          <i class="fa-solid fa-book-open"></i> Course Choice Categories:
+        </strong>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px;">
+          <div style="background: #FFFFFF; border: 1px solid #E2E8F0; padding: 12px; border-radius: 6px;">
+            <strong style="color: #9B1C2E; display: block; margin-bottom: 6px;">ELECTIVE II PAPERS:</strong>
+            <ul style="font-size: 0.88rem; line-height: 1.6; padding-left: 18px;">
+              <li>24BSD63E05: 5G & Future Network Tech.</li>
+              <li>24BSD63E06: Predictive Analytics</li>
+              <li>24BSD63E07: Software Engineering</li>
+              <li>24BSD63E08: Market Analysis & Decision</li>
+            </ul>
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid #E2E8F0; padding: 12px; border-radius: 6px;">
+            <strong style="color: #002B49; display: block; margin-bottom: 6px;">ELECTIVE III PAPERS:</strong>
+            <ul style="font-size: 0.88rem; line-height: 1.6; padding-left: 18px;">
+              <li>24BSD63E09: Internet of Things (IoT)</li>
+              <li>24BSD63E10: Natural Language Processing</li>
+              <li>24BSD63E11: Mobile Application Dev.</li>
+              <li>24BSD63E12: Block Chain Technology</li>
+            </ul>
+          </div>
+        </div>
       </div>
+      <p style="text-align: justify; margin-top: 14px;">
+        Selection closes upon receipt of all 43 batch submissions. Tutors and HOD approval will follow immediately.
+      </p>
     `;
   }
 }
