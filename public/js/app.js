@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderIndividualPhotoSlots();
   renderCircularContent();
 
-  // Polling for real-time background sync
+  // Fast 3-second polling for real-time live prototype synchronization
   setInterval(() => {
     loadGuideConfig(true);
     loadElectiveConfig(true);
@@ -265,23 +265,25 @@ async function handleSlotSelection(slotNum) {
     if (res.ok) {
       const result = await res.json();
       if (result.success || result.isExisting) {
-        completeGuideSubmission(result.submission || { regNo, studentName, slotChosen: slotNum });
-        loadGuideConfig(true);
-        if (adminUnlocked) loadAdminData();
-        return;
-      } else if (result.error) {
-        alert(result.error);
-        return;
-      }
-    } else {
-      const errData = await res.json().catch(() => ({}));
-      if (errData.error) {
-        alert(errData.error);
+        const sub = result.submission || { regNo, studentName, slotChosen: slotNum };
+        const db = getLocalDB();
+        const existingIdx = db.guidePortal.submissions.findIndex(s => s.regNo.toUpperCase() === regNo.toUpperCase());
+        if (existingIdx >= 0) {
+          db.guidePortal.submissions[existingIdx] = sub;
+        } else {
+          db.guidePortal.submissions.push(sub);
+        }
+        db.guidePortal.guides.forEach(g => {
+          g.assignedCount = db.guidePortal.submissions.filter(s => s.guideId === g.id).length;
+        });
+        saveLocalDB(db);
+
+        completeGuideSubmission(sub);
         return;
       }
     }
   } catch (err) {
-    console.warn('Server offline, using local dynamic allocation engine:', err);
+    // Proceed to Local Dynamic Engine
   }
 
   // 2. Resilient In-Browser Fallback Engine
@@ -527,12 +529,25 @@ async function submitElectiveWizard() {
     if (res.ok) {
       const result = await res.json();
       if (result.success || result.isExisting) {
-        completeElectiveSubmission({
+        const subData = result.submission || {
           regNo,
           studentName,
+          elective2Code,
           elective2Title: `${elective2Code} - ${e2Title}`,
-          elective3Title: `${elective3Code} - ${e3Title}`
-        });
+          elective3Code,
+          elective3Title: `${elective3Code} - ${e3Title}`,
+          timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+        };
+        const db = getLocalDB();
+        const existingIdx = db.electivePortal.submissions.findIndex(s => s.regNo.toUpperCase() === regNo.toUpperCase());
+        if (existingIdx >= 0) {
+          db.electivePortal.submissions[existingIdx] = subData;
+        } else {
+          db.electivePortal.submissions.push(subData);
+        }
+        saveLocalDB(db);
+
+        completeElectiveSubmission(subData);
         return;
       }
     }
@@ -727,55 +742,93 @@ function toggleSubmissionsView(viewType) {
   }
 }
 
-async function loadAdminData() {
+async function loadAdminData(isManual = false) {
+  const refreshBtn = document.getElementById('btnRefreshLiveAdmin');
+  if (isManual && refreshBtn) {
+    refreshBtn.innerHTML = `<i class="fa-solid fa-arrows-rotate fa-spin"></i> Syncing...`;
+  }
+
+  let db = getLocalDB();
+
+  // 1. Fetch live server submissions from both APIs
   try {
-    const [guideRes, electiveRes] = await Promise.all([
-      fetch('/api/guide/submissions').then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch('/api/elective/submissions').then(r => r.ok ? r.json() : null).catch(() => null)
+    const [gRes, eRes] = await Promise.all([
+      fetch('/api/guide/submissions'),
+      fetch('/api/elective/submissions')
     ]);
 
-    const db = getLocalDB();
+    if (gRes.ok) {
+      const gData = await gRes.json();
+      if (gData.success && Array.isArray(gData.submissions)) {
+        gData.submissions.forEach(sub => {
+          const idx = db.guidePortal.submissions.findIndex(s => s.regNo.toUpperCase() === sub.regNo.toUpperCase());
+          if (idx >= 0) {
+            db.guidePortal.submissions[idx] = sub;
+          } else {
+            db.guidePortal.submissions.push(sub);
+          }
+        });
+        if (Array.isArray(gData.guides) && gData.guides.length > 0) {
+          gData.guides.forEach((srvG, i) => {
+            if (db.guidePortal.guides[i] && srvG.name) {
+              db.guidePortal.guides[i].name = srvG.name;
+              db.guidePortal.guides[i].designation = srvG.designation || db.guidePortal.guides[i].designation;
+            }
+          });
+        }
+      }
+    }
 
-    if (guideRes && guideRes.success) {
-      db.guidePortal.submissions = guideRes.submissions || [];
-      if (guideRes.guideGroups) {
-        guideRes.guideGroups.forEach(gg => {
-          const g = db.guidePortal.guides.find(x => x.id === gg.guideId);
-          if (g) {
-            if (gg.guideName) g.name = gg.guideName;
-            if (gg.designation) g.designation = gg.designation;
-            if (gg.maxStudents) g.maxStudents = gg.maxStudents;
-            g.assignedCount = gg.assignedCount !== undefined ? gg.assignedCount : (gg.students ? gg.students.length : 0);
+    if (eRes.ok) {
+      const eData = await eRes.json();
+      if (eData.success && Array.isArray(eData.submissions)) {
+        eData.submissions.forEach(sub => {
+          const idx = db.electivePortal.submissions.findIndex(s => s.regNo.toUpperCase() === sub.regNo.toUpperCase());
+          if (idx >= 0) {
+            db.electivePortal.submissions[idx] = sub;
+          } else {
+            db.electivePortal.submissions.push(sub);
           }
         });
       }
     }
 
-    if (electiveRes && electiveRes.success) {
-      db.electivePortal.submissions = electiveRes.submissions || [];
+    // 2. Bi-directional sync: ensure server knows about any locally-recorded submissions
+    const syncRes = await fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        guideSubmissions: db.guidePortal.submissions,
+        electiveSubmissions: db.electivePortal.submissions
+      })
+    });
+    if (syncRes.ok) {
+      const syncData = await syncRes.json();
+      if (syncData.success) {
+        if (syncData.guidePortal?.submissions) db.guidePortal.submissions = syncData.guidePortal.submissions;
+        if (syncData.electivePortal?.submissions) db.electivePortal.submissions = syncData.electivePortal.submissions;
+      }
     }
-
-    saveLocalDB(db);
   } catch (err) {
-    console.warn('Live server sync warning:', err);
+    console.warn('Network sync notice:', err);
   }
 
-  const db = getLocalDB();
+  // Recount current assignments for all 5 Mams
+  db.guidePortal.guides.forEach(g => {
+    g.assignedCount = db.guidePortal.submissions.filter(s => s.guideId === g.id).length;
+  });
+  saveLocalDB(db);
+
   const gp = db.guidePortal;
   const ep = db.electivePortal;
 
-  // Recount current assignments
-  gp.guides.forEach(g => {
-    g.assignedCount = gp.submissions.filter(s => s.guideId === g.id).length;
-  });
-
-  // Counts
+  // Counts badges
   const gCount = document.getElementById('adminGuideCount');
   if (gCount) gCount.textContent = gp.submissions.length;
   const eCount = document.getElementById('adminElectiveCount');
   if (eCount) eCount.textContent = ep.submissions.length;
 
-  // Render Submissions Tables with real live data
+  // Render Submissions Tables
   renderAdminGuideMasterTable(gp.submissions);
   renderAdminGuideWiseView(gp.guides, gp.submissions);
   renderAdminElectiveTable(ep.submissions);
@@ -805,6 +858,10 @@ async function loadAdminData() {
 
   // Populate dynamic results in Formal 5-Page Report
   populateReportTables();
+
+  if (refreshBtn) {
+    refreshBtn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> Refresh Live Data`;
+  }
 }
 
 function renderAdminGuideMasterTable(submissions) {
@@ -812,7 +869,12 @@ function renderAdminGuideMasterTable(submissions) {
   if (!cont) return;
 
   if (!submissions || submissions.length === 0) {
-    cont.innerHTML = `<div class="p-4 text-muted text-center"><i class="fa-solid fa-inbox fa-2x"></i><br>No guide allocations recorded yet.</div>`;
+    cont.innerHTML = `
+      <div class="p-4 text-muted text-center">
+        <i class="fa-solid fa-inbox fa-2x"></i><br>
+        <strong>No guide allocations recorded yet.</strong><br>
+        <small class="text-muted">As students select mystery slots live, their assigned Faculty Guide (Mam) will appear here in real time.</small>
+      </div>`;
     return;
   }
 
@@ -824,7 +886,7 @@ function renderAdminGuideMasterTable(submissions) {
           <th>College Reg. No</th>
           <th>Student Name</th>
           <th>Slot</th>
-          <th>Allocated Guide Name</th>
+          <th>Allocated Guide (Mam)</th>
           <th>Time</th>
         </tr>
       </thead>
@@ -862,24 +924,27 @@ function renderAdminGuideWiseView(guides, submissions) {
       <div class="guide-wise-card">
         <div class="guide-wise-header">
           <div>
-            <div class="guide-wise-title">${escapeHTML(g.name || `Guide #${idx + 1}`)}</div>
-            <small class="text-muted">${escapeHTML(g.designation || 'Assistant Professor')} ${isNine ? '• 9 Quota' : ''}</small>
+            <div class="guide-wise-title">${escapeHTML(g.name || `Faculty Guide #${idx + 1}`)}</div>
+            <small class="text-muted">${escapeHTML(g.designation || 'Assistant Professor')} ${isNine ? '• 9 Quota (Designated)' : '• 8 Quota'}</small>
           </div>
-          <span class="guide-wise-count">${students.length} / ${g.maxStudents || 8}</span>
+          <span class="guide-wise-count ${students.length >= (g.maxStudents || 8) ? 'bg-danger text-white' : ''}">
+            ${students.length} / ${g.maxStudents || 8}
+          </span>
         </div>
         <table class="guide-wise-students-table">
           <thead>
             <tr>
-              <th style="width: 15%;">#</th>
-              <th style="width: 40%;">College Reg. No</th>
-              <th style="width: 45%;">Student Name</th>
+              <th style="width: 12%;">#</th>
+              <th style="width: 38%;">College Reg. No</th>
+              <th style="width: 32%;">Student Name</th>
+              <th style="width: 18%; text-align: center;">Slot</th>
             </tr>
           </thead>
           <tbody>
     `;
 
     if (students.length === 0) {
-      html += `<tr><td colspan="3" class="text-muted text-center" style="padding: 14px 6px;">No students allocated yet</td></tr>`;
+      html += `<tr><td colspan="4" class="text-muted text-center" style="padding: 14px 6px;">No students allocated yet to this guide</td></tr>`;
     } else {
       students.forEach((st, sIdx) => {
         html += `
@@ -887,6 +952,7 @@ function renderAdminGuideWiseView(guides, submissions) {
             <td>${sIdx + 1}</td>
             <td><strong>${escapeHTML(st.regNo)}</strong></td>
             <td>${escapeHTML(st.studentName)}</td>
+            <td style="text-align: center;"><span class="badge-tag">Slot #${st.slotChosen}</span></td>
           </tr>
         `;
       });
@@ -1122,19 +1188,7 @@ function saveWorkbookAsExcel(wb, filename) {
 }
 
 // 1. Master Student Allocation Excel (.xlsx)
-async function downloadMasterStudentExcel() {
-  try {
-    const res = await fetch('/api/guide/submissions');
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && data.submissions) {
-        const db = getLocalDB();
-        db.guidePortal.submissions = data.submissions;
-        saveLocalDB(db);
-      }
-    }
-  } catch (e) {}
-
+function downloadMasterStudentExcel() {
   const db = getLocalDB();
   const gp = db.guidePortal;
 
@@ -1158,7 +1212,7 @@ async function downloadMasterStudentExcel() {
   ];
 
   if (!gp.submissions || gp.submissions.length === 0) {
-    masterRows.push(["N/A", "No student submissions recorded yet", "Awaiting Live Registrations", "N/A", "Awaiting Allocation", "Assistant Professor, CS & DA", new Date().toLocaleString(), "AWAITING"]);
+    masterRows.push(["-", "No live student registrations recorded yet", "Awaiting live selections", "-", "-", "-", new Date().toLocaleString(), "AWAITING VOTES"]);
   } else {
     gp.submissions.forEach((s, idx) => {
       const guideObj = (gp.guides || []).find(g => g.id === s.guideId);
@@ -1245,19 +1299,7 @@ async function downloadMasterStudentExcel() {
 }
 
 // 2. Guide-Wise Grouped Student Allocation Excel (.xlsx)
-async function downloadGuideWiseExcel() {
-  try {
-    const res = await fetch('/api/guide/submissions');
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && data.submissions) {
-        const db = getLocalDB();
-        db.guidePortal.submissions = data.submissions;
-        saveLocalDB(db);
-      }
-    }
-  } catch (e) {}
-
+function downloadGuideWiseExcel() {
   const db = getLocalDB();
   const gp = db.guidePortal;
 
@@ -1347,19 +1389,7 @@ function downloadGuideWiseWord() {
 }
 
 // 4. Elective Course Selections Excel (.xlsx)
-async function downloadElectiveExcel() {
-  try {
-    const res = await fetch('/api/elective/submissions');
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && data.submissions) {
-        const db = getLocalDB();
-        db.electivePortal.submissions = data.submissions;
-        saveLocalDB(db);
-      }
-    }
-  } catch (e) {}
-
+function downloadElectiveExcel() {
   const db = getLocalDB();
   const ep = db.electivePortal;
 
@@ -1382,7 +1412,7 @@ async function downloadElectiveExcel() {
   ];
 
   if (!ep.submissions || ep.submissions.length === 0) {
-    rows.push(["N/A", "No elective selections recorded yet", "Awaiting Student Votes", "N/A", "N/A", new Date().toLocaleString(), "AWAITING"]);
+    rows.push(["-", "No live elective selections recorded yet", "Awaiting live selections", "-", "-", new Date().toLocaleString(), "AWAITING VOTES"]);
   } else {
     ep.submissions.forEach((s, idx) => {
       rows.push([

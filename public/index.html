@@ -329,15 +329,15 @@
           <div class="ballot-receipt-box">
             <div class="receipt-row">
               <span class="receipt-label"><i class="fa-solid fa-hashtag"></i> College Register Number:</span>
-              <strong class="receipt-val" id="receiptGuideRegNo">24BSD001</strong>
+              <strong class="receipt-val" id="receiptGuideRegNo">—</strong>
             </div>
             <div class="receipt-row">
               <span class="receipt-label"><i class="fa-solid fa-user"></i> Student Name:</span>
-              <strong class="receipt-val" id="receiptGuideName">Student Name</strong>
+              <strong class="receipt-val" id="receiptGuideName">—</strong>
             </div>
             <div class="receipt-row">
               <span class="receipt-label"><i class="fa-solid fa-cube"></i> Mystery Slot Chosen:</span>
-              <span class="slot-chosen-badge" id="receiptGuideSlot">Slot #1 Selected</span>
+              <span class="slot-chosen-badge" id="receiptGuideSlot">—</span>
             </div>
             <div class="receipt-row">
               <span class="receipt-label"><i class="fa-solid fa-shield-halved"></i> Selection Status:</span>
@@ -541,11 +541,11 @@
           <div class="ballot-receipt-box">
             <div class="receipt-row">
               <span class="receipt-label"><i class="fa-solid fa-hashtag"></i> College Register Number:</span>
-              <strong class="receipt-val" id="receiptElectiveRegNo">24BSD001</strong>
+              <strong class="receipt-val" id="receiptElectiveRegNo">—</strong>
             </div>
             <div class="receipt-row">
               <span class="receipt-label"><i class="fa-solid fa-user"></i> Student Name:</span>
-              <strong class="receipt-val" id="receiptElectiveName">Student Name</strong>
+              <strong class="receipt-val" id="receiptElectiveName">—</strong>
             </div>
             <div class="receipt-row">
               <span class="receipt-label"><i class="fa-solid fa-book-open"></i> Elective II Chosen:</span>
@@ -646,10 +646,13 @@
                 <i class="fa-solid fa-table-list"></i> Master Student Allocation List
               </button>
               <button class="view-btn" id="btnViewGuideWise" onclick="toggleSubmissionsView('guidewise')">
-                <i class="fa-solid fa-users-line"></i> Guide-Wise Student Grouping
+                <i class="fa-solid fa-users-line"></i> Guide-Wise Student Grouping (Assigned to Each Mam)
               </button>
             </div>
             <div class="export-btn-group">
+              <button class="btn btn-sm btn-primary" id="btnRefreshLiveAdmin" onclick="loadAdminData(true)" title="Fetch and sync latest live student submissions across all devices">
+                <i class="fa-solid fa-arrows-rotate"></i> Refresh Live Data
+              </button>
               <button class="btn btn-sm btn-outline" onclick="downloadMasterStudentExcel()" title="Download Excel">
                 <i class="fa-solid fa-file-excel text-success"></i> Master Excel
               </button>

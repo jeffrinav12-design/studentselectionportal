@@ -23,19 +23,26 @@ if (!process.env.VERCEL && !fs.existsSync(path.join(__dirname, 'data'))) {
   fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
 }
 
-// Database helper
+let inMemoryDB = null;
+
+// Database helper with memory caching for fast serverless execution
 function loadDB() {
+  if (inMemoryDB) {
+    return inMemoryDB;
+  }
   try {
     if (!fs.existsSync(DB_PATH)) {
       if (fs.existsSync(SEED_DB_PATH)) {
         const seedData = fs.readFileSync(SEED_DB_PATH, 'utf-8');
-        fs.writeFileSync(DB_PATH, seedData, 'utf-8');
-        return JSON.parse(seedData);
+        try { fs.writeFileSync(DB_PATH, seedData, 'utf-8'); } catch(e){}
+        inMemoryDB = JSON.parse(seedData);
+        return inMemoryDB;
       }
-      throw new Error('Database not found');
+      throw new Error('Database seed not found');
     }
     const data = fs.readFileSync(DB_PATH, 'utf-8');
-    return JSON.parse(data);
+    inMemoryDB = JSON.parse(data);
+    return inMemoryDB;
   } catch (err) {
     console.error('Error reading database, creating default:', err);
     const defaultDB = {
@@ -53,8 +60,6 @@ function loadDB() {
         slotCount: 8,
         ninthGuideId: "g1",
         lastSlotGuideMap: {},
-        lastAllocatedGuideId: null,
-        slotHistory: {},
         guides: [
           { id: "g1", name: "Dr. K. Meenakshi", designation: "Assistant Professor, CS & DA", maxStudents: 9, assignedCount: 0 },
           { id: "g2", name: "Prof. S. Kavitha", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 },
@@ -81,14 +86,20 @@ function loadDB() {
         submissions: []
       }
     };
-    fs.writeFileSync(DB_PATH, JSON.stringify(defaultDB, null, 2), 'utf-8');
+    try { fs.writeFileSync(DB_PATH, JSON.stringify(defaultDB, null, 2), 'utf-8'); } catch(e){}
+    inMemoryDB = defaultDB;
     return defaultDB;
   }
 }
 
 function saveDB(data) {
+  inMemoryDB = data;
   data.system.lastUpdated = new Date().toISOString();
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  try {
+    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (e) {
+    // In serverless read-only instances, memory state is preserved
+  }
 }
 
 // Get LAN IPv4 address
@@ -294,14 +305,17 @@ app.post('/api/guide/submit', (req, res) => {
 
   // CONFIDENTIAL BALLOT RESPONSE:
   // Strictly do NOT reveal guide name on the student's screen!
+  // Backend passes the guide details so system state is persistent across devices.
   res.json({
     success: true,
     isSecretBallot: true,
     message: 'Slot selection successfully recorded! The official guide allotment list will be announced by the department after all students vote.',
     submission: {
-      regNo,
-      studentName,
-      slotChosen: slot,
+      regNo: submissionRecord.regNo,
+      studentName: submissionRecord.studentName,
+      slotChosen: submissionRecord.slotChosen,
+      guideId: submissionRecord.guideId,
+      guideName: submissionRecord.guideName,
       timestamp: submissionRecord.timestamp
     }
   });
@@ -312,6 +326,11 @@ app.get('/api/guide/submissions', (req, res) => {
   const db = loadDB();
   const guidePortal = db.guidePortal;
   
+  // Recalculate assignedCount for accuracy
+  guidePortal.guides.forEach(g => {
+    g.assignedCount = guidePortal.submissions.filter(s => s.guideId === g.id).length;
+  });
+
   // Group by guide
   const guideGroups = guidePortal.guides.map(g => {
     const students = guidePortal.submissions
@@ -337,7 +356,59 @@ app.get('/api/guide/submissions', (req, res) => {
     totalTarget: guidePortal.targetStudents,
     totalSubmissions: guidePortal.submissions.length,
     submissions: guidePortal.submissions,
+    guides: guidePortal.guides,
     guideGroups
+  });
+});
+
+// Bi-directional state synchronization across distributed devices & Vercel lambdas
+app.post('/api/sync', (req, res) => {
+  const { guideSubmissions, electiveSubmissions } = req.body;
+  const db = loadDB();
+  let modified = false;
+
+  if (Array.isArray(guideSubmissions)) {
+    guideSubmissions.forEach(sub => {
+      if (sub && sub.regNo && !db.guidePortal.submissions.some(s => s.regNo.toUpperCase() === sub.regNo.toUpperCase())) {
+        db.guidePortal.submissions.push(sub);
+        modified = true;
+      }
+    });
+  }
+
+  if (Array.isArray(electiveSubmissions)) {
+    electiveSubmissions.forEach(sub => {
+      if (sub && sub.regNo && !db.electivePortal.submissions.some(s => s.regNo.toUpperCase() === sub.regNo.toUpperCase())) {
+        db.electivePortal.submissions.push(sub);
+        modified = true;
+      }
+    });
+  }
+
+  if (modified) {
+    db.guidePortal.guides.forEach(g => {
+      g.assignedCount = db.guidePortal.submissions.filter(s => s.guideId === g.id).length;
+    });
+    saveDB(db);
+  }
+
+  // Recount
+  db.guidePortal.guides.forEach(g => {
+    g.assignedCount = db.guidePortal.submissions.filter(s => s.guideId === g.id).length;
+  });
+
+  res.json({
+    success: true,
+    guidePortal: {
+      isLive: db.guidePortal.isLive,
+      targetStudents: db.guidePortal.targetStudents,
+      submissions: db.guidePortal.submissions,
+      guides: db.guidePortal.guides
+    },
+    electivePortal: {
+      targetStudents: db.electivePortal.targetStudents,
+      submissions: db.electivePortal.submissions
+    }
   });
 });
 
