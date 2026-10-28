@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sankara College of Science and Commerce | Selection Portal</title>
-  <meta name="description" content="Department of Computer Science with Data Analytics - Project Guide & Elective Course Selection Portal, Batch 2024-2027.">
+  <title>Sankara College of Science and Commerce | Academic Selection Portal</title>
+  <meta name="description" content="Official Semester VI Project Guide Allocation and Elective Course Selection System for Department of Computer Science with Data Analytics, Batch 2024-2027.">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,8 +38,8 @@
         <button id="btnNetworkShare" class="btn-network-badge" onclick="openNetworkModal()" title="Connect from mobile phones / other devices">
           <i class="fa-solid fa-qrcode"></i> Multi-Device Sync (LAN)
         </button>
-        <button class="btn-portal-badge" onclick="showPortal('landing')" title="Portal Home">
-          <i class="fa-solid fa-house"></i> Home
+        <button id="btnTopStaffAccess" class="btn-admin-badge" onclick="showStaffPortal()" title="Staff & Faculty Access">
+          <i class="fa-solid fa-lock"></i> Staff Login
         </button>
       </div>
     </div>
@@ -49,7 +49,7 @@
   <header class="institution-header">
     <div class="container header-content">
       <div class="header-logo-left">
-        <img src="assets/sankara_logo.jpg" alt="Sankara Educational Institutions Logo" class="sankara-logo">
+        <img src="assets/sankara_logo.jpg" alt="Sankara Educational Institutions Logo" class="sankara-logo" onclick="showGateway()" style="cursor: pointer;" title="Back to Portal Gateway">
       </div>
       <div class="header-title-box">
         <h1 class="college-name">SANKARA COLLEGE OF SCIENCE AND COMMERCE</h1>
@@ -66,109 +66,128 @@
     </div>
   </header>
 
-  <!-- ========================================================================= -->
-  <!-- 1. ROOT VIEW: FIRST PAGE LANDING (STUDENT PORTAL vs STAFF / ADMIN PORTAL) -->
-  <!-- ========================================================================= -->
-  <section id="view-landing" class="portal-view active-view fade-in">
-    <div class="container landing-container">
-      <div class="landing-hero text-center">
-        <span class="hero-badge"><i class="fa-solid fa-shield-halved"></i> AUTONOMOUS SELECTION SUITE</span>
-        <h2 class="landing-main-title">Academic Selection Portal</h2>
-        <p class="landing-subtitle">Welcome to the official selection system for Semester VI Capstone Project Guides and Elective Courses. Please select your portal below to proceed.</p>
+  <!-- Main Application Container -->
+  <main class="main-content container">
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 1: GATEWAY LANDING (FIRST PAGE: STUDENT PORTAL vs STAFF / ADMIN)    -->
+    <!-- ========================================================================= -->
+    <section id="view-gateway" class="app-view active fade-in">
+      <div class="gateway-hero">
+        <span class="sub-badge"><i class="fa-solid fa-landmark"></i> ACADEMIC YEAR 2026–2027</span>
+        <h2 class="gateway-title">Welcome to the Academic Selection Portal</h2>
+        <p class="gateway-subtitle">Please select your designated portal below to proceed with course and guide selection.</p>
       </div>
 
-      <div class="portal-selection-grid">
-        <!-- CARD 1: STUDENT PORTAL -->
-        <div class="portal-card student-card" onclick="showPortal('student')">
-          <div class="card-glow student-glow"></div>
-          <div class="portal-card-icon-wrap student-icon-wrap">
+      <div class="gateway-cards-grid">
+        <!-- Gateway Card 1: Student Portal -->
+        <div class="gateway-card student-gateway-card" onclick="showStudentPortal('guide')">
+          <div class="gateway-card-badge student-badge-pill">
+            <i class="fa-solid fa-user-graduate"></i> Student Access
+          </div>
+          <div class="gateway-icon-circle student-icon-circle">
             <i class="fa-solid fa-graduation-cap"></i>
           </div>
-          <span class="portal-access-tag student-tag">STUDENT ACCESS</span>
-          <h3 class="portal-card-title">Student Portal</h3>
-          <p class="portal-card-desc">Casting terminal for Project Guide Mystery Slot Allocation and Elective Course Selection.</p>
-          <ul class="portal-card-features">
-            <li><i class="fa-solid fa-check"></i> Step 1: Register Number & Name</li>
-            <li><i class="fa-solid fa-check"></i> Step 2: Choose Your Mystery Slot</li>
-            <li><i class="fa-solid fa-check"></i> Elective II & Elective III Choices</li>
+          <h3 class="gateway-card-title">Student Portal</h3>
+          <p class="gateway-card-desc">
+            Official terminal for III B.Sc Computer Science with Data Analytics students to select Project Guide and Elective Courses.
+          </p>
+          <ul class="gateway-features-list">
+            <li><i class="fa-solid fa-check"></i> Capstone Project Guide Slot Selection</li>
+            <li><i class="fa-solid fa-check"></i> Elective II & Elective III Course Preferences</li>
+            <li><i class="fa-solid fa-check"></i> Instant Confidential Selection Receipt</li>
           </ul>
-          <button class="btn btn-primary btn-portal-action">
-            <span>Enter Student Portal</span>
-            <i class="fa-solid fa-arrow-right"></i>
-          </button>
+          <div class="gateway-action-row">
+            <button class="btn btn-primary btn-block btn-lg">
+              <span>Enter Student Portal</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
         </div>
 
-        <!-- CARD 2: STAFF / ADMIN PORTAL -->
-        <div class="portal-card staff-card" onclick="showPortal('staff')">
-          <div class="card-glow staff-glow"></div>
-          <div class="portal-card-icon-wrap staff-icon-wrap">
+        <!-- Gateway Card 2: Staff / Admin Portal -->
+        <div class="gateway-card staff-gateway-card" onclick="showStaffPortal()">
+          <div class="gateway-card-badge staff-badge-pill">
+            <i class="fa-solid fa-shield-halved"></i> Faculty & Staff Only
+          </div>
+          <div class="gateway-icon-circle staff-icon-circle">
             <i class="fa-solid fa-user-shield"></i>
           </div>
-          <span class="portal-access-tag staff-tag">FACULTY & STAFF ONLY</span>
-          <h3 class="portal-card-title">Staff / Admin Portal</h3>
-          <p class="portal-card-desc">Administrative console for Faculty Guide configuration, live student rosters, circulars, and formal dossier.</p>
-          <ul class="portal-card-features">
-            <li><i class="fa-solid fa-lock"></i> Passkey Protected Access</li>
-            <li><i class="fa-solid fa-users-gear"></i> Faculty Quotas & Slots Live Switch</li>
-            <li><i class="fa-solid fa-file-excel"></i> Master Excel, Word & Event Report</li>
+          <h3 class="gateway-card-title">Staff / Admin Portal</h3>
+          <p class="gateway-card-desc">
+            Administrative terminal for department faculty to manage guide names, monitor live submissions, review analytics, and generate reports.
+          </p>
+          <ul class="gateway-features-list">
+            <li><i class="fa-solid fa-check"></i> 5 Faculty Guide Configuration & Live Controls</li>
+            <li><i class="fa-solid fa-check"></i> Live Submissions & Elective Analytics</li>
+            <li><i class="fa-solid fa-check"></i> Official Circulars & 5-Page Event Report</li>
+            <li><i class="fa-solid fa-check"></i> Master Excel (.xlsx) & Word (.docx) Exports</li>
           </ul>
-          <button class="btn btn-crimson btn-portal-action">
-            <span>Access Staff Console</span>
-            <i class="fa-solid fa-lock"></i>
-          </button>
+          <div class="gateway-action-row">
+            <button class="btn btn-crimson btn-block btn-lg">
+              <span>Staff Login</span>
+              <i class="fa-solid fa-lock"></i>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- ========================================================================= -->
-  <!-- 2. ROOT VIEW: STUDENT PORTAL (STEPPED WIZARD)                              -->
-  <!-- ========================================================================= -->
-  <section id="view-student" class="portal-view d-none">
-    <!-- Student Header & Mode Switch -->
-    <div class="sub-header-bar">
-      <div class="container sub-header-inner">
-        <button class="btn btn-outline btn-sm btn-back" onclick="showPortal('landing')">
-          <i class="fa-solid fa-arrow-left"></i> Portal Home
+    <!-- ========================================================================= -->
+    <!-- VIEW 2: STUDENT PORTAL (MULTI-STEP WIZARD ORDER FORMAT)                    -->
+    <!-- ========================================================================= -->
+    <section id="view-student" class="app-view d-none fade-in">
+      <!-- Student Portal Sub-Nav -->
+      <div class="student-header-bar">
+        <button class="btn btn-sm btn-outline btn-back-home" onclick="showGateway()">
+          <i class="fa-solid fa-arrow-left"></i> Main Menu
         </button>
-        <div class="student-mode-tabs">
-          <button class="student-mode-btn active" id="btnModeGuide" onclick="switchStudentMode('guide')">
-            <i class="fa-solid fa-users-viewfinder"></i> Project Guide Selection
+        <div class="student-service-tabs">
+          <button class="student-tab-btn active" id="tabStudentGuideBtn" onclick="switchStudentService('guide')">
+            <i class="fa-solid fa-cube"></i> Project Guide Selection
           </button>
-          <button class="student-mode-btn" id="btnModeElective" onclick="switchStudentMode('elective')">
+          <button class="student-tab-btn" id="tabStudentElectiveBtn" onclick="switchStudentService('elective')">
             <i class="fa-solid fa-layer-group"></i> Elective Course Selection
           </button>
         </div>
       </div>
-    </div>
 
-    <div class="container student-content-area">
-      <!-- ------------------------------------------------------------- -->
-      <!-- MODULE A: PROJECT GUIDE SELECTION (STEPPED FLOW)              -->
-      <!-- ------------------------------------------------------------- -->
-      <div id="studentGuideModule" class="student-flow-wrap">
-        
-        <!-- GUIDE STEP 1: CREDENTIALS ONLY -->
-        <div id="guideStep1" class="wizard-card active-step fade-in-up">
-          <div class="wizard-step-indicator">
-            <span class="step-badge active">Step 1 of 2</span>
-            <span class="step-label">Student Identification</span>
+      <!-- SERVICE 1: PROJECT GUIDE SELECTION (STEP WIZARD) -->
+      <div id="student-guide-service" class="student-service-pane active">
+        <!-- Step Progress Indicator -->
+        <div class="wizard-progress-bar">
+          <div class="wizard-step-node active" id="gStepNode1">
+            <span class="step-num">1</span>
+            <span class="step-label">Credentials</span>
+          </div>
+          <div class="wizard-step-line" id="gStepLine1"></div>
+          <div class="wizard-step-node" id="gStepNode2">
+            <span class="step-num">2</span>
+            <span class="step-label">Choose Slot</span>
+          </div>
+          <div class="wizard-step-line" id="gStepLine2"></div>
+          <div class="wizard-step-node" id="gStepNode3">
+            <span class="step-num">3</span>
+            <span class="step-label">Receipt</span>
+          </div>
+        </div>
+
+        <!-- GUIDE STEP 1: REGISTER NUMBER & STUDENT NAME -->
+        <div class="wizard-step-card active fade-in" id="guideStep1">
+          <div class="wizard-card-header">
+            <span class="sub-badge"><i class="fa-solid fa-id-card-clip"></i> STEP 1 OF 2</span>
+            <h3>Student Credentials</h3>
+            <p>Please enter your Register Number and registered Full Name to proceed.</p>
           </div>
 
-          <div class="wizard-card-header text-center">
-            <div class="wizard-icon-circle"><i class="fa-solid fa-id-card-clip"></i></div>
-            <h2 class="wizard-title">Student Credentials</h2>
-            <p class="wizard-desc">Please enter your official college Register Number and Full Name to proceed to slot selection.</p>
-          </div>
-
-          <form id="guideCredentialsForm" onsubmit="event.preventDefault(); goToGuideStep2();">
+          <form id="guideCredentialsForm" onsubmit="event.preventDefault(); nextGuideStep();">
             <div class="form-group">
               <label for="guideRegNo">Student Register Number <span class="required">*</span></label>
               <div class="input-with-icon">
                 <i class="fa-solid fa-hashtag"></i>
-                <input type="text" id="guideRegNo" placeholder="e.g. 24BSD001" required autocomplete="off" maxlength="15">
+                <input type="text" id="guideRegNo" placeholder="e.g. 24BSD001" required autocomplete="off" maxlength="15" autofocus>
               </div>
-              <small class="field-hint">Official Bharathiar University register number.</small>
+              <small class="field-hint">Enter your official Bharathiar University / College Register Number.</small>
             </div>
 
             <div class="form-group">
@@ -177,154 +196,193 @@
                 <i class="fa-solid fa-user"></i>
                 <input type="text" id="guideStudentName" placeholder="e.g. Anand Kumar S" required autocomplete="off">
               </div>
-              <small class="field-hint">Your name as registered in college records.</small>
+              <small class="field-hint">Enter your full name as per college academic records.</small>
             </div>
 
+            <div class="form-error-feedback text-danger" id="guideStep1Error"></div>
+
             <div class="wizard-actions">
-              <button type="submit" class="btn btn-primary btn-block btn-lg btn-proceed">
-                <span>Proceed to Slot Selection</span>
+              <button type="submit" class="btn btn-primary btn-block btn-lg">
+                <span>Next: Choose Slot</span>
                 <i class="fa-solid fa-arrow-right"></i>
               </button>
             </div>
           </form>
         </div>
 
-        <!-- GUIDE STEP 2: MYSTERY SLOTS ONLY (NO SHUFFLE WORDS, MYSTERIOUS AT BACK) -->
-        <div id="guideStep2" class="wizard-card d-none fade-in-up">
-          <div class="wizard-step-indicator">
-            <span class="step-badge active">Step 2 of 2</span>
-            <span class="step-label">Slot Selection</span>
-          </div>
-
-          <!-- Active Student Identity Banner -->
-          <div class="student-identity-banner">
-            <div class="student-identity-info">
-              <i class="fa-solid fa-user-circle"></i>
-              <span>Student: <strong id="guideActiveNameDisplay">Student Name</strong></span>
-              <span class="divider">|</span>
-              <span>Reg. No: <strong id="guideActiveRegDisplay">24BSD001</strong></span>
+        <!-- GUIDE STEP 2: MYSTERY SLOTS -->
+        <div class="wizard-step-card d-none fade-in" id="guideStep2">
+          <div class="wizard-card-header flex-header">
+            <div>
+              <span class="sub-badge"><i class="fa-solid fa-box-archive"></i> STEP 2 OF 2</span>
+              <h3>Choose Your Mystery Slot</h3>
+              <p>Click any mystery slot number below to cast your confidential choice.</p>
             </div>
-            <button class="btn-text-edit" onclick="goToGuideStep1()" title="Change credentials">
-              <i class="fa-solid fa-pen-to-square"></i> Change Details
-            </button>
+            <div class="active-student-pill">
+              <i class="fa-solid fa-user-check"></i>
+              <span id="guideActiveStudentDisplay">Student</span>
+            </div>
           </div>
 
-          <div class="wizard-card-header text-center">
-            <div class="wizard-icon-circle mystic-circle"><i class="fa-solid fa-box-archive"></i></div>
-            <h2 class="wizard-title">Choose Your Mystery Slot</h2>
-            <p class="wizard-desc">Click any numbered mystery slot below to cast your choice.</p>
-          </div>
-
-          <!-- 8 Clean Mystery Slot Cards (NO "Shuffled" badge!) -->
+          <!-- 8 Clean Mysterious Slots (Pure Mystery, Zero Shuffle/Quota Text) -->
           <div class="slots-grid-wrapper">
             <div class="slots-grid" id="slotsContainer">
-              <div class="slot-card" data-slot="1" onclick="handleSlotClick(1)">
-                <div class="slot-badge">Slot #1</div>
+              <div class="slot-card" data-slot="1" onclick="handleSlotSelection(1)">
+                <div class="slot-badge">Slot 1</div>
                 <div class="slot-card-inner">
                   <div class="slot-icon"><i class="fa-solid fa-cube"></i></div>
                   <div class="slot-number">1</div>
-                  <span class="slot-mystic-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Mystery Slot</span>
+                  <div class="slot-action-hint">Click to Select</div>
                 </div>
               </div>
 
-              <div class="slot-card" data-slot="2" onclick="handleSlotClick(2)">
-                <div class="slot-badge">Slot #2</div>
+              <div class="slot-card" data-slot="2" onclick="handleSlotSelection(2)">
+                <div class="slot-badge">Slot 2</div>
                 <div class="slot-card-inner">
                   <div class="slot-icon"><i class="fa-solid fa-cube"></i></div>
                   <div class="slot-number">2</div>
-                  <span class="slot-mystic-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Mystery Slot</span>
+                  <div class="slot-action-hint">Click to Select</div>
                 </div>
               </div>
 
-              <div class="slot-card" data-slot="3" onclick="handleSlotClick(3)">
-                <div class="slot-badge">Slot #3</div>
+              <div class="slot-card" data-slot="3" onclick="handleSlotSelection(3)">
+                <div class="slot-badge">Slot 3</div>
                 <div class="slot-card-inner">
                   <div class="slot-icon"><i class="fa-solid fa-cube"></i></div>
                   <div class="slot-number">3</div>
-                  <span class="slot-mystic-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Mystery Slot</span>
+                  <div class="slot-action-hint">Click to Select</div>
                 </div>
               </div>
 
-              <div class="slot-card" data-slot="4" onclick="handleSlotClick(4)">
-                <div class="slot-badge">Slot #4</div>
+              <div class="slot-card" data-slot="4" onclick="handleSlotSelection(4)">
+                <div class="slot-badge">Slot 4</div>
                 <div class="slot-card-inner">
                   <div class="slot-icon"><i class="fa-solid fa-cube"></i></div>
                   <div class="slot-number">4</div>
-                  <span class="slot-mystic-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Mystery Slot</span>
+                  <div class="slot-action-hint">Click to Select</div>
                 </div>
               </div>
 
-              <div class="slot-card" data-slot="5" onclick="handleSlotClick(5)">
-                <div class="slot-badge">Slot #5</div>
+              <div class="slot-card" data-slot="5" onclick="handleSlotSelection(5)">
+                <div class="slot-badge">Slot 5</div>
                 <div class="slot-card-inner">
                   <div class="slot-icon"><i class="fa-solid fa-cube"></i></div>
                   <div class="slot-number">5</div>
-                  <span class="slot-mystic-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Mystery Slot</span>
+                  <div class="slot-action-hint">Click to Select</div>
                 </div>
               </div>
 
-              <div class="slot-card" data-slot="6" onclick="handleSlotClick(6)">
-                <div class="slot-badge">Slot #6</div>
+              <div class="slot-card" data-slot="6" onclick="handleSlotSelection(6)">
+                <div class="slot-badge">Slot 6</div>
                 <div class="slot-card-inner">
                   <div class="slot-icon"><i class="fa-solid fa-cube"></i></div>
                   <div class="slot-number">6</div>
-                  <span class="slot-mystic-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Mystery Slot</span>
+                  <div class="slot-action-hint">Click to Select</div>
                 </div>
               </div>
 
-              <div class="slot-card" data-slot="7" onclick="handleSlotClick(7)">
-                <div class="slot-badge">Slot #7</div>
+              <div class="slot-card" data-slot="7" onclick="handleSlotSelection(7)">
+                <div class="slot-badge">Slot 7</div>
                 <div class="slot-card-inner">
                   <div class="slot-icon"><i class="fa-solid fa-cube"></i></div>
                   <div class="slot-number">7</div>
-                  <span class="slot-mystic-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Mystery Slot</span>
+                  <div class="slot-action-hint">Click to Select</div>
                 </div>
               </div>
 
-              <div class="slot-card" data-slot="8" onclick="handleSlotClick(8)">
-                <div class="slot-badge">Slot #8</div>
+              <div class="slot-card" data-slot="8" onclick="handleSlotSelection(8)">
+                <div class="slot-badge">Slot 8</div>
                 <div class="slot-card-inner">
                   <div class="slot-icon"><i class="fa-solid fa-cube"></i></div>
                   <div class="slot-number">8</div>
-                  <span class="slot-mystic-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Mystery Slot</span>
+                  <div class="slot-action-hint">Click to Select</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="slot-selection-status" id="slotStatusMessage">
-            <i class="fa-solid fa-circle-question"></i> Click any mystery slot above to record your selection.
+          <div class="slot-status-msg" id="guideStep2Status">
+            <i class="fa-solid fa-hand-pointer"></i> Select one of the mystery slots above to submit your vote.
+          </div>
+
+          <div class="wizard-actions-between">
+            <button type="button" class="btn btn-outline" onclick="prevGuideStep()">
+              <i class="fa-solid fa-arrow-left"></i> Change Details
+            </button>
           </div>
         </div>
 
+        <!-- GUIDE STEP 3: CONFIDENTIAL SELECTION RECEIPT -->
+        <div class="wizard-step-card d-none fade-in" id="guideStep3">
+          <div class="receipt-success-banner">
+            <div class="receipt-success-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <h3>Selection Recorded Successfully!</h3>
+            <p>Your slot choice has been securely cast and saved in the departmental vault.</p>
+          </div>
+
+          <div class="ballot-receipt-box">
+            <div class="receipt-row">
+              <span class="receipt-label"><i class="fa-solid fa-hashtag"></i> Register Number:</span>
+              <strong class="receipt-val" id="receiptGuideRegNo">24BSD001</strong>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label"><i class="fa-solid fa-user"></i> Student Name:</span>
+              <strong class="receipt-val" id="receiptGuideName">Student Name</strong>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label"><i class="fa-solid fa-cube"></i> Mystery Slot Chosen:</span>
+              <span class="slot-chosen-badge" id="receiptGuideSlot">Slot #1 Selected</span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label"><i class="fa-solid fa-shield-halved"></i> Selection Status:</span>
+              <span class="receipt-badge-vault"><i class="fa-solid fa-lock"></i> Recorded Confidentially</span>
+            </div>
+          </div>
+
+          <div class="wizard-actions">
+            <button type="button" class="btn btn-primary btn-block btn-lg" onclick="resetGuideWizard()">
+              <i class="fa-solid fa-user-plus"></i> Done / Next Student
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- ------------------------------------------------------------- -->
-      <!-- MODULE B: ELECTIVE SELECTION (SAME STEPPED ORDER FORMAT)       -->
-      <!-- ------------------------------------------------------------- -->
-      <div id="studentElectiveModule" class="student-flow-wrap d-none">
-        
-        <!-- ELECTIVE STEP 1: CREDENTIALS ONLY -->
-        <div id="electiveStep1" class="wizard-card active-step fade-in-up">
-          <div class="wizard-step-indicator">
-            <span class="step-badge active">Step 1 of 2</span>
-            <span class="step-label">Student Identification</span>
+      <!-- SERVICE 2: ELECTIVE COURSE SELECTION (STEP WIZARD - SAME ORDER FORMAT) -->
+      <div id="student-elective-service" class="student-service-pane d-none">
+        <!-- Step Progress Indicator -->
+        <div class="wizard-progress-bar">
+          <div class="wizard-step-node active" id="eStepNode1">
+            <span class="step-num">1</span>
+            <span class="step-label">Credentials</span>
+          </div>
+          <div class="wizard-step-line" id="eStepLine1"></div>
+          <div class="wizard-step-node" id="eStepNode2">
+            <span class="step-num">2</span>
+            <span class="step-label">Choose Courses</span>
+          </div>
+          <div class="wizard-step-line" id="eStepLine2"></div>
+          <div class="wizard-step-node" id="eStepNode3">
+            <span class="step-num">3</span>
+            <span class="step-label">Receipt</span>
+          </div>
+        </div>
+
+        <!-- ELECTIVE STEP 1: REGISTER NUMBER & STUDENT NAME -->
+        <div class="wizard-step-card active fade-in" id="electiveStep1">
+          <div class="wizard-card-header">
+            <span class="sub-badge"><i class="fa-solid fa-id-card-clip"></i> STEP 1 OF 2</span>
+            <h3>Student Credentials</h3>
+            <p>Please enter your Register Number and registered Full Name to proceed.</p>
           </div>
 
-          <div class="wizard-card-header text-center">
-            <div class="wizard-icon-circle"><i class="fa-solid fa-id-card-clip"></i></div>
-            <h2 class="wizard-title">Student Credentials</h2>
-            <p class="wizard-desc">Please enter your official college Register Number and Full Name to proceed to course selection.</p>
-          </div>
-
-          <form id="electiveCredentialsForm" onsubmit="event.preventDefault(); goToElectiveStep2();">
+          <form id="electiveCredentialsForm" onsubmit="event.preventDefault(); nextElectiveStep();">
             <div class="form-group">
               <label for="electiveRegNo">Student Register Number <span class="required">*</span></label>
               <div class="input-with-icon">
                 <i class="fa-solid fa-hashtag"></i>
                 <input type="text" id="electiveRegNo" placeholder="e.g. 24BSD001" required autocomplete="off" maxlength="15">
               </div>
-              <small class="field-hint">Official Bharathiar University register number.</small>
+              <small class="field-hint">Enter your official college Register Number.</small>
             </div>
 
             <div class="form-group">
@@ -333,52 +391,42 @@
                 <i class="fa-solid fa-user"></i>
                 <input type="text" id="electiveStudentName" placeholder="e.g. Anand Kumar S" required autocomplete="off">
               </div>
-              <small class="field-hint">Your name as registered in college records.</small>
+              <small class="field-hint">Enter your full name as per college academic records.</small>
             </div>
 
+            <div class="form-error-feedback text-danger" id="electiveStep1Error"></div>
+
             <div class="wizard-actions">
-              <button type="submit" class="btn btn-primary btn-block btn-lg btn-proceed">
-                <span>Proceed to Course Selection</span>
+              <button type="submit" class="btn btn-primary btn-block btn-lg">
+                <span>Next: Choose Courses</span>
                 <i class="fa-solid fa-arrow-right"></i>
               </button>
             </div>
           </form>
         </div>
 
-        <!-- ELECTIVE STEP 2: COURSE SELECTION ONLY -->
-        <div id="electiveStep2" class="wizard-card d-none fade-in-up">
-          <div class="wizard-step-indicator">
-            <span class="step-badge active">Step 2 of 2</span>
-            <span class="step-label">Course Selection</span>
-          </div>
-
-          <!-- Active Student Identity Banner -->
-          <div class="student-identity-banner">
-            <div class="student-identity-info">
-              <i class="fa-solid fa-user-circle"></i>
-              <span>Student: <strong id="electiveActiveNameDisplay">Student Name</strong></span>
-              <span class="divider">|</span>
-              <span>Reg. No: <strong id="electiveActiveRegDisplay">24BSD001</strong></span>
+        <!-- ELECTIVE STEP 2: CHOOSE ELECTIVE II & ELECTIVE III -->
+        <div class="wizard-step-card d-none fade-in" id="electiveStep2">
+          <div class="wizard-card-header flex-header">
+            <div>
+              <span class="sub-badge"><i class="fa-solid fa-layer-group"></i> STEP 2 OF 2</span>
+              <h3>Choose Elective Courses</h3>
+              <p>Select one course for Elective II and one course for Elective III.</p>
             </div>
-            <button class="btn-text-edit" onclick="goToElectiveStep1()" title="Change credentials">
-              <i class="fa-solid fa-pen-to-square"></i> Change Details
-            </button>
+            <div class="active-student-pill">
+              <i class="fa-solid fa-user-check"></i>
+              <span id="electiveActiveStudentDisplay">Student</span>
+            </div>
           </div>
 
-          <div class="wizard-card-header text-center">
-            <div class="wizard-icon-circle"><i class="fa-solid fa-book-bookmark"></i></div>
-            <h2 class="wizard-title">Elective Courses</h2>
-            <p class="wizard-desc">Select one course from Elective II and one course from Elective III as per university curriculum.</p>
-          </div>
-
-          <form id="electiveSelectionForm" onsubmit="handleElectiveSubmit(event)">
+          <form id="electiveSelectionForm" onsubmit="event.preventDefault(); submitElectiveWizard();">
             <!-- Elective II Choices -->
             <div class="course-group-container">
               <div class="course-group-header">
                 <div class="badge-tag">COURSE 1</div>
                 <h4>Elective II Selection (Choose One)</h4>
               </div>
-              <div class="course-options-grid">
+              <div class="course-options-grid" id="e2OptionsContainer">
                 <label class="course-option-card" for="e2_24BSD63E05">
                   <input type="radio" name="elective2" id="e2_24BSD63E05" value="24BSD63E05" required>
                   <div class="course-card-content">
@@ -418,12 +466,12 @@
             </div>
 
             <!-- Elective III Choices -->
-            <div class="course-group-container mt-4">
+            <div class="course-group-container">
               <div class="course-group-header">
                 <div class="badge-tag">COURSE 2</div>
                 <h4>Elective III Selection (Choose One)</h4>
               </div>
-              <div class="course-options-grid">
+              <div class="course-options-grid" id="e3OptionsContainer">
                 <label class="course-option-card" for="e3_24BSD63E09">
                   <input type="radio" name="elective3" id="e3_24BSD63E09" value="24BSD63E09" required>
                   <div class="course-card-content">
@@ -462,106 +510,175 @@
               </div>
             </div>
 
-            <div class="wizard-actions mt-4">
-              <button type="submit" class="btn btn-primary btn-block btn-lg btn-proceed" id="btnSubmitElective">
-                <span>Submit Elective Preferences</span>
-                <i class="fa-solid fa-paper-plane"></i>
+            <div class="form-error-feedback text-danger" id="electiveStep2Error"></div>
+
+            <div class="wizard-actions-between">
+              <button type="button" class="btn btn-outline" onclick="prevElectiveStep()">
+                <i class="fa-solid fa-arrow-left"></i> Change Details
+              </button>
+              <button type="submit" class="btn btn-primary btn-lg" id="btnSubmitElective">
+                <i class="fa-solid fa-paper-plane"></i> Submit Elective Selection
               </button>
             </div>
           </form>
         </div>
 
-      </div>
-    </div>
-  </section>
+        <!-- ELECTIVE STEP 3: CONFIRMATION RECEIPT -->
+        <div class="wizard-step-card d-none fade-in" id="electiveStep3">
+          <div class="receipt-success-banner">
+            <div class="receipt-success-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <h3>Elective Selection Recorded!</h3>
+            <p>Your elective course choices have been registered in the departmental database.</p>
+          </div>
 
-  <!-- ========================================================================= -->
-  <!-- 3. ROOT VIEW: STAFF / ADMIN PORTAL (FACULTY AUTHORITIES ONLY)             -->
-  <!-- ========================================================================= -->
-  <section id="view-staff" class="portal-view d-none">
-    <!-- Staff Sub-Header Bar -->
-    <div class="sub-header-bar staff-bar">
-      <div class="container sub-header-inner">
-        <button class="btn btn-outline btn-sm btn-back" onclick="showPortal('landing')">
-          <i class="fa-solid fa-arrow-left"></i> Exit to Portal Home
-        </button>
+          <div class="ballot-receipt-box">
+            <div class="receipt-row">
+              <span class="receipt-label"><i class="fa-solid fa-hashtag"></i> Register Number:</span>
+              <strong class="receipt-val" id="receiptElectiveRegNo">24BSD001</strong>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label"><i class="fa-solid fa-user"></i> Student Name:</span>
+              <strong class="receipt-val" id="receiptElectiveName">Student Name</strong>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label"><i class="fa-solid fa-book-open"></i> Elective II Chosen:</span>
+              <strong class="receipt-val text-primary" id="receiptElective2">-</strong>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label"><i class="fa-solid fa-book-open"></i> Elective III Chosen:</span>
+              <strong class="receipt-val text-primary" id="receiptElective3">-</strong>
+            </div>
+          </div>
 
-        <div class="staff-header-title">
-          <i class="fa-solid fa-shield-halved"></i> Staff & Faculty Console
+          <div class="wizard-actions">
+            <button type="button" class="btn btn-primary btn-block btn-lg" onclick="resetElectiveWizard()">
+              <i class="fa-solid fa-user-plus"></i> Done / Next Student
+            </button>
+          </div>
         </div>
-
-        <div class="staff-header-actions">
-          <button class="btn btn-danger btn-sm" id="btnStaffLock" onclick="handleAdminLogout()">
-            <i class="fa-solid fa-lock"></i> Lock Console
-          </button>
-        </div>
       </div>
-    </div>
+    </section>
 
-    <div class="container staff-content-area">
-      <!-- LOCKED STATE: PASSKEY LOGIN CARD -->
+    <!-- ========================================================================= -->
+    <!-- VIEW 3: STAFF / ADMIN PORTAL (FACULTY ONLY - NO STUDENT FORMS)           -->
+    <!-- ========================================================================= -->
+    <section id="view-staff" class="app-view d-none fade-in">
+      <!-- Staff Authentication Form (If locked) -->
       <div id="staffLockState" class="admin-login-wrapper">
-        <div class="admin-login-card fade-in-up">
+        <div class="admin-login-card">
           <div class="admin-login-icon">
             <i class="fa-solid fa-user-shield"></i>
           </div>
-          <h3>Staff Authentication</h3>
-          <p>Please enter the faculty security passkey to access Guide Configuration, Live Allocation Tables, Circulars, and Formal Reports.</p>
+          <h3>Staff & Faculty Authentication</h3>
+          <p>Please enter the department security passkey to access master administrative controls, live allocations, and reports.</p>
           
           <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
             <div class="form-group">
               <label for="adminPasswordInput">Security Passkey</label>
               <div class="input-with-icon">
                 <i class="fa-solid fa-key"></i>
-                <input type="password" id="adminPasswordInput" placeholder="Enter passkey (data sorcerers)" required autocomplete="current-password">
+                <input type="password" id="adminPasswordInput" placeholder="Enter staff password" required autocomplete="current-password">
               </div>
             </div>
-            <button type="submit" class="btn btn-primary btn-block btn-lg">
-              <i class="fa-solid fa-unlock-keyhole"></i> Unlock Staff Console
-            </button>
+            <div class="wizard-actions-between">
+              <button type="button" class="btn btn-outline" onclick="showGateway()">
+                <i class="fa-solid fa-arrow-left"></i> Main Menu
+              </button>
+              <button type="submit" class="btn btn-crimson btn-lg">
+                <i class="fa-solid fa-unlock-keyhole"></i> Unlock Console
+              </button>
+            </div>
             <div class="login-feedback text-danger" id="adminLoginFeedback"></div>
           </form>
         </div>
       </div>
 
-      <!-- UNLOCKED STATE: FULL ADMINISTRATIVE CONSOLE (NO STUDENT INTERFACE) -->
-      <div id="staffUnlockedState" class="d-none">
-        <!-- Staff Authorities Navigation Bar -->
-        <nav class="staff-nav-tabs">
-          <button class="staff-tab-btn active" data-staff-tab="tab-staff-config" onclick="switchStaffTab('tab-staff-config')">
-            <i class="fa-solid fa-user-gear"></i> Guide Configuration & Status
-          </button>
-          <button class="staff-tab-btn" data-staff-tab="tab-staff-roster" onclick="switchStaffTab('tab-staff-roster')">
-            <i class="fa-solid fa-list-ol"></i> Live Guide Submissions
-          </button>
-          <button class="staff-tab-btn" data-staff-tab="tab-staff-electives" onclick="switchStaffTab('tab-staff-electives')">
-            <i class="fa-solid fa-chart-pie"></i> Elective Analytics & Tally
-          </button>
-          <button class="staff-tab-btn" data-staff-tab="tab-staff-circulars" onclick="switchStaffTab('tab-staff-circulars')">
-            <i class="fa-solid fa-file-contract"></i> Official Circulars
-          </button>
-          <button class="staff-tab-btn" data-staff-tab="tab-staff-report" onclick="switchStaffTab('tab-staff-report')">
-            <i class="fa-solid fa-folder-open"></i> 5-Page Event Report
-          </button>
-          <button class="staff-tab-btn" data-staff-tab="tab-staff-exports" onclick="switchStaffTab('tab-staff-exports')">
-            <i class="fa-solid fa-file-export"></i> Master Exports
-          </button>
-        </nav>
+      <!-- Staff Dashboard Console (Once unlocked) -->
+      <div id="staffDashboardState" class="d-none">
+        <!-- Staff Sub-Nav -->
+        <div class="staff-header-bar">
+          <div class="staff-header-left">
+            <button class="btn btn-sm btn-outline" onclick="showGateway()">
+              <i class="fa-solid fa-arrow-left"></i> Main Menu
+            </button>
+            <span class="staff-live-badge"><i class="fa-solid fa-circle-check"></i> STAFF CONSOLE UNLOCKED</span>
+          </div>
+          <div class="staff-sub-tabs">
+            <button class="staff-tab-btn active" data-staff-tab="staff-submissions" onclick="switchStaffTab('staff-submissions')">
+              <i class="fa-solid fa-list-check"></i> Live Submissions
+            </button>
+            <button class="staff-tab-btn" data-staff-tab="staff-faculty" onclick="switchStaffTab('staff-faculty')">
+              <i class="fa-solid fa-users-gear"></i> Faculty Setup
+            </button>
+            <button class="staff-tab-btn" data-staff-tab="staff-analytics" onclick="switchStaffTab('staff-analytics')">
+              <i class="fa-solid fa-chart-pie"></i> Elective Analytics
+            </button>
+            <button class="staff-tab-btn" data-staff-tab="staff-circulars" onclick="switchStaffTab('staff-circulars')">
+              <i class="fa-solid fa-file-contract"></i> Circulars
+            </button>
+            <button class="staff-tab-btn" data-staff-tab="staff-report" onclick="switchStaffTab('staff-report')">
+              <i class="fa-solid fa-folder-open"></i> 5-Page Report
+            </button>
+            <button class="staff-tab-btn" data-staff-tab="staff-exports" onclick="switchStaffTab('staff-exports')">
+              <i class="fa-solid fa-file-export"></i> Master Exports
+            </button>
+          </div>
+          <div class="staff-header-right">
+            <button class="btn btn-sm btn-danger" onclick="handleAdminLogout()">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i> Lock Console
+            </button>
+          </div>
+        </div>
 
-        <!-- ------------------------------------------------------------- -->
-        <!-- TAB A: GUIDE FACULTY CONFIGURATION & LIVE SWITCH              -->
-        <!-- ------------------------------------------------------------- -->
-        <div id="tab-staff-config" class="staff-tab-pane active fade-in">
+        <!-- STAFF SUB-PANE 1: LIVE SUBMISSIONS -->
+        <div id="staff-submissions" class="staff-sub-pane active fade-in">
+          <div class="admin-grid-2col">
+            <!-- Guide Submissions -->
+            <div class="admin-card">
+              <div class="card-header">
+                <div>
+                  <h3><i class="fa-solid fa-users-viewfinder"></i> Live Project Guide Allocations (<span id="adminGuideCount">0</span>/41)</h3>
+                  <p class="subtitle">Complete allocation roster displaying real assigned faculty guides.</p>
+                </div>
+                <button class="btn btn-sm btn-danger-outline" onclick="promptResetGuide()">
+                  <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+              </div>
+              <div class="table-responsive table-scrollable" id="adminGuideSubmissionsTable">
+                <p class="text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Loading allocations...</p>
+              </div>
+            </div>
+
+            <!-- Elective Submissions -->
+            <div class="admin-card">
+              <div class="card-header">
+                <div>
+                  <h3><i class="fa-solid fa-list-check"></i> Live Elective Submissions (<span id="adminElectiveCount">0</span>/43)</h3>
+                  <p class="subtitle">Student choices for Elective II and Elective III.</p>
+                </div>
+                <button class="btn btn-sm btn-danger-outline" onclick="promptResetElective()">
+                  <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+              </div>
+              <div class="table-responsive table-scrollable" id="adminElectiveSubmissionsTable">
+                <p class="text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Loading elective submissions...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STAFF SUB-PANE 2: FACULTY SETUP & LIVE CONTROLS -->
+        <div id="staff-faculty" class="staff-sub-pane d-none fade-in">
           <!-- Live Slots Status & Activation Banner -->
           <div class="admin-live-toggle-banner">
             <div class="live-toggle-info">
-              <span class="live-pill" id="adminLivePill"><i class="fa-solid fa-lock"></i> SLOTS STATUS: LOCKED</span>
-              <h4>Student Slot Selection Status: <span id="adminLiveText" class="text-danger">LOCKED (Awaiting Guide Names)</span></h4>
-              <p>Configure the 5 Guide Faculty names below and activate slots for students.</p>
+              <span class="live-pill" id="adminLivePill"><i class="fa-solid fa-circle-check"></i> SLOTS STATUS: LIVE</span>
+              <h4>Student Slot Selection Status: <span id="adminLiveText" class="text-success">LIVE (Open for Students)</span></h4>
+              <p>Configure the 5 Project Guide Faculty (Ma'am) names below. Changes reflect instantly in all exports and departmental records.</p>
             </div>
             <div class="live-toggle-btns">
-              <button class="btn btn-success btn-lg" onclick="activateGuideSlotsLive()">
-                <i class="fa-solid fa-bolt"></i> Make Slots LIVE for Students
+              <button class="btn btn-success" onclick="activateGuideSlotsLive()">
+                <i class="fa-solid fa-bolt"></i> Enable Slots LIVE
               </button>
               <button class="btn btn-secondary" onclick="deactivateGuideSlotsLive()">
                 <i class="fa-solid fa-lock"></i> Lock Slots
@@ -573,52 +690,31 @@
           <div class="admin-card">
             <div class="card-header">
               <div>
-                <h3><i class="fa-solid fa-user-pen"></i> Guide Faculty Names & Base Quotas</h3>
-                <p class="subtitle">Enter the 5 Project Guide Ma'ams names. Each faculty receives 8 students (1 guide receives 9th student).</p>
+                <h3><i class="fa-solid fa-user-pen"></i> 5 Guide Faculty Names & Capacity Setup</h3>
+                <p class="subtitle">Update the official faculty names. Base quota is strictly 8 students each (one faculty receives 9th student for 41 total).</p>
               </div>
               <button class="btn btn-primary" onclick="saveGuideConfiguration(true)">
-                <i class="fa-solid fa-floppy-disk"></i> Save & Make Slots LIVE
+                <i class="fa-solid fa-floppy-disk"></i> Save Configuration
               </button>
             </div>
 
             <div class="faculty-config-grid" id="facultyConfigList">
-              <!-- Dynamically rendered 5 Guide Cards -->
+              <!-- 5 Editable Guide Cards dynamically rendered -->
             </div>
           </div>
         </div>
 
-        <!-- ------------------------------------------------------------- -->
-        <!-- TAB B: LIVE GUIDE ALLOCATION ROSTER                            -->
-        <!-- ------------------------------------------------------------- -->
-        <div id="tab-staff-roster" class="staff-tab-pane d-none fade-in">
-          <div class="admin-card">
-            <div class="card-header">
-              <div>
-                <h3><i class="fa-solid fa-list-ol"></i> Live Guide Submissions (<span id="adminGuideCount">0</span> of 41)</h3>
-                <p class="subtitle">Complete audit record of student registrations, slots chosen, and assigned guides.</p>
-              </div>
-              <button class="btn btn-sm btn-danger-outline" onclick="promptResetGuide()">
-                <i class="fa-solid fa-rotate-left"></i> Reset Guide Data
-              </button>
-            </div>
-            <div class="table-responsive table-scrollable" id="adminGuideSubmissionsTable">
-              <!-- Submissions populated here -->
-            </div>
-          </div>
-        </div>
-
-        <!-- ------------------------------------------------------------- -->
-        <!-- TAB C: ELECTIVE ANALYTICS & LIVE TALLY                        -->
-        <!-- ------------------------------------------------------------- -->
-        <div id="tab-staff-electives" class="staff-tab-pane d-none fade-in">
-          <div class="elective-analytics-layout">
+        <!-- STAFF SUB-PANE 3: ELECTIVE ANALYTICS -->
+        <div id="staff-analytics" class="staff-sub-pane d-none fade-in">
+          <div class="admin-grid-2col">
+            <!-- Winner Highlights -->
             <div class="admin-card">
               <div class="card-header">
                 <h3><i class="fa-solid fa-trophy"></i> Leading Elective Courses</h3>
               </div>
-              <div class="winners-row">
+              <div class="winner-cards-container">
                 <div class="winner-card" id="e2WinnerCard">
-                  <div class="winner-icon"><i class="fa-solid fa-award"></i></div>
+                  <div class="winner-icon"><i class="fa-solid fa-trophy"></i></div>
                   <div class="winner-details">
                     <span class="winner-label">ELECTIVE II LEADING COURSE</span>
                     <h4 id="e2WinnerTitle">Awaiting votes...</h4>
@@ -626,8 +722,8 @@
                   </div>
                 </div>
 
-                <div class="winner-card" id="e3WinnerCard">
-                  <div class="winner-icon"><i class="fa-solid fa-award"></i></div>
+                <div class="winner-card mt-3" id="e3WinnerCard">
+                  <div class="winner-icon"><i class="fa-solid fa-trophy"></i></div>
                   <div class="winner-details">
                     <span class="winner-label">ELECTIVE III LEADING COURSE</span>
                     <h4 id="e3WinnerTitle">Awaiting votes...</h4>
@@ -635,33 +731,22 @@
                   </div>
                 </div>
               </div>
-
-              <h4 class="mt-4"><i class="fa-solid fa-bars-progress"></i> Vote Distribution Breakdown</h4>
-              <div id="electiveTallyList" class="tally-list">
-                <!-- Dynamically populated -->
-              </div>
             </div>
 
+            <!-- Vote Distribution -->
             <div class="admin-card">
               <div class="card-header">
-                <div>
-                  <h3><i class="fa-solid fa-list-check"></i> Elective Submissions Roster (<span id="adminElectiveCount">0</span> of 43)</h3>
-                </div>
-                <button class="btn btn-sm btn-danger-outline" onclick="promptResetElective()">
-                  <i class="fa-solid fa-rotate-left"></i> Reset Electives
-                </button>
+                <h3><i class="fa-solid fa-chart-column"></i> Real-Time Vote Distribution</h3>
               </div>
-              <div class="table-responsive table-scrollable" id="adminElectiveSubmissionsTable">
-                <!-- Submissions populated here -->
+              <div id="electiveTallyList" class="tally-list">
+                <!-- Dynamically populated -->
               </div>
             </div>
           </div>
         </div>
 
-        <!-- ------------------------------------------------------------- -->
-        <!-- TAB D: OFFICIAL CIRCULARS (PRINTABLE)                         -->
-        <!-- ------------------------------------------------------------- -->
-        <div id="tab-staff-circulars" class="staff-tab-pane d-none fade-in">
+        <!-- STAFF SUB-PANE 4: OFFICIAL CIRCULARS -->
+        <div id="staff-circulars" class="staff-sub-pane d-none fade-in">
           <div class="circulars-control-bar">
             <div class="circular-tabs">
               <button class="btn-circ-tab active" id="btnCircGuide" onclick="toggleCircular('guide')">
@@ -708,7 +793,7 @@
               <!-- Circular Metadata Row -->
               <div class="circular-meta-row">
                 <span class="circ-dept-title">DEPARTMENT OF COMPUTER SCIENCE WITH DATA ANALYTICS</span>
-                <span class="circ-date" id="circularDateText">Date: 27.10.2026</span>
+                <span class="circ-date" id="circularDateText">Date: 28.10.2026</span>
               </div>
 
               <div class="circular-heading-block">
@@ -742,8 +827,12 @@
               </div>
 
               <!-- Signature Block -->
-              <!-- Signature Block (Class Tutor, HOD, Principal) -->
               <div class="circular-signatures">
+                <div class="sig-block">
+                  <div class="sig-line"></div>
+                  <p class="sig-title">Staff Coordinator</p>
+                  <p class="sig-sub">Project In-Charge</p>
+                </div>
                 <div class="sig-block">
                   <div class="sig-line"></div>
                   <p class="sig-title">Class Tutor</p>
@@ -753,6 +842,11 @@
                   <div class="sig-line"></div>
                   <p class="sig-title">Head of Department</p>
                   <p class="sig-sub">Computer Science & DA</p>
+                </div>
+                <div class="sig-block">
+                  <div class="sig-line"></div>
+                  <p class="sig-title">Vice Principal</p>
+                  <p class="sig-sub">SCSC</p>
                 </div>
                 <div class="sig-block">
                   <div class="sig-line"></div>
@@ -769,10 +863,8 @@
           </div>
         </div>
 
-        <!-- ------------------------------------------------------------- -->
-        <!-- TAB E: FORMAL 5-PAGE EVENT REPORT & DOSSIER                   -->
-        <!-- ------------------------------------------------------------- -->
-        <div id="tab-staff-report" class="staff-tab-pane d-none fade-in">
+        <!-- STAFF SUB-PANE 5: FORMAL 5-PAGE REPORT -->
+        <div id="staff-report" class="staff-sub-pane d-none fade-in">
           <div class="report-controls-bar">
             <div>
               <h2><i class="fa-solid fa-file-invoice"></i> Departmental Report & Event Dossier</h2>
@@ -786,7 +878,7 @@
           </div>
 
           <div class="formal-report-paper">
-            <!-- ================= PAGE 1: OFFICIAL PRESENTATION COVER ================= -->
+            <!-- PAGE 1: COVER -->
             <div class="report-page page-1">
               <div class="cover-header-logos">
                 <div class="cover-logo-left">
@@ -835,10 +927,9 @@
                 <div class="cover-topic-line">
                   <strong>TOPIC:</strong> Semester VI Project Guide Allocation & Elective Selection Outcome
                 </div>
-                <div class="cover-date-line" id="reportCoverDate">Date: 28-10-2024</div>
+                <div class="cover-date-line" id="reportCoverDate">Date: 28-10-2026</div>
               </div>
 
-              <!-- Two Circular Portrait Holders for Student Coordinators -->
               <div class="cover-leads-container">
                 <div class="cover-lead-card" onclick="triggerLeadPhotoUpload(1)">
                   <input type="file" id="leadPhotoInput1" accept="image/*" class="d-none" onchange="previewLeadPhoto(event, 1)">
@@ -862,7 +953,7 @@
               </div>
             </div>
 
-            <!-- ================= PAGE 2: OFFICIAL LETTERHEAD & SUMMARY ================= -->
+            <!-- PAGE 2: SUMMARY -->
             <div class="report-page page-2">
               <div class="rep-letterhead">
                 <img src="assets/sankara_logo.jpg" alt="Sankara Crest" class="rep-logo-crest">
@@ -883,7 +974,7 @@
               </div>
 
               <div class="rep-meta-grid">
-                <div><strong>DATE:</strong> <span id="repDateText">28/10/2024</span></div>
+                <div><strong>DATE:</strong> <span id="repDateText">28/10/2026</span></div>
                 <div><strong>TIME:</strong> 10:00 AM</div>
                 <div><strong>VENUE:</strong> III B.Sc CSDA Lab / Hall</div>
               </div>
@@ -895,7 +986,7 @@
                   <strong>Semester VI Project Guide Allocation</strong> and <strong>Elective Courses</strong> exclusively for the 
                   students of III B.Sc CSDA (Batch 2024–2027). The selection was conducted via custom-designed software engineered 
                   by <strong>Data Sorcerers</strong>. The event was aimed at equipping the department with an automated, 
-                  impartial, and transparent system for allocating 41 project students across four faculty guide members and 
+                  impartial, and transparent system for allocating 41 project students across five faculty guide members and 
                   determining the most preferred elective courses for 43 students.
                 </p>
               </div>
@@ -912,7 +1003,7 @@
               </div>
             </div>
 
-            <!-- ================= PAGE 3: PARTICIPANTS, METHODOLOGY & GLIMPSE 1 ================= -->
+            <!-- PAGE 3: PARTICIPANTS & GLIMPSE 1 -->
             <div class="report-page page-3">
               <div class="rep-content-block">
                 <h4 class="rep-block-title">PARTICIPANTS</h4>
@@ -947,7 +1038,7 @@
               </div>
             </div>
 
-            <!-- ================= PAGE 4: EVENT VISUALS & CONCLUSION ================= -->
+            <!-- PAGE 4: VISUALS & CONCLUSION -->
             <div class="report-page page-4">
               <div class="event-glimpse-grid">
                 <div class="event-glimpse-box" onclick="triggerGlimpseUpload(2)">
@@ -979,7 +1070,7 @@
               </div>
             </div>
 
-            <!-- ================= PAGE 5: OUTCOME & SIGNATURES ================= -->
+            <!-- PAGE 5: SIGNATURES & APPENDIX -->
             <div class="report-page page-5">
               <div class="rep-content-block">
                 <p>
@@ -988,28 +1079,21 @@
                 </p>
               </div>
 
-              <!-- Official Departmental Signatures (Class Tutor, HOD, Principal) -->
               <div class="rep-official-signatures">
                 <div class="rep-sig-col">
                   <div class="rep-sig-space"></div>
-                  <strong>CLASS TUTOR</strong>
-                  <p>Dept. of CS with Data Analytics</p>
-                </div>
-                <div class="rep-sig-col text-center">
-                  <div class="rep-sig-space"></div>
-                  <strong>HEAD OF DEPARTMENT (HOD)</strong>
+                  <strong>STAFFS IN-CHARGE</strong>
                   <p>Dept. of CS with Data Analytics</p>
                 </div>
                 <div class="rep-sig-col text-right">
                   <div class="rep-sig-space"></div>
-                  <strong>PRINCIPAL</strong>
-                  <p>Sankara College of Science & Commerce</p>
+                  <strong>HOD</strong>
+                  <p>Dept. of CS with Data Analytics</p>
                 </div>
               </div>
 
               <hr class="report-divider">
 
-              <!-- Complete Live Allocation Audit Table Appendix -->
               <div class="rep-content-block">
                 <h4 class="rep-block-title">APPENDIX: LIVE ALLOCATION & SELECTION ROSTER</h4>
                 <div id="reportGuideTableContainer" class="table-responsive">
@@ -1023,56 +1107,28 @@
           </div>
         </div>
 
-        <!-- ------------------------------------------------------------- -->
-        <!-- TAB F: MASTER EXCEL, WORD & PDF EXPORTS                       -->
-        <!-- ------------------------------------------------------------- -->
-        <div id="tab-staff-exports" class="staff-tab-pane d-none fade-in">
+        <!-- STAFF SUB-PANE 6: MASTER EXPORTS & BACKUP -->
+        <div id="staff-exports" class="staff-sub-pane d-none fade-in">
           <div class="admin-card">
             <div class="card-header">
-              <h3><i class="fa-solid fa-file-export"></i> Master Excel, Word & PDF Document Exports</h3>
-              <p class="subtitle">Download student-wise lists, guide-wise grouped rosters, formal Word reports, and full backup files.</p>
+              <h3><i class="fa-solid fa-file-export"></i> Master Excel & Word Document Exports</h3>
             </div>
             <div class="exports-action-grid">
-              <!-- Export 1: Student Allocation Excel -->
               <div class="export-box">
                 <div class="export-icon"><i class="fa-solid fa-file-excel text-success"></i></div>
                 <div class="export-info">
-                  <h4>Student Allocation List (Excel)</h4>
-                  <p>All students with Register Number, Name, Slot Chosen, and Assigned Guide.</p>
+                  <h4>Project Guide Selection (Excel)</h4>
+                  <p>Includes Master Student Allocation and Guide-wise Distribution with student counts.</p>
                 </div>
                 <button class="btn btn-outline" onclick="downloadMasterExcel()">
                   <i class="fa-solid fa-download"></i> Download .xlsx
                 </button>
               </div>
 
-              <!-- Export 2: Guide-Wise Grouped Allocation Excel -->
               <div class="export-box">
                 <div class="export-icon"><i class="fa-solid fa-file-excel text-success"></i></div>
                 <div class="export-info">
-                  <h4>Guide-Wise Grouped Allocation (Excel)</h4>
-                  <p>Lists students grouped under each Faculty Guide's name with Reg. No and Name.</p>
-                </div>
-                <button class="btn btn-outline" onclick="downloadGuideWiseExcel()">
-                  <i class="fa-solid fa-download"></i> Download .xlsx
-                </button>
-              </div>
-
-              <!-- Export 3: Guide Allocation Word Report -->
-              <div class="export-box">
-                <div class="export-info">
-                  <h4>Project Guide Allocation Report (Word)</h4>
-                  <p>Official resolution document (.docx) with CLASS TUTOR, HOD, and PRINCIPAL signatures.</p>
-                </div>
-                <a href="/api/guide/export/word" class="btn btn-outline" download>
-                  <i class="fa-solid fa-file-word text-primary"></i> Download .docx
-                </a>
-              </div>
-
-              <!-- Export 4: Elective Selection Excel -->
-              <div class="export-box">
-                <div class="export-icon"><i class="fa-solid fa-file-excel text-success"></i></div>
-                <div class="export-info">
-                  <h4>Elective Selection Master (Excel)</h4>
+                  <h4>Elective Selection (Excel)</h4>
                   <p>Student choices plus Elective Popularity Analytics and Highest-Chosen highlight.</p>
                 </div>
                 <button class="btn btn-outline" onclick="downloadElectiveExcel()">
@@ -1080,137 +1136,36 @@
                 </button>
               </div>
 
-              <!-- Export 5: Elective Word Report -->
               <div class="export-box">
                 <div class="export-icon"><i class="fa-solid fa-file-word text-primary"></i></div>
                 <div class="export-info">
                   <h4>Elective Selection Report (Word)</h4>
-                  <p>Official resolution formatted Word document (.docx) with Tutor, HOD, Principal signatures.</p>
+                  <p>Official resolution formatted Word document (.docx) with signatures.</p>
                 </div>
-                <a href="/api/elective/export/word" class="btn btn-outline" download>
-                  <i class="fa-solid fa-file-word text-primary"></i> Download .docx
-                </a>
+                <button class="btn btn-outline" onclick="downloadElectiveWord()">
+                  <i class="fa-solid fa-download"></i> Download .docx
+                </button>
               </div>
 
-              <!-- Export 6: Printable PDF Dossier -->
               <div class="export-box">
-                <div class="export-icon"><i class="fa-solid fa-file-pdf text-danger"></i></div>
+                <div class="export-icon"><i class="fa-solid fa-database text-warning"></i></div>
                 <div class="export-info">
-                  <h4>Print 5-Page Event Report (PDF)</h4>
-                  <p>Official department presentation report with live audit tables and photos.</p>
+                  <h4>Full System Data Backup</h4>
+                  <p>Export all submissions and configurations in JSON format for offline record.</p>
                 </div>
-                <button class="btn btn-outline" onclick="window.print()">
-                  <i class="fa-solid fa-print"></i> Print / Save PDF
+                <button class="btn btn-outline" onclick="downloadBackupJSON()">
+                  <i class="fa-solid fa-download"></i> Download Backup
                 </button>
               </div>
             </div>
           </div>
         </div>
-
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- ========================================================================= -->
-  <!-- MODAL 1: GUIDE ALLOCATION CONFIDENTIAL RECEIPT                            -->
-  <!-- ========================================================================= -->
-  <div class="modal-backdrop d-none" id="guideRevealModal">
-    <div class="modal-dialog celebration-modal">
-      <div class="modal-card">
-        <div class="celebration-badge"><i class="fa-solid fa-circle-check"></i> SELECTION CAST SUCCESSFULLY</div>
-        <h2 class="modal-title">Successfully Completed! Thank You!</h2>
-        
-        <div class="allocation-msg-banner">
-          <p class="congrats-text">
-            Thank you, <strong id="modalStudentName">Student Name</strong> (<span id="modalRegNo">24BSD001</span>)!
-          </p>
-          <p class="congrats-sub">
-            Your slot choice has been securely cast and recorded in the departmental vault.
-          </p>
-        </div>
+  </main>
 
-        <div class="ballot-receipt-box">
-          <div class="receipt-row">
-            <span class="receipt-label"><i class="fa-solid fa-hashtag"></i> Register Number:</span>
-            <strong class="receipt-val" id="receiptRegNo">24BSD001</strong>
-          </div>
-          <div class="receipt-row">
-            <span class="receipt-label"><i class="fa-solid fa-user"></i> Student Name:</span>
-            <strong class="receipt-val" id="receiptStudentName">Student Name</strong>
-          </div>
-          <div class="receipt-row">
-            <span class="receipt-label"><i class="fa-solid fa-cube"></i> Mystery Slot Chosen:</span>
-            <span class="slot-chosen-badge" id="modalSlotChosen">Slot #1 Selected</span>
-          </div>
-          <div class="receipt-row">
-            <span class="receipt-label"><i class="fa-solid fa-shield-halved"></i> Allocation Status:</span>
-            <span class="receipt-badge-vault"><i class="fa-solid fa-lock"></i> Recorded in Department Vault</span>
-          </div>
-        </div>
-
-        <div class="modal-instruction-box">
-          <i class="fa-solid fa-circle-info text-primary"></i>
-          <span>Official faculty guide allocation lists will be published by the department after all students complete slot selection.</span>
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn btn-primary btn-block btn-lg" onclick="closeGuideModal()">
-            <i class="fa-solid fa-check"></i> Done, Thank You!
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ========================================================================= -->
-  <!-- MODAL 2: ELECTIVE SELECTION CONFIRMATION RECEIPT                          -->
-  <!-- ========================================================================= -->
-  <div class="modal-backdrop d-none" id="electiveRevealModal">
-    <div class="modal-dialog celebration-modal">
-      <div class="modal-card">
-        <div class="celebration-badge"><i class="fa-solid fa-check-double"></i> ELECTIVES SUBMITTED</div>
-        <h2 class="modal-title">Preferences Submitted!</h2>
-        
-        <div class="allocation-msg-banner">
-          <p class="congrats-text">
-            Thank you, <strong id="modalElectiveStudentName">Student Name</strong> (<span id="modalElectiveRegNo">24BSD001</span>)!
-          </p>
-          <p class="congrats-sub">
-            Your elective course preferences have been recorded successfully.
-          </p>
-        </div>
-
-        <div class="ballot-receipt-box">
-          <div class="receipt-row">
-            <span class="receipt-label"><i class="fa-solid fa-hashtag"></i> Register Number:</span>
-            <strong class="receipt-val" id="receiptElectiveRegNo">24BSD001</strong>
-          </div>
-          <div class="receipt-row">
-            <span class="receipt-label"><i class="fa-solid fa-book"></i> Elective II:</span>
-            <strong class="receipt-val text-primary" id="modalElective2Choice">Course Title</strong>
-          </div>
-          <div class="receipt-row">
-            <span class="receipt-label"><i class="fa-solid fa-book-open"></i> Elective III:</span>
-            <strong class="receipt-val text-primary" id="modalElective3Choice">Course Title</strong>
-          </div>
-          <div class="receipt-row">
-            <span class="receipt-label"><i class="fa-solid fa-clock"></i> Timestamp:</span>
-            <span class="receipt-val" id="modalElectiveTime">Recorded</span>
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn btn-primary btn-block btn-lg" onclick="closeElectiveModal()">
-            <i class="fa-solid fa-check"></i> Done & Next Student
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ========================================================================= -->
-  <!-- MODAL 3: MULTI-DEVICE NETWORK SYNC & QR CODE                             -->
-  <!-- ========================================================================= -->
+  <!-- MODAL: MULTI-DEVICE NETWORK SYNC & QR CODE -->
   <div class="modal-backdrop d-none" id="networkModal">
     <div class="modal-dialog">
       <div class="modal-card">

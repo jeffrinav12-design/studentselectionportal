@@ -3258,119 +3258,120 @@ tbody tr:hover {
 }
 
 /* ========================================================================== */
-/* MULTI-PAGE STEPPED ARCHITECTURE & MODERN ANIMATIONS                        */
+/* GATEWAY LANDING & MULTI-STEP WIZARD STYLES (NEW DESIGN SYSTEM)             */
 /* ========================================================================== */
 
-/* Portal Views */
-.portal-view {
+.app-view {
   display: none;
-  width: 100%;
 }
 
-.portal-view.active-view {
+.app-view.active {
   display: block;
 }
 
-/* Top Nav Utility */
-.btn-portal-badge {
-  background: rgba(255, 255, 255, 0.15);
-  color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 4px 14px;
-  border-radius: var(--radius-full);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.25s ease;
+/* Gateway Hero */
+.gateway-hero {
+  text-align: center;
+  max-width: 800px;
+  margin: 10px auto 35px;
+  padding: 10px 15px;
 }
 
-.btn-portal-badge:hover {
-  background: var(--accent-gold);
-  color: var(--primary-navy-dark);
-  border-color: var(--accent-gold);
-}
-
-/* 1. FIRST PAGE LANDING PORTAL (STUDENT vs STAFF CARDS) */
-.landing-container {
-  padding: 50px 20px 80px;
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-.landing-hero {
-  margin-bottom: 44px;
-}
-
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #EFF6FF;
-  color: var(--primary-navy);
-  font-size: 0.82rem;
-  font-weight: 700;
-  padding: 6px 16px;
-  border-radius: var(--radius-full);
-  border: 1px solid #BFDBFE;
-  margin-bottom: 16px;
-  letter-spacing: 0.5px;
-}
-
-.landing-main-title {
+.gateway-title {
   font-family: var(--font-heading);
-  font-size: 2.5rem;
+  font-size: 2.2rem;
   font-weight: 800;
   color: var(--primary-navy);
-  letter-spacing: -0.5px;
-  margin-bottom: 12px;
+  margin: 12px 0 8px;
+  line-height: 1.25;
 }
 
-.landing-subtitle {
+.gateway-subtitle {
   font-size: 1.05rem;
   color: var(--text-secondary);
-  max-width: 680px;
-  margin: 0 auto;
   line-height: 1.6;
 }
 
-.portal-selection-grid {
+/* Gateway Cards Grid */
+.gateway-cards-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 32px;
-  margin-top: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 28px;
+  max-width: 1000px;
+  margin: 0 auto 40px;
 }
 
-.portal-card {
+.gateway-card {
   background: #FFFFFF;
-  border: 2px solid #E2E8F0;
+  border: 2px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 38px 32px;
+  padding: 34px 30px;
+  box-shadow: var(--shadow-md);
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.portal-card:hover {
+.gateway-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  transition: opacity 0.3s ease;
+}
+
+.student-gateway-card::before {
+  background: linear-gradient(90deg, #0284C7, #002B49);
+}
+
+.staff-gateway-card::before {
+  background: linear-gradient(90deg, #D4AF37, #9B1C2E);
+}
+
+.gateway-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 25px 35px -5px rgba(0, 43, 73, 0.15), 0 12px 16px -8px rgba(0, 43, 73, 0.08);
+  box-shadow: 0 20px 30px -10px rgba(0, 43, 73, 0.15);
 }
 
-.student-card:hover {
-  border-color: var(--primary-navy);
+.student-gateway-card:hover {
+  border-color: #0284C7;
 }
 
-.staff-card:hover {
-  border-color: var(--sankara-crimson);
+.staff-gateway-card:hover {
+  border-color: #9B1C2E;
 }
 
-.portal-card-icon-wrap {
+.gateway-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  margin-bottom: 20px;
+  align-self: flex-start;
+  letter-spacing: 0.3px;
+}
+
+.student-badge-pill {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+.staff-badge-pill {
+  background: #FFF1F2;
+  color: #BE123C;
+  border: 1px solid #FECDD3;
+}
+
+.gateway-icon-circle {
   width: 72px;
   height: 72px;
   border-radius: 20px;
@@ -3378,148 +3379,114 @@ tbody tr:hover {
   align-items: center;
   justify-content: center;
   font-size: 2rem;
-  margin-bottom: 22px;
+  margin-bottom: 20px;
   transition: transform 0.3s ease;
 }
 
-.portal-card:hover .portal-card-icon-wrap {
+.gateway-card:hover .gateway-icon-circle {
   transform: scale(1.1) rotate(4deg);
 }
 
-.student-icon-wrap {
+.student-icon-circle {
   background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
-  color: var(--primary-navy);
+  color: #0284C7;
   border: 1px solid #BFDBFE;
 }
 
-.staff-icon-wrap {
+.staff-icon-circle {
   background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%);
-  color: var(--sankara-crimson);
+  color: #9B1C2E;
   border: 1px solid #FECDD3;
 }
 
-.portal-access-tag {
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  display: inline-block;
-  margin-bottom: 12px;
-  width: fit-content;
-}
-
-.student-tag {
-  background: #EFF6FF;
-  color: #1D4ED8;
-  border: 1px solid #BFDBFE;
-}
-
-.staff-tag {
-  background: #FFF1F2;
-  color: var(--sankara-crimson);
-  border: 1px solid #FECDD3;
-}
-
-.portal-card-title {
+.gateway-card-title {
   font-family: var(--font-heading);
-  font-size: 1.65rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--primary-navy);
   margin-bottom: 10px;
 }
 
-.portal-card-desc {
+.gateway-card-desc {
   font-size: 0.92rem;
   color: var(--text-secondary);
-  line-height: 1.55;
-  margin-bottom: 24px;
+  line-height: 1.6;
+  margin-bottom: 20px;
 }
 
-.portal-card-features {
+.gateway-features-list {
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 32px;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin-bottom: 28px;
   flex: 1;
 }
 
-.portal-card-features li {
-  font-size: 0.88rem;
-  color: var(--text-primary);
+.gateway-features-list li {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-weight: 500;
 }
 
-.student-card .portal-card-features i {
-  color: #2563EB;
+.gateway-features-list li i {
+  color: var(--success);
+  font-size: 0.8rem;
 }
 
-.staff-card .portal-card-features i {
-  color: var(--sankara-crimson);
-}
-
-.btn-portal-action {
-  width: 100%;
-  padding: 14px 20px;
-  font-size: 1rem;
-  font-weight: 700;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: all 0.25s ease;
+.gateway-action-row {
+  margin-top: auto;
 }
 
 .btn-crimson {
   background: var(--sankara-crimson);
   color: #FFFFFF;
-  border: 1px solid var(--sankara-crimson);
+  border-color: var(--sankara-crimson);
 }
 
 .btn-crimson:hover {
   background: var(--sankara-crimson-hover);
-  box-shadow: 0 6px 16px rgba(155, 28, 46, 0.3);
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(155, 28, 46, 0.3);
 }
 
-/* 2. SUB-HEADER & MODE TOGGLE */
-.sub-header-bar {
-  background: #FFFFFF;
-  border-bottom: 1px solid var(--border-color);
-  padding: 12px 0;
-  position: sticky;
-  top: 0;
-  z-index: 90;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
+/* ========================================================================== */
+/* STUDENT PORTAL HEADER & SERVICE SWITCHER                                  */
+/* ========================================================================== */
 
-.sub-header-inner {
+.student-header-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 16px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 14px 20px;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow-sm);
 }
 
-.student-mode-tabs {
+.student-service-tabs {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   background: #F1F5F9;
   padding: 4px;
   border-radius: var(--radius-md);
 }
 
-.student-mode-btn {
+.student-tab-btn {
   background: transparent;
   border: none;
   font-family: var(--font-body);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--text-secondary);
-  padding: 8px 16px;
+  padding: 8px 18px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   display: inline-flex;
@@ -3528,299 +3495,369 @@ tbody tr:hover {
   transition: all 0.2s ease;
 }
 
-.student-mode-btn:hover {
+.student-tab-btn:hover {
   color: var(--primary-navy);
 }
 
-.student-mode-btn.active {
+.student-tab-btn.active {
   background: #FFFFFF;
   color: var(--primary-navy);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-.staff-bar {
-  border-bottom: 2px solid var(--sankara-crimson);
+.student-service-pane {
+  display: none;
 }
 
-.staff-header-title {
-  font-family: var(--font-heading);
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: var(--primary-navy);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* 3. STEPPED WIZARD CARDS (STUDENT FLOW) */
-.student-content-area {
-  padding: 36px 20px 60px;
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.wizard-card {
-  background: #FFFFFF;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 36px 32px;
-  box-shadow: var(--shadow-md);
-  margin: 0 auto;
-}
-
-.wizard-card.active-step {
+.student-service-pane.active {
   display: block;
 }
 
-#guideStep1, #electiveStep1 {
-  max-width: 540px;
-}
+/* ========================================================================== */
+/* STEP WIZARD PROGRESS TRACKER                                              */
+/* ========================================================================== */
 
-#guideStep2, #electiveStep2 {
-  max-width: 860px;
-}
-
-.wizard-step-indicator {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.step-badge {
-  background: #EFF6FF;
-  color: #1D4ED8;
-  font-size: 0.75rem;
-  font-weight: 800;
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  border: 1px solid #BFDBFE;
-}
-
-.step-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.wizard-card-header {
-  margin-bottom: 26px;
-}
-
-.wizard-icon-circle {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: #EFF6FF;
-  color: var(--primary-navy);
+.wizard-progress-bar {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
-  margin: 0 auto 14px;
+  max-width: 520px;
+  margin: 0 auto 30px;
+  padding: 0 20px;
 }
 
-.mystic-circle {
-  background: linear-gradient(135deg, #FFF8E7 0%, #FEF3C7 100%);
-  color: #B45309;
-  border: 1px solid #FDE68A;
+.wizard-step-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  z-index: 2;
 }
 
-.wizard-title {
+.step-num {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 2px solid #CBD5E1;
+  color: #64748B;
   font-family: var(--font-heading);
-  font-size: 1.55rem;
+  font-weight: 800;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.step-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748B;
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.wizard-step-node.active .step-num {
+  background: var(--primary-navy);
+  border-color: var(--primary-navy);
+  color: #FFFFFF;
+  box-shadow: 0 0 0 4px rgba(0, 43, 73, 0.15);
+}
+
+.wizard-step-node.active .step-label {
+  color: var(--primary-navy);
+}
+
+.wizard-step-node.completed .step-num {
+  background: var(--success);
+  border-color: var(--success);
+  color: #FFFFFF;
+}
+
+.wizard-step-node.completed .step-label {
+  color: var(--success);
+}
+
+.wizard-step-line {
+  flex: 1;
+  height: 3px;
+  background: #CBD5E1;
+  margin: -18px 10px 0;
+  position: relative;
+  z-index: 1;
+  transition: background 0.3s ease;
+}
+
+.wizard-step-line.completed {
+  background: var(--success);
+}
+
+/* Wizard Step Card */
+.wizard-step-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 34px;
+  box-shadow: var(--shadow-sm);
+  max-width: 660px;
+  margin: 0 auto 30px;
+}
+
+#guideStep2.wizard-step-card, #electiveStep2.wizard-step-card {
+  max-width: 860px;
+}
+
+.wizard-card-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.wizard-card-header.flex-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.wizard-card-header h3 {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
   font-weight: 800;
   color: var(--primary-navy);
-  margin-bottom: 6px;
+  margin: 6px 0 4px;
 }
 
-.wizard-desc {
+.wizard-card-header p {
   font-size: 0.9rem;
   color: var(--text-secondary);
+}
+
+.active-student-pill {
+  background: #EFF6FF;
+  color: var(--primary-navy);
+  border: 1px solid #BFDBFE;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .wizard-actions {
   margin-top: 24px;
 }
 
-.btn-proceed {
+.wizard-actions-between {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-weight: 700;
-}
-
-/* Student Identity Banner (In Step 2) */
-.student-identity-banner {
-  background: #F8FAFC;
-  border: 1px solid #CBD5E1;
-  border-left: 4px solid var(--primary-navy);
-  border-radius: var(--radius-sm);
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 24px;
-  font-size: 0.88rem;
 }
 
-.student-identity-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-secondary);
+.form-error-feedback {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 10px;
 }
 
-.student-identity-info i {
-  color: var(--primary-navy);
-  font-size: 1.1rem;
-}
-
-.student-identity-info strong {
-  color: var(--primary-navy);
-}
-
-.btn-text-edit {
-  background: transparent;
-  border: none;
-  color: #2563EB;
-  font-weight: 700;
-  font-size: 0.82rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-}
-
-.btn-text-edit:hover {
-  background: #EFF6FF;
-  text-decoration: underline;
-}
-
-/* 4. CLEAN MYSTERY SLOTS (NO SHUFFLE MENTIONS) */
-.slots-grid-wrapper {
-  margin: 20px 0;
-}
+/* ========================================================================== */
+/* PURE MYSTERY SLOTS (CLEAN, NO SHUFFLE TAGS, LUXURIOUS ANIMATIONS)          */
+/* ========================================================================== */
 
 .slots-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
+  margin: 20px 0;
 }
 
 .slot-card {
-  background: linear-gradient(145deg, #FFFFFF, #F8FAFC);
-  border: 2px solid #E2E8F0;
+  background: linear-gradient(145deg, #001a2c 0%, #002B49 100%);
+  border: 2px solid rgba(212, 175, 55, 0.4);
   border-radius: var(--radius-md);
-  padding: 22px 12px;
+  padding: 22px 14px;
   text-align: center;
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: var(--shadow-sm);
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0, 43, 73, 0.2);
+  color: #FFFFFF;
 }
 
-.slot-card::before {
+.slot-card::after {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--accent-gold), var(--primary-navy));
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  height: 3px;
+  background: linear-gradient(90deg, #D4AF37, #FFFFFF);
+  opacity: 0.7;
 }
 
 .slot-card:hover {
   transform: translateY(-6px) scale(1.02);
-  border-color: var(--accent-gold);
-  box-shadow: 0 12px 24px -8px rgba(0, 43, 73, 0.2);
+  border-color: #D4AF37;
+  box-shadow: 0 12px 24px -4px rgba(0, 43, 73, 0.4), 0 0 16px rgba(212, 175, 55, 0.35);
 }
 
-.slot-card:hover::before {
-  opacity: 1;
+.slot-card:active {
+  transform: scale(0.96);
 }
 
 .slot-badge {
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--text-muted);
+  color: #D4AF37;
   text-transform: uppercase;
+  letter-spacing: 1px;
   margin-bottom: 8px;
-  letter-spacing: 0.5px;
 }
 
 .slot-icon {
-  font-size: 1.7rem;
-  color: var(--primary-navy);
-  margin-bottom: 6px;
+  font-size: 1.6rem;
+  color: #FFFFFF;
+  margin-bottom: 8px;
   transition: transform 0.25s ease;
 }
 
 .slot-card:hover .slot-icon {
   transform: scale(1.2) rotate(6deg);
-  color: var(--accent-gold);
+  color: #D4AF37;
 }
 
 .slot-number {
   font-family: var(--font-heading);
-  font-size: 2.3rem;
+  font-size: 2.6rem;
   font-weight: 800;
-  color: var(--primary-navy);
+  color: #FFFFFF;
   line-height: 1;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.slot-mystic-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #B45309;
-  background: #FFFBEB;
-  border: 1px solid #FDE68A;
-  padding: 3px 10px;
-  border-radius: var(--radius-full);
+.slot-action-hint {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+.slot-status-msg {
+  background: #F8FAFC;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
   margin-top: 10px;
 }
 
-/* 5. STAFF AUTHORITIES DASHBOARD */
-.staff-content-area {
-  padding: 30px 20px 60px;
+/* ========================================================================== */
+/* CONFIDENTIAL RECEIPT STYLES                                               */
+/* ========================================================================== */
+
+.receipt-success-banner {
+  text-align: center;
+  padding: 10px 0 20px;
 }
 
-.staff-nav-tabs {
+.receipt-success-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #ECFDF5;
+  color: var(--success);
   display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 16px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--border-color);
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  margin: 0 auto 14px;
+  animation: scalePop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes scalePop {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.receipt-success-banner h3 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--primary-navy);
+  margin-bottom: 6px;
+}
+
+.receipt-success-banner p {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+/* ========================================================================== */
+/* STAFF PORTAL SUB-NAV & PANES (NO STUDENT FORMS INSIDE STAFF)              */
+/* ========================================================================== */
+
+.staff-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 14px 20px;
+  margin-bottom: 26px;
+  box-shadow: var(--shadow-sm);
+}
+
+.staff-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.staff-live-badge {
+  background: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+.staff-sub-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .staff-tab-btn {
-  background: #FFFFFF;
-  border: 1px solid var(--border-color);
+  background: transparent;
+  border: 1px solid transparent;
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--text-secondary);
-  padding: 10px 18px;
-  border-radius: var(--radius-md);
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  white-space: nowrap;
+  gap: 6px;
   transition: all 0.2s ease;
 }
 
@@ -3832,67 +3869,24 @@ tbody tr:hover {
 .staff-tab-btn.active {
   background: var(--primary-navy);
   color: #FFFFFF;
-  border-color: var(--primary-navy);
-  box-shadow: 0 4px 10px rgba(0, 43, 73, 0.2);
 }
 
-.staff-tab-pane {
+.staff-sub-pane {
   display: none;
 }
 
-.staff-tab-pane.active {
+.staff-sub-pane.active {
   display: block;
 }
 
-.elective-analytics-layout {
+.admin-grid-2col {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
 }
 
-.winners-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-/* 6. ANIMATIONS */
-.fade-in-up {
-  animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Responsive adjustments */
-@media (max-width: 860px) {
-  .portal-selection-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  .landing-main-title {
-    font-size: 1.85rem;
-  }
-
-  .slots-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .elective-analytics-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .winners-row {
+@media (max-width: 900px) {
+  .admin-grid-2col {
     grid-template-columns: 1fr;
   }
 }
