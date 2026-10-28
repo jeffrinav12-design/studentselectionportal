@@ -1,15 +1,15 @@
-// Sankara College of Science and Commerce
+// Sankara College of Science and Commerce (Autonomous)
 // Department of Computer Science with Data Analytics
-// Application Logic - Gateway Landing & Multi-Step Academic Selection System
+// Academic Selection Terminal - Dynamic Rotation & Anti-Collision Allocation Engine
 
 let currentView = 'view-gateway';
 let activeStudentService = 'guide';
 let activeStaffTab = 'staff-submissions';
+let activeSubmissionView = 'master'; // 'master' or 'guidewise'
 let adminUnlocked = false;
 let guideData = null;
 let electiveData = null;
 let activeCircularType = 'guide';
-let lastAllocatedSubmission = null;
 
 const LOCAL_STORAGE_KEY = 'scsc_portal_data_v2';
 
@@ -19,14 +19,22 @@ const LOCAL_STORAGE_KEY = 'scsc_portal_data_v2';
 function getLocalDB() {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Ensure institution name is Autonomous
+      if (parsed.system) {
+        parsed.system.institutionName = "Sankara College of Science and Commerce (Autonomous)";
+      }
+      return parsed;
+    }
   } catch (e) {
     console.error('LocalStorage read error:', e);
   }
 
+  // 5 Guide Faculty: Exactly 4 guides with quota 8, exactly 1 guide with quota 9 (Total = 41 students)
   const defaultState = {
     system: {
-      institutionName: "Sankara College of Science and Commerce",
+      institutionName: "Sankara College of Science and Commerce (Autonomous)",
       department: "Department of Computer Science with Data Analytics",
       batch: "2024-2027",
       semester: "Semester VI",
@@ -37,10 +45,12 @@ function getLocalDB() {
       isLive: true,
       targetStudents: 41,
       slotCount: 8,
+      ninthGuideId: "g1",
       lastSlotGuideMap: {},
       lastAllocatedGuideId: null,
+      slotHistory: {},
       guides: [
-        { id: "g1", name: "Dr. K. Meenakshi", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 },
+        { id: "g1", name: "Dr. K. Meenakshi", designation: "Assistant Professor, CS & DA", maxStudents: 9, assignedCount: 0 },
         { id: "g2", name: "Prof. S. Kavitha", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 },
         { id: "g3", name: "Dr. R. Malathi", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 },
         { id: "g4", name: "Prof. P. Deepa", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 },
@@ -186,7 +196,7 @@ function nextGuideStep() {
   const name = nameInput.value.trim();
 
   if (!regNo) {
-    if (errBox) errBox.textContent = 'Please enter your Student Register Number.';
+    if (errBox) errBox.textContent = 'Please enter your College Register Number.';
     regNoInput.focus();
     return;
   }
@@ -199,11 +209,9 @@ function nextGuideStep() {
 
   if (errBox) errBox.textContent = '';
 
-  // Update display on Step 2
   const disp = document.getElementById('guideActiveStudentDisplay');
   if (disp) disp.textContent = `${name} (${regNo})`;
 
-  // Advance to Step 2
   document.getElementById('guideStep1')?.classList.add('d-none');
   document.getElementById('guideStep2')?.classList.remove('d-none');
   updateGuideWizardProgress(2);
@@ -217,6 +225,14 @@ function prevGuideStep() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ----------------------------------------------------
+// ALLOCATION LOGIC ENGINE:
+// 1. Quota: 4 guides max 8 students, 1 guide max 9 students (Total = 41).
+// 2. Automatic Termination: once a guide reaches 8 (or 9 for the designated guide),
+//    that guide is automatically terminated and excluded from the eligible pool.
+// 3. Anti-Collision Rotation: if slot 1 is clicked by 3 consecutive students,
+//    all 3 students receive DIFFERENT guides!
+// ----------------------------------------------------
 async function handleSlotSelection(slotNum) {
   const regNo = document.getElementById('guideRegNo').value.trim().toUpperCase();
   const studentName = document.getElementById('guideStudentName').value.trim();
@@ -227,7 +243,7 @@ async function handleSlotSelection(slotNum) {
     return;
   }
 
-  // Animation on selected slot card
+  // Visual card click animation
   const card = document.querySelector(`.slot-card[data-slot="${slotNum}"]`);
   if (card) {
     card.style.transform = 'scale(0.94)';
@@ -268,20 +284,69 @@ async function handleSlotSelection(slotNum) {
     return;
   }
 
-  // Anti-collision impartial guide assignment (strict quota: 8 per guide, 1 receives 9th)
-  const eligibleGuides = gp.guides.filter(g => (g.assignedCount || 0) < (g.maxStudents || 8));
-  let assignedGuide = null;
+  const ninthGuideId = gp.ninthGuideId || (gp.guides[0] ? gp.guides[0].id : 'g1');
+  const totalAllocated = gp.submissions.length;
 
-  if (eligibleGuides.length > 0) {
-    // Pick guide with least allocations to balance evenly
-    eligibleGuides.sort((a, b) => (a.assignedCount || 0) - (b.assignedCount || 0));
-    assignedGuide = eligibleGuides[0];
+  // Recount current assignments
+  gp.guides.forEach(g => {
+    g.assignedCount = gp.submissions.filter(s => s.guideId === g.id).length;
+  });
+
+  // STEP A: Strict automatic termination condition:
+  // For first 40 students: all guides are terminated once they reach 8 students.
+  // For 41st student: only the single designated guide can accept the 9th student.
+  let eligibleGuides;
+  if (totalAllocated < 40) {
+    eligibleGuides = gp.guides.filter(g => (g.assignedCount || 0) < 8);
   } else {
-    // All 5 guides reached 8 students; allow 41st student into the first guide
-    assignedGuide = gp.guides[0];
+    eligibleGuides = gp.guides.filter(g => g.id === ninthGuideId && (g.assignedCount || 0) < 9);
+    if (eligibleGuides.length === 0) {
+      eligibleGuides = gp.guides.filter(g => (g.assignedCount || 0) < (g.maxStudents || 8));
+    }
   }
 
+  if (eligibleGuides.length === 0) {
+    alert('All 41 student allocations are complete!');
+    return;
+  }
+
+  // STEP B: Anti-Collision Rotation per Slot:
+  // If Slot 1 is clicked by 3 students, all 3 receive DIFFERENT guides!
+  gp.slotHistory = gp.slotHistory || {};
+  const recentForSlot = gp.slotHistory[slotNum] || [];
+  const lastAllocatedId = gp.lastAllocatedGuideId || null;
+
+  let candidates = eligibleGuides;
+
+  // Exclude guides recently allocated for this slot
+  if (recentForSlot.length > 0 && candidates.length > 1) {
+    const nonRecent = candidates.filter(g => !recentForSlot.includes(g.id));
+    if (nonRecent.length > 0) {
+      candidates = nonRecent;
+    } else {
+      const mostRecentId = recentForSlot[recentForSlot.length - 1];
+      const withoutMostRecent = candidates.filter(g => g.id !== mostRecentId);
+      if (withoutMostRecent.length > 0) candidates = withoutMostRecent;
+    }
+  }
+
+  // Also prevent consecutive identical guide allocation across any two back-to-back student picks
+  if (lastAllocatedId && candidates.length > 1) {
+    const diffCandidates = candidates.filter(g => g.id !== lastAllocatedId);
+    if (diffCandidates.length > 0) candidates = diffCandidates;
+  }
+
+  // Dynamic uniform selection among candidates
+  const chosenIndex = Math.floor(Math.random() * candidates.length);
+  const assignedGuide = candidates[chosenIndex];
+
   assignedGuide.assignedCount = (assignedGuide.assignedCount || 0) + 1;
+  gp.lastAllocatedGuideId = assignedGuide.id;
+
+  // Track history for this slot
+  if (!gp.slotHistory[slotNum]) gp.slotHistory[slotNum] = [];
+  gp.slotHistory[slotNum].push(assignedGuide.id);
+  if (gp.slotHistory[slotNum].length > 4) gp.slotHistory[slotNum].shift();
 
   const newSub = {
     regNo,
@@ -300,7 +365,7 @@ async function handleSlotSelection(slotNum) {
 
 function completeGuideSubmission(submission) {
   if (typeof confetti === 'function') {
-    confetti({ particleCount: 110, spread: 75, origin: { y: 0.6 } });
+    confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
   }
 
   // Populate Step 3 Receipt
@@ -375,7 +440,7 @@ function nextElectiveStep() {
   const name = nameInput.value.trim();
 
   if (!regNo) {
-    if (errBox) errBox.textContent = 'Please enter your Student Register Number.';
+    if (errBox) errBox.textContent = 'Please enter your College Register Number.';
     regNoInput.focus();
     return;
   }
@@ -460,9 +525,7 @@ async function submitElectiveWizard() {
         return;
       }
     }
-  } catch (err) {
-    // Proceed to Local Dynamic Engine
-  }
+  } catch (err) {}
 
   // 2. Resilient In-Browser Fallback Engine
   const db = getLocalDB();
@@ -491,7 +554,7 @@ async function submitElectiveWizard() {
 
 function completeElectiveSubmission(submission) {
   if (typeof confetti === 'function') {
-    confetti({ particleCount: 110, spread: 75, origin: { y: 0.6 } });
+    confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
   }
 
   const rReg = document.getElementById('receiptElectiveRegNo');
@@ -633,10 +696,35 @@ function switchStaffTab(tabId) {
   }
 }
 
+function toggleSubmissionsView(viewType) {
+  activeSubmissionView = viewType;
+  const btnMaster = document.getElementById('btnViewMasterTable');
+  const btnGuideWise = document.getElementById('btnViewGuideWise');
+  const masterContainer = document.getElementById('adminGuideSubmissionsTable');
+  const guideWiseContainer = document.getElementById('adminGuideWiseContainer');
+
+  if (viewType === 'master') {
+    btnMaster?.classList.add('active');
+    btnGuideWise?.classList.remove('active');
+    masterContainer?.classList.remove('d-none');
+    guideWiseContainer?.classList.add('d-none');
+  } else {
+    btnGuideWise?.classList.add('active');
+    btnMaster?.classList.remove('active');
+    guideWiseContainer?.classList.remove('d-none');
+    masterContainer?.classList.add('d-none');
+  }
+}
+
 function loadAdminData() {
   const db = getLocalDB();
   const gp = db.guidePortal;
   const ep = db.electivePortal;
+
+  // Recount current assignments
+  gp.guides.forEach(g => {
+    g.assignedCount = gp.submissions.filter(s => s.guideId === g.id).length;
+  });
 
   // Counts
   const gCount = document.getElementById('adminGuideCount');
@@ -644,12 +732,13 @@ function loadAdminData() {
   const eCount = document.getElementById('adminElectiveCount');
   if (eCount) eCount.textContent = ep.submissions.length;
 
-  // Render Submissions Table
-  renderAdminGuideTable(gp.submissions);
+  // Render Submissions Tables
+  renderAdminGuideMasterTable(gp.submissions);
+  renderAdminGuideWiseView(gp.guides, gp.submissions);
   renderAdminElectiveTable(ep.submissions);
 
   // Render 5 Faculty Editor
-  renderFacultyConfigList(gp.guides);
+  renderFacultyConfigList(gp.guides, gp.ninthGuideId);
 
   // Render Elective Analytics
   updateElectiveAnalyticsUI();
@@ -670,14 +759,17 @@ function loadAdminData() {
       liveText.className = 'text-danger';
     }
   }
+
+  // Populate dynamic results in Formal 5-Page Report
+  populateReportTables();
 }
 
-function renderAdminGuideTable(submissions) {
+function renderAdminGuideMasterTable(submissions) {
   const cont = document.getElementById('adminGuideSubmissionsTable');
   if (!cont) return;
 
   if (!submissions || submissions.length === 0) {
-    cont.innerHTML = `<div class="p-3 text-muted text-center"><i class="fa-solid fa-inbox"></i> No guide allocations recorded yet.</div>`;
+    cont.innerHTML = `<div class="p-4 text-muted text-center"><i class="fa-solid fa-inbox fa-2x"></i><br>No guide allocations recorded yet.</div>`;
     return;
   }
 
@@ -686,10 +778,10 @@ function renderAdminGuideTable(submissions) {
       <thead>
         <tr>
           <th>#</th>
-          <th>Reg. Number</th>
+          <th>College Reg. No</th>
           <th>Student Name</th>
           <th>Slot</th>
-          <th>Assigned Guide</th>
+          <th>Allocated Guide Name</th>
           <th>Time</th>
         </tr>
       </thead>
@@ -713,12 +805,63 @@ function renderAdminGuideTable(submissions) {
   cont.innerHTML = html;
 }
 
+function renderAdminGuideWiseView(guides, submissions) {
+  const cont = document.getElementById('adminGuideWiseContainer');
+  if (!cont) return;
+
+  let html = `<div class="guide-wise-grid">`;
+
+  guides.forEach((g, idx) => {
+    const students = submissions.filter(s => s.guideId === g.id);
+    const isNine = (g.maxStudents === 9);
+
+    html += `
+      <div class="guide-wise-card">
+        <div class="guide-wise-header">
+          <div>
+            <div class="guide-wise-title">${escapeHTML(g.name || `Guide #${idx + 1}`)}</div>
+            <small class="text-muted">${escapeHTML(g.designation || 'Assistant Professor')} ${isNine ? '• 9 Quota' : ''}</small>
+          </div>
+          <span class="guide-wise-count">${students.length} / ${g.maxStudents || 8}</span>
+        </div>
+        <table class="guide-wise-students-table">
+          <thead>
+            <tr>
+              <th style="width: 15%;">#</th>
+              <th style="width: 40%;">College Reg. No</th>
+              <th style="width: 45%;">Student Name</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    if (students.length === 0) {
+      html += `<tr><td colspan="3" class="text-muted text-center" style="padding: 14px 6px;">No students allocated yet</td></tr>`;
+    } else {
+      students.forEach((st, sIdx) => {
+        html += `
+          <tr>
+            <td>${sIdx + 1}</td>
+            <td><strong>${escapeHTML(st.regNo)}</strong></td>
+            <td>${escapeHTML(st.studentName)}</td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `</tbody></table></div>`;
+  });
+
+  html += `</div>`;
+  cont.innerHTML = html;
+}
+
 function renderAdminElectiveTable(submissions) {
   const cont = document.getElementById('adminElectiveSubmissionsTable');
   if (!cont) return;
 
   if (!submissions || submissions.length === 0) {
-    cont.innerHTML = `<div class="p-3 text-muted text-center"><i class="fa-solid fa-inbox"></i> No elective submissions recorded yet.</div>`;
+    cont.innerHTML = `<div class="p-4 text-muted text-center"><i class="fa-solid fa-inbox fa-2x"></i><br>No elective submissions recorded yet.</div>`;
     return;
   }
 
@@ -727,10 +870,10 @@ function renderAdminElectiveTable(submissions) {
       <thead>
         <tr>
           <th>#</th>
-          <th>Reg. Number</th>
+          <th>College Reg. No</th>
           <th>Student Name</th>
-          <th>Elective II</th>
-          <th>Elective III</th>
+          <th>Elective II Choice</th>
+          <th>Elective III Choice</th>
         </tr>
       </thead>
       <tbody>
@@ -752,16 +895,17 @@ function renderAdminElectiveTable(submissions) {
   cont.innerHTML = html;
 }
 
-function renderFacultyConfigList(guides) {
+function renderFacultyConfigList(guides, ninthGuideId) {
   const cont = document.getElementById('facultyConfigList');
   if (!cont) return;
 
   let html = '';
   guides.forEach((g, idx) => {
+    const isNinth = (g.id === (ninthGuideId || 'g1')) || (g.maxStudents === 9);
     html += `
       <div class="faculty-config-card" data-guide-id="${g.id}">
         <div class="f-card-header">
-          <span class="f-badge">Faculty Guide #${idx + 1}</span>
+          <span class="f-badge">Faculty Guide #${idx + 1} ${isNinth ? '★ (9-Student Quota)' : '(8-Student Quota)'}</span>
           <span class="f-assigned-count">${g.assignedCount || 0} / ${g.maxStudents || 8} Allocated</span>
         </div>
         <div class="form-group mb-2">
@@ -773,8 +917,9 @@ function renderFacultyConfigList(guides) {
           <input type="text" class="guide-desig-input form-control" value="${escapeHTML(g.designation || 'Assistant Professor, CS & DA')}">
         </div>
         <div class="form-group mb-0">
-          <label>Max Students (Quota)</label>
+          <label>Capacity Quota (Auto-Terminated upon reaching)</label>
           <input type="number" class="guide-quota-input form-control" value="${g.maxStudents || 8}" min="1" max="15">
+          <small class="text-muted">${isNinth ? 'Designated for 9th student allocation' : 'Terminated automatically at 8'}</small>
         </div>
       </div>
     `;
@@ -841,7 +986,6 @@ function updateElectiveAnalyticsUI() {
     e3Counts[e3] = (e3Counts[e3] || 0) + 1;
   });
 
-  // Calculate Winners
   let e2Winner = { name: 'Awaiting votes...', count: 0 };
   for (let k in e2Counts) {
     if (e2Counts[k] > e2Winner.count) e2Winner = { name: k, count: e2Counts[k] };
@@ -862,7 +1006,6 @@ function updateElectiveAnalyticsUI() {
   if (e3Title) e3Title.textContent = e3Winner.name;
   if (e3Votes) e3Votes.textContent = `${e3Winner.count} student votes`;
 
-  // Render Tally
   const tallyCont = document.getElementById('electiveTallyList');
   if (!tallyCont) return;
 
@@ -889,11 +1032,14 @@ function updateElectiveAnalyticsUI() {
   tallyCont.innerHTML = html;
 }
 
-// In-Browser Master Excel Export (.xlsx)
-function downloadMasterExcel() {
+// ==========================================
+// 6. EXPORT ENGINES (EXCEL, WORD, PDF)
+// ==========================================
+
+// 1. Master Student Allocation Excel (.xlsx)
+function downloadMasterStudentExcel() {
   const db = getLocalDB();
   const gp = db.guidePortal;
-  const ep = db.electivePortal;
 
   if (typeof XLSX === 'undefined') {
     window.location.href = '/api/guide/export/excel';
@@ -902,49 +1048,116 @@ function downloadMasterExcel() {
 
   const wb = XLSX.utils.book_new();
 
-  // Sheet 1: Master Allotment List
-  const masterData = gp.submissions.map((s, idx) => ({
-    "S.No": idx + 1,
-    "Register Number": s.regNo,
-    "Student Name": s.studentName,
-    "Mystery Slot Chosen": `Slot #${s.slotChosen}`,
-    "Allocated Project Guide": s.guideName,
-    "Timestamp": s.timestamp
-  }));
-  const wsMaster = XLSX.utils.json_to_sheet(masterData.length > 0 ? masterData : [{ "Notice": "No submissions recorded yet." }]);
-  XLSX.utils.book_append_sheet(wb, wsMaster, "Master Allotment");
+  const masterRows = [
+    ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
+    ["Department of Computer Science with Data Analytics"],
+    ["Semester VI Project Guide Allocation - Master Student List"],
+    ["Generated on: " + new Date().toLocaleString()],
+    [],
+    ["S.No", "College Register Number", "Student Name", "Mystery Slot Chosen", "Allocated Faculty Guide", "Timestamp"]
+  ];
 
-  // Sheet 2: Guide Distribution
-  const guideDistData = gp.guides.map(g => {
-    const students = gp.submissions.filter(s => s.guideId === g.id);
-    return {
-      "Faculty Guide Name": g.name || "Awaiting Name",
-      "Designation": g.designation,
-      "Base Quota Limit": g.maxStudents || 8,
-      "Allocated Students Count": students.length,
-      "Student Register Numbers": students.map(st => st.regNo).join(', ')
-    };
+  gp.submissions.forEach((s, idx) => {
+    masterRows.push([
+      idx + 1,
+      s.regNo,
+      s.studentName,
+      `Slot #${s.slotChosen}`,
+      s.guideName || 'Guide Assigned',
+      s.timestamp || ''
+    ]);
   });
-  const wsGuides = XLSX.utils.json_to_sheet(guideDistData);
-  XLSX.utils.book_append_sheet(wb, wsGuides, "Guide Distribution");
 
-  // Sheet 3: Elective Selections
-  const electiveDataRows = ep.submissions.map((s, idx) => ({
-    "S.No": idx + 1,
-    "Register Number": s.regNo,
-    "Student Name": s.studentName,
-    "Elective II Choice": s.elective2Title,
-    "Elective III Choice": s.elective3Title,
-    "Timestamp": s.timestamp
-  }));
-  const wsElective = XLSX.utils.json_to_sheet(electiveDataRows.length > 0 ? electiveDataRows : [{ "Notice": "No elective votes recorded yet." }]);
-  XLSX.utils.book_append_sheet(wb, wsElective, "Elective Voting");
+  const ws = XLSX.utils.aoa_to_sheet(masterRows);
+  ws['!cols'] = [{ wch: 8 }, { wch: 24 }, { wch: 30 }, { wch: 18 }, { wch: 30 }, { wch: 24 }];
+  XLSX.utils.book_append_sheet(wb, ws, "Master Student Roster");
 
-  XLSX.writeFile(wb, "Sankara_CSDA_Selection_Portal_Master_Sheet.xlsx");
+  XLSX.writeFile(wb, "Master_Student_Guide_Allocations.xlsx");
+}
+
+// 2. Guide-Wise Grouped Student Allocation Excel (.xlsx)
+function downloadGuideWiseExcel() {
+  const db = getLocalDB();
+  const gp = db.guidePortal;
+
+  if (typeof XLSX === 'undefined') {
+    window.location.href = '/api/guide/export/excel-guidewise';
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+
+  const guideWiseRows = [
+    ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
+    ["Department of Computer Science with Data Analytics"],
+    ["Semester VI Project Guide Allocation - Guide-Wise Grouped Allocation Roster"],
+    ["Academic Batch 2024-2027 | Total Students: 41 (4 Guides × 8 + 1 Guide × 9 = 41)"],
+    ["Generated on: " + new Date().toLocaleString()],
+    []
+  ];
+
+  gp.guides.forEach((g, gIdx) => {
+    const students = gp.submissions.filter(s => s.guideId === g.id);
+    guideWiseRows.push([`FACULTY GUIDE #${gIdx + 1}: ${g.name.toUpperCase()} (${g.designation})`, `Allocated Students: ${students.length} / ${g.maxStudents}`]);
+    guideWiseRows.push(["S.No", "College Register Number", "Student Name", "Slot Chosen", "Allocated Guide"]);
+
+    if (students.length === 0) {
+      guideWiseRows.push(["-", "No students allocated yet", "-", "-", "-"]);
+    } else {
+      students.forEach((st, sIdx) => {
+        guideWiseRows.push([sIdx + 1, st.regNo, st.studentName, `Slot #${st.slotChosen}`, g.name]);
+      });
+    }
+    guideWiseRows.push([]); // blank row
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(guideWiseRows);
+  ws['!cols'] = [{ wch: 8 }, { wch: 24 }, { wch: 30 }, { wch: 16 }, { wch: 30 }];
+  XLSX.utils.book_append_sheet(wb, ws, "Guide-Wise Groupings");
+
+  XLSX.writeFile(wb, "Guide_Wise_Student_Allocations.xlsx");
+}
+
+// 3. Word Document Exports (.docx)
+function downloadMasterWord() {
+  window.location.href = '/api/guide/export/word';
+}
+
+function downloadGuideWiseWord() {
+  window.location.href = '/api/guide/export/word-guidewise';
 }
 
 function downloadElectiveExcel() {
-  downloadMasterExcel();
+  const db = getLocalDB();
+  const ep = db.electivePortal;
+
+  if (typeof XLSX === 'undefined') return;
+
+  const wb = XLSX.utils.book_new();
+  const rows = [
+    ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
+    ["Department of Computer Science with Data Analytics - Elective Selection Roster"],
+    ["Generated on: " + new Date().toLocaleString()],
+    [],
+    ["S.No", "College Register Number", "Student Name", "Elective II Chosen", "Elective III Chosen", "Timestamp"]
+  ];
+
+  ep.submissions.forEach((s, idx) => {
+    rows.push([
+      idx + 1,
+      s.regNo,
+      s.studentName,
+      s.elective2Title || s.elective2Code,
+      s.elective3Title || s.elective3Code,
+      s.timestamp || ''
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{ wch: 8 }, { wch: 24 }, { wch: 30 }, { wch: 35 }, { wch: 35 }, { wch: 22 }];
+  XLSX.utils.book_append_sheet(wb, ws, "Elective Voting");
+
+  XLSX.writeFile(wb, "Elective_Course_Selections.xlsx");
 }
 
 function downloadElectiveWord() {
@@ -960,10 +1173,169 @@ function downloadBackupJSON() {
   dlAnchor.click();
 }
 
+// 4. Clean Printable PDF Views
+function printMasterPDF() {
+  const db = getLocalDB();
+  const gp = db.guidePortal;
+
+  let rowsHtml = '';
+  gp.submissions.forEach((s, idx) => {
+    rowsHtml += `
+      <tr>
+        <td style="text-align: center;">${idx + 1}</td>
+        <td><strong>${escapeHTML(s.regNo)}</strong></td>
+        <td>${escapeHTML(s.studentName)}</td>
+        <td style="text-align: center;">Slot #${s.slotChosen}</td>
+        <td><strong>${escapeHTML(s.guideName || 'Guide Assigned')}</strong></td>
+      </tr>
+    `;
+  });
+
+  if (gp.submissions.length === 0) {
+    rowsHtml = `<tr><td colspan="5" style="text-align: center; padding: 20px;">No student submissions recorded yet.</td></tr>`;
+  }
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Sankara College of Science and Commerce (Autonomous) - Master Guide Allocation</title>
+      <style>
+        body { font-family: 'Arial', sans-serif; padding: 30px; color: #1F2937; }
+        .inst-header { text-align: center; border-bottom: 2px solid #002B49; padding-bottom: 15px; margin-bottom: 20px; }
+        .inst-name { font-size: 1.4rem; font-weight: bold; color: #002B49; margin: 0; }
+        .dept-name { font-size: 1.1rem; color: #9B1C2E; font-weight: bold; margin: 5px 0; }
+        .sub-title { font-size: 0.95rem; color: #4B5563; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; }
+        th, td { border: 1px solid #CBD5E1; padding: 8px 12px; }
+        th { background: #002B49; color: #fff; text-align: left; }
+        .sig-row { display: flex; justify-content: space-between; margin-top: 60px; padding-top: 20px; }
+        .sig-box { text-align: center; width: 30%; }
+        .sig-line { border-top: 1px solid #333; margin-bottom: 6px; }
+      </style>
+    </head>
+    <body>
+      <div class="inst-header">
+        <h1 class="inst-name">SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)</h1>
+        <p class="dept-name">DEPARTMENT OF COMPUTER SCIENCE WITH DATA ANALYTICS</p>
+        <p class="sub-title">Semester VI Capstone Project Guide Allocation - Master Student Roster (Batch 2024–2027)</p>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 8%; text-align: center;">S.No</th>
+            <th style="width: 25%;">College Register Number</th>
+            <th style="width: 32%;">Student Name</th>
+            <th style="width: 15%; text-align: center;">Slot Chosen</th>
+            <th style="width: 20%;">Allocated Faculty Guide</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+      <div class="sig-row">
+        <div class="sig-box"><div class="sig-line"></div><strong>CLASS TUTOR</strong><br><small>Dept. of CS with DA</small></div>
+        <div class="sig-box"><div class="sig-line"></div><strong>HEAD OF DEPARTMENT</strong><br><small>Dept. of CS with DA</small></div>
+        <div class="sig-box"><div class="sig-line"></div><strong>PRINCIPAL</strong><br><small>SCSC (Autonomous)</small></div>
+      </div>
+      <script>window.onload = function() { window.print(); };<\/script>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
+
+function printGuideWisePDF() {
+  const db = getLocalDB();
+  const gp = db.guidePortal;
+
+  let bodyHtml = '';
+  gp.guides.forEach((g, gIdx) => {
+    const students = gp.submissions.filter(s => s.guideId === g.id);
+    bodyHtml += `
+      <div style="margin-top: 24px;">
+        <h3 style="color: #002B49; margin-bottom: 6px; font-size: 1.05rem;">
+          FACULTY GUIDE #${gIdx + 1}: ${escapeHTML(g.name.toUpperCase())} (${escapeHTML(g.designation)}) 
+          <span style="color: #9B1C2E; font-size: 0.9rem;">— Allocated: ${students.length} / ${g.maxStudents || 8}</span>
+        </h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 10%; text-align: center;">S.No</th>
+              <th style="width: 35%;">College Register Number</th>
+              <th style="width: 40%;">Student Name</th>
+              <th style="width: 15%; text-align: center;">Slot</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    if (students.length === 0) {
+      bodyHtml += `<tr><td colspan="4" style="text-align: center; color: #6B7280; padding: 10px;">No students allocated yet.</td></tr>`;
+    } else {
+      students.forEach((st, sIdx) => {
+        bodyHtml += `
+          <tr>
+            <td style="text-align: center;">${sIdx + 1}</td>
+            <td><strong>${escapeHTML(st.regNo)}</strong></td>
+            <td>${escapeHTML(st.studentName)}</td>
+            <td style="text-align: center;">Slot #${st.slotChosen}</td>
+          </tr>
+        `;
+      });
+    }
+
+    bodyHtml += `</tbody></table></div>`;
+  });
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Sankara College of Science and Commerce (Autonomous) - Guide-Wise Allocations</title>
+      <style>
+        body { font-family: 'Arial', sans-serif; padding: 30px; color: #1F2937; }
+        .inst-header { text-align: center; border-bottom: 2px solid #002B49; padding-bottom: 15px; margin-bottom: 20px; }
+        .inst-name { font-size: 1.4rem; font-weight: bold; color: #002B49; margin: 0; }
+        .dept-name { font-size: 1.1rem; color: #9B1C2E; font-weight: bold; margin: 5px 0; }
+        .sub-title { font-size: 0.95rem; color: #4B5563; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.9rem; }
+        th, td { border: 1px solid #CBD5E1; padding: 7px 10px; }
+        th { background: #002B49; color: #fff; text-align: left; }
+        .sig-row { display: flex; justify-content: space-between; margin-top: 60px; padding-top: 20px; }
+        .sig-box { text-align: center; width: 30%; }
+        .sig-line { border-top: 1px solid #333; margin-bottom: 6px; }
+      </style>
+    </head>
+    <body>
+      <div class="inst-header">
+        <h1 class="inst-name">SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)</h1>
+        <p class="dept-name">DEPARTMENT OF COMPUTER SCIENCE WITH DATA ANALYTICS</p>
+        <p class="sub-title">Semester VI Project Guide Allocation - Guide-Wise Grouped Student Allocation Roster</p>
+      </div>
+      ${bodyHtml}
+      <div class="sig-row">
+        <div class="sig-box"><div class="sig-line"></div><strong>CLASS TUTOR</strong><br><small>Dept. of CS with DA</small></div>
+        <div class="sig-box"><div class="sig-line"></div><strong>HEAD OF DEPARTMENT</strong><br><small>Dept. of CS with DA</small></div>
+        <div class="sig-box"><div class="sig-line"></div><strong>PRINCIPAL</strong><br><small>SCSC (Autonomous)</small></div>
+      </div>
+      <script>window.onload = function() { window.print(); };<\/script>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
+
 function promptResetGuide() {
   if (!confirm('Are you sure you want to reset all Project Guide Submissions? This action cannot be undone.')) return;
   const db = getLocalDB();
   db.guidePortal.submissions = [];
+  db.guidePortal.slotHistory = {};
+  db.guidePortal.lastSlotGuideMap = {};
+  db.guidePortal.lastAllocatedGuideId = null;
   db.guidePortal.guides.forEach(g => g.assignedCount = 0);
   saveLocalDB(db);
   alert('Project Guide submissions have been reset.');
@@ -980,7 +1352,7 @@ function promptResetElective() {
 }
 
 // ==========================================
-// 6. OFFICIAL CIRCULARS (STAFF VIEW)
+// 7. OFFICIAL CIRCULARS (STAFF VIEW)
 // ==========================================
 
 function toggleCircular(type) {
@@ -1034,7 +1406,7 @@ function renderCircularContent() {
         This is to officially inform all students of the <strong>III B.Sc. Computer Science with Data Analytics (Academic Batch 2024–2027)</strong> that the choice of Elective Courses for <strong>Semester VI</strong> is open for registration.
       </p>
       <p style="margin-bottom: 16px; text-align: justify;">
-        Students are required to register their choices for <strong>Elective II</strong> and <strong>Elective III</strong> as per the prescribed Autonomous Bharathiar University curriculum. The course with the highest aggregate student votes will be officially offered by the department.
+        Students are required to register their choices for <strong>Elective II</strong> and <strong>Elective III</strong> as per the prescribed Autonomous curriculum. The course with the highest aggregate student votes will be officially offered by the department.
       </p>
       <div style="background: #F8FAFC; border: 1px solid #CBD5E1; padding: 18px; border-radius: 6px; margin: 20px 0;">
         <strong style="color: #002B49; display: block; margin-bottom: 8px; font-size: 1.05rem;">
@@ -1069,7 +1441,7 @@ function renderCircularContent() {
 }
 
 // ==========================================
-// 7. FORMAL 5-PAGE EVENT REPORT HELPERS
+// 8. FORMAL 5-PAGE EVENT REPORT (REAL DYNAMIC RESULTS)
 // ==========================================
 
 function populateReportTables() {
@@ -1088,11 +1460,11 @@ function populateReportTables() {
         <table class="report-audit-table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Register Number</th>
-              <th>Student Name</th>
-              <th>Slot</th>
-              <th>Assigned Faculty Guide</th>
+              <th style="width: 8%; text-align: center;">#</th>
+              <th style="width: 25%;">College Register Number</th>
+              <th style="width: 32%;">Student Name</th>
+              <th style="width: 15%; text-align: center;">Slot</th>
+              <th style="width: 20%;">Assigned Faculty Guide</th>
             </tr>
           </thead>
           <tbody>
@@ -1100,10 +1472,10 @@ function populateReportTables() {
       gp.submissions.forEach((s, idx) => {
         html += `
           <tr>
-            <td>${idx + 1}</td>
+            <td style="text-align: center;">${idx + 1}</td>
             <td><strong>${escapeHTML(s.regNo)}</strong></td>
             <td>${escapeHTML(s.studentName)}</td>
-            <td>Slot #${s.slotChosen}</td>
+            <td style="text-align: center;">Slot #${s.slotChosen}</td>
             <td><strong>${escapeHTML(s.guideName || 'Guide Assigned')}</strong></td>
           </tr>
         `;
@@ -1121,11 +1493,11 @@ function populateReportTables() {
         <table class="report-audit-table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Register Number</th>
-              <th>Student Name</th>
-              <th>Elective II Choice</th>
-              <th>Elective III Choice</th>
+              <th style="width: 8%; text-align: center;">#</th>
+              <th style="width: 25%;">College Register Number</th>
+              <th style="width: 27%;">Student Name</th>
+              <th style="width: 20%;">Elective II Choice</th>
+              <th style="width: 20%;">Elective III Choice</th>
             </tr>
           </thead>
           <tbody>
@@ -1133,7 +1505,7 @@ function populateReportTables() {
       ep.submissions.forEach((s, idx) => {
         html += `
           <tr>
-            <td>${idx + 1}</td>
+            <td style="text-align: center;">${idx + 1}</td>
             <td><strong>${escapeHTML(s.regNo)}</strong></td>
             <td>${escapeHTML(s.studentName)}</td>
             <td>${escapeHTML(s.elective2Title || s.elective2Code)}</td>
@@ -1184,11 +1556,11 @@ function previewGlimpse(event, index) {
 }
 
 function renderIndividualPhotoSlots() {
-  // Initial placeholders
+  // Placeholders ready
 }
 
 // ==========================================
-// 8. MULTI-DEVICE NETWORK SYNC MODAL
+// 9. MULTI-DEVICE NETWORK SYNC MODAL
 // ==========================================
 
 function openNetworkModal() {

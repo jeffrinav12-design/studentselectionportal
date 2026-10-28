@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sankara College of Science and Commerce | Academic Selection Portal</title>
+  <title>Sankara College of Science and Commerce (Autonomous) | Academic Selection Portal</title>
   <meta name="description" content="Official Semester VI Project Guide Allocation and Elective Course Selection System for Department of Computer Science with Data Analytics, Batch 2024-2027.">
   
   <!-- Google Fonts -->
@@ -52,7 +52,7 @@
         <img src="assets/sankara_logo.jpg" alt="Sankara Educational Institutions Logo" class="sankara-logo" onclick="showGateway()" style="cursor: pointer;" title="Back to Portal Gateway">
       </div>
       <div class="header-title-box">
-        <h1 class="college-name">SANKARA COLLEGE OF SCIENCE AND COMMERCE</h1>
+        <h1 class="college-name">SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)</h1>
         <p class="college-affil">Affiliated to Bharathiar University, Coimbatore | Approved by AICTE, New Delhi</p>
         <p class="college-accred">Re-Accredited by NAAC with 'A+' Grade (Cycle II) | An ISO 9001:2015 Certified Institution</p>
         <p class="college-addr">Saravanampatty, Coimbatore, Tamil Nadu – 641035</p>
@@ -93,7 +93,7 @@
             Official terminal for III B.Sc Computer Science with Data Analytics students to select Project Guide and Elective Courses.
           </p>
           <ul class="gateway-features-list">
-            <li><i class="fa-solid fa-check"></i> Capstone Project Guide Slot Selection</li>
+            <li><i class="fa-solid fa-check"></i> Capstone Project Guide Slot Selection (8 Mystery Slots)</li>
             <li><i class="fa-solid fa-check"></i> Elective II & Elective III Course Preferences</li>
             <li><i class="fa-solid fa-check"></i> Instant Confidential Selection Receipt</li>
           </ul>
@@ -119,9 +119,9 @@
           </p>
           <ul class="gateway-features-list">
             <li><i class="fa-solid fa-check"></i> 5 Faculty Guide Configuration & Live Controls</li>
-            <li><i class="fa-solid fa-check"></i> Live Submissions & Elective Analytics</li>
+            <li><i class="fa-solid fa-check"></i> Live Submissions (Master & Guide-Wise Rosters)</li>
             <li><i class="fa-solid fa-check"></i> Official Circulars & 5-Page Event Report</li>
-            <li><i class="fa-solid fa-check"></i> Master Excel (.xlsx) & Word (.docx) Exports</li>
+            <li><i class="fa-solid fa-check"></i> Excel (.xlsx), Word (.docx) & PDF Documents</li>
           </ul>
           <div class="gateway-action-row">
             <button class="btn btn-crimson btn-block btn-lg">
@@ -177,17 +177,17 @@
           <div class="wizard-card-header">
             <span class="sub-badge"><i class="fa-solid fa-id-card-clip"></i> STEP 1 OF 2</span>
             <h3>Student Credentials</h3>
-            <p>Please enter your Register Number and registered Full Name to proceed.</p>
+            <p>Please enter your official College Register Number and registered Full Name to proceed.</p>
           </div>
 
           <form id="guideCredentialsForm" onsubmit="event.preventDefault(); nextGuideStep();">
             <div class="form-group">
-              <label for="guideRegNo">Student Register Number <span class="required">*</span></label>
+              <label for="guideRegNo">College Register Number <span class="required">*</span></label>
               <div class="input-with-icon">
                 <i class="fa-solid fa-hashtag"></i>
                 <input type="text" id="guideRegNo" placeholder="e.g. 24BSD001" required autocomplete="off" maxlength="15" autofocus>
               </div>
-              <small class="field-hint">Enter your official Bharathiar University / College Register Number.</small>
+              <small class="field-hint">Enter your official College Register Number.</small>
             </div>
 
             <div class="form-group">
@@ -210,7 +210,7 @@
           </form>
         </div>
 
-        <!-- GUIDE STEP 2: MYSTERY SLOTS -->
+        <!-- GUIDE STEP 2: 8 MYSTERY SLOTS -->
         <div class="wizard-step-card d-none fade-in" id="guideStep2">
           <div class="wizard-card-header flex-header">
             <div>
@@ -316,13 +316,14 @@
         <div class="wizard-step-card d-none fade-in" id="guideStep3">
           <div class="receipt-success-banner">
             <div class="receipt-success-icon"><i class="fa-solid fa-circle-check"></i></div>
-            <h3>Selection Recorded Successfully!</h3>
+            <h3 class="text-success" style="font-size: 1.8rem; margin-bottom: 4px;">Successfully Completed!</h3>
+            <h4 style="font-size: 1.3rem; color: var(--primary-navy); margin-bottom: 8px;">Thank You!</h4>
             <p>Your slot choice has been securely cast and saved in the departmental vault.</p>
           </div>
 
           <div class="ballot-receipt-box">
             <div class="receipt-row">
-              <span class="receipt-label"><i class="fa-solid fa-hashtag"></i> Register Number:</span>
+              <span class="receipt-label"><i class="fa-solid fa-hashtag"></i> College Register Number:</span>
               <strong class="receipt-val" id="receiptGuideRegNo">24BSD001</strong>
             </div>
             <div class="receipt-row">
@@ -372,17 +373,17 @@
           <div class="wizard-card-header">
             <span class="sub-badge"><i class="fa-solid fa-id-card-clip"></i> STEP 1 OF 2</span>
             <h3>Student Credentials</h3>
-            <p>Please enter your Register Number and registered Full Name to proceed.</p>
+            <p>Please enter your College Register Number and registered Full Name to proceed.</p>
           </div>
 
           <form id="electiveCredentialsForm" onsubmit="event.preventDefault(); nextElectiveStep();">
             <div class="form-group">
-              <label for="electiveRegNo">Student Register Number <span class="required">*</span></label>
+              <label for="electiveRegNo">College Register Number <span class="required">*</span></label>
               <div class="input-with-icon">
                 <i class="fa-solid fa-hashtag"></i>
                 <input type="text" id="electiveRegNo" placeholder="e.g. 24BSD001" required autocomplete="off" maxlength="15">
               </div>
-              <small class="field-hint">Enter your official college Register Number.</small>
+              <small class="field-hint">Enter your official College Register Number.</small>
             </div>
 
             <div class="form-group">
@@ -527,13 +528,14 @@
         <div class="wizard-step-card d-none fade-in" id="electiveStep3">
           <div class="receipt-success-banner">
             <div class="receipt-success-icon"><i class="fa-solid fa-circle-check"></i></div>
-            <h3>Elective Selection Recorded!</h3>
+            <h3 class="text-success" style="font-size: 1.8rem; margin-bottom: 4px;">Successfully Completed!</h3>
+            <h4 style="font-size: 1.3rem; color: var(--primary-navy); margin-bottom: 8px;">Thank You!</h4>
             <p>Your elective course choices have been registered in the departmental database.</p>
           </div>
 
           <div class="ballot-receipt-box">
             <div class="receipt-row">
-              <span class="receipt-label"><i class="fa-solid fa-hashtag"></i> Register Number:</span>
+              <span class="receipt-label"><i class="fa-solid fa-hashtag"></i> College Register Number:</span>
               <strong class="receipt-val" id="receiptElectiveRegNo">24BSD001</strong>
             </div>
             <div class="receipt-row">
@@ -632,8 +634,31 @@
 
         <!-- STAFF SUB-PANE 1: LIVE SUBMISSIONS -->
         <div id="staff-submissions" class="staff-sub-pane active fade-in">
+          <!-- View switcher bar for Live Submissions -->
+          <div class="view-switcher-bar">
+            <div class="view-btn-group">
+              <button class="view-btn active" id="btnViewMasterTable" onclick="toggleSubmissionsView('master')">
+                <i class="fa-solid fa-table-list"></i> Master Student Allocation List
+              </button>
+              <button class="view-btn" id="btnViewGuideWise" onclick="toggleSubmissionsView('guidewise')">
+                <i class="fa-solid fa-users-line"></i> Guide-Wise Student Grouping
+              </button>
+            </div>
+            <div class="export-btn-group">
+              <button class="btn btn-sm btn-outline" onclick="downloadMasterStudentExcel()" title="Download Excel">
+                <i class="fa-solid fa-file-excel text-success"></i> Master Excel
+              </button>
+              <button class="btn btn-sm btn-outline" onclick="downloadGuideWiseExcel()" title="Download Guide-wise Excel">
+                <i class="fa-solid fa-file-excel text-success"></i> Guide-Wise Excel
+              </button>
+              <button class="btn btn-sm btn-outline" onclick="printMasterPDF()" title="Print / PDF">
+                <i class="fa-solid fa-print text-danger"></i> Print PDF
+              </button>
+            </div>
+          </div>
+
           <div class="admin-grid-2col">
-            <!-- Guide Submissions -->
+            <!-- Guide Submissions Column -->
             <div class="admin-card">
               <div class="card-header">
                 <div>
@@ -644,12 +669,19 @@
                   <i class="fa-solid fa-rotate-left"></i> Reset
                 </button>
               </div>
+
+              <!-- Master Table Container -->
               <div class="table-responsive table-scrollable" id="adminGuideSubmissionsTable">
                 <p class="text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Loading allocations...</p>
               </div>
+
+              <!-- Guide-Wise Container (Hidden by default) -->
+              <div id="adminGuideWiseContainer" class="d-none">
+                <!-- Dynamically rendered guide-wise cards -->
+              </div>
             </div>
 
-            <!-- Elective Submissions -->
+            <!-- Elective Submissions Column -->
             <div class="admin-card">
               <div class="card-header">
                 <div>
@@ -674,7 +706,7 @@
             <div class="live-toggle-info">
               <span class="live-pill" id="adminLivePill"><i class="fa-solid fa-circle-check"></i> SLOTS STATUS: LIVE</span>
               <h4>Student Slot Selection Status: <span id="adminLiveText" class="text-success">LIVE (Open for Students)</span></h4>
-              <p>Configure the 5 Project Guide Faculty (Ma'am) names below. Changes reflect instantly in all exports and departmental records.</p>
+              <p>Configure the 5 Project Guide Faculty (Ma'am) names below. 4 guides have a quota of 8 students; 1 guide has 9 allocations (Total = 41 students). Changes reflect instantly.</p>
             </div>
             <div class="live-toggle-btns">
               <button class="btn btn-success" onclick="activateGuideSlotsLive()">
@@ -691,7 +723,7 @@
             <div class="card-header">
               <div>
                 <h3><i class="fa-solid fa-user-pen"></i> 5 Guide Faculty Names & Capacity Setup</h3>
-                <p class="subtitle">Update the official faculty names. Base quota is strictly 8 students each (one faculty receives 9th student for 41 total).</p>
+                <p class="subtitle">Update the official faculty names. Base quota is strictly 8 students each (one guide alone receives the 9th student for 41 total). Once 8 students are allocated, that guide is terminated automatically.</p>
               </div>
               <button class="btn btn-primary" onclick="saveGuideConfiguration(true)">
                 <i class="fa-solid fa-floppy-disk"></i> Save Configuration
@@ -777,7 +809,7 @@
                   <img src="assets/sankara_logo.jpg" alt="Sankara Crest Logo" class="circ-crest">
                 </div>
                 <div class="circ-title-col">
-                  <h2 class="inst-name">SANKARA COLLEGE OF SCIENCE AND COMMERCE</h2>
+                  <h2 class="inst-name">SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)</h2>
                   <p class="inst-affil">Affiliated to Bharathiar University, Coimbatore | Approved by AICTE, New Delhi</p>
                   <p class="inst-accred">Re-Accredited by NAAC with 'A+' Grade (Cycle II) | An ISO 9001:2015 Certified Institution</p>
                   <p class="inst-loc">Saravanampatty, Coimbatore, Tamilnadu | Pincode: 641035</p>
@@ -803,55 +835,25 @@
 
               <!-- Dynamic Circular Body Text -->
               <div class="circular-body" id="circularBodyContent" style="font-size: 1.05rem; line-height: 1.8; color: #1F2937; position: relative; z-index: 2;">
-                <p style="margin-bottom: 16px; text-indent: 40px; text-align: justify;">
-                  This is to officially inform all students of the <strong>III B.Sc. Computer Science with Data Analytics (Academic Batch 2024–2027)</strong> that the selection and allotment of Faculty Project Guides for the <strong>Semester VI Capstone Project (Course Code: 24BSD63V01)</strong> is scheduled to commence as per departmental autonomy regulations.
-                </p>
-                <p style="margin-bottom: 16px; text-align: justify;">
-                  To ensure absolute merit, transparency, and impartiality, the allotment process is conducted via the <strong>Data Sorcerers Dynamic Selection Suite</strong>. Each of the 5 Faculty Guide members (Ma'ams) is assigned an equal base student quota of strictly <strong>8 students</strong> (with exactly one faculty receiving the 41st student).
-                </p>
-                <div style="background: #F8FAFC; border: 1px solid #CBD5E1; padding: 18px; border-radius: 6px; margin: 20px 0;">
-                  <strong style="color: #002B49; display: block; margin-bottom: 8px; font-size: 1.05rem;">
-                    <i class="fa-solid fa-list-check"></i> Procedural Guidelines for Students:
-                  </strong>
-                  <ol style="margin-left: 24px; font-size: 0.95rem; line-height: 1.7;">
-                    <li>Students must enter their official College Register Number and registered Full Name on the selection terminal.</li>
-                    <li>Choose any mystery slot number from <strong>1 to 8</strong> on the interactive selection terminal.</li>
-                    <li>Faculty mappings behind slots are dynamically rotated and shuffled for every student to eliminate collusion or pre-arranged slot trading.</li>
-                    <li>All selections are recorded via <strong>confidential secret ballot</strong>. Official allotment lists will be released by the department after all 41 students have cast their choices.</li>
-                    <li>Allocations once confirmed by the system are final and strictly non-transferable.</li>
-                  </ol>
-                </div>
-                <p style="text-align: justify; margin-top: 14px;">
-                  All students are required to complete their slot selection strictly within the designated schedule. Non-compliance will result in direct administrative allocation.
-                </p>
+                <!-- Populated dynamically via JS -->
               </div>
 
-              <!-- Signature Block -->
-              <div class="circular-signatures">
+              <!-- Signature Block (ONLY TUTOR, HOD, PRINCIPAL) -->
+              <div class="circular-signatures-3col">
                 <div class="sig-block">
                   <div class="sig-line"></div>
-                  <p class="sig-title">Staff Coordinator</p>
-                  <p class="sig-sub">Project In-Charge</p>
-                </div>
-                <div class="sig-block">
-                  <div class="sig-line"></div>
-                  <p class="sig-title">Class Tutor</p>
+                  <p class="sig-title">CLASS TUTOR</p>
                   <p class="sig-sub">Dept. of CS with DA</p>
                 </div>
                 <div class="sig-block">
                   <div class="sig-line"></div>
-                  <p class="sig-title">Head of Department</p>
+                  <p class="sig-title">HEAD OF DEPARTMENT</p>
                   <p class="sig-sub">Computer Science & DA</p>
                 </div>
                 <div class="sig-block">
                   <div class="sig-line"></div>
-                  <p class="sig-title">Vice Principal</p>
-                  <p class="sig-sub">SCSC</p>
-                </div>
-                <div class="sig-block">
-                  <div class="sig-line"></div>
-                  <p class="sig-title">Principal</p>
-                  <p class="sig-sub">SCSC</p>
+                  <p class="sig-title">PRINCIPAL</p>
+                  <p class="sig-sub">SCSC (Autonomous)</p>
                 </div>
               </div>
 
@@ -887,7 +889,7 @@
                 <div class="cover-inst-text">
                   <h1 class="cover-inst-title">SANKARA</h1>
                   <p class="cover-inst-sub">COLLEGE OF SCIENCE & COMMERCE</p>
-                  <p class="cover-inst-auto">AUTONOMOUS INSTITUTION</p>
+                  <p class="cover-inst-auto">(AUTONOMOUS INSTITUTION)</p>
                   <p class="cover-inst-addr">Saravanampatty, Coimbatore - 641035</p>
                 </div>
                 <div class="cover-naac-badge">
@@ -958,7 +960,7 @@
               <div class="rep-letterhead">
                 <img src="assets/sankara_logo.jpg" alt="Sankara Crest" class="rep-logo-crest">
                 <div class="rep-head-text">
-                  <h2>SANKARA COLLEGE OF SCIENCE AND COMMERCE</h2>
+                  <h2>SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)</h2>
                   <span class="auto-tag">(AUTONOMOUS)</span>
                   <p class="rep-affil">Affiliated to Bharathiar University, Coimbatore | Approved by AICTE, New Delhi</p>
                   <p class="rep-accred">Re-Accredited by NAAC with A+ Grade (Cycle II) | An ISO 9001:2015 Certified Institution</p>
@@ -996,7 +998,7 @@
                 <p>
                   An automated, cryptographically randomized allocation initiative was conducted by the Department of Computer Science 
                   with Data Analytics as a part of its academic curriculum enrichment programs. The session focused on executing 
-                  project guide allotment with high fairness and zero preferential bias through a 
+                  project guide allotment with high fairness and zero preferential bias through an automated 
                   <strong>Dynamic Anti-Collision Slot Shuffling Engine</strong>, ensuring that students selecting identical slots 
                   receive rotated guide mappings.
                 </p>
@@ -1018,10 +1020,10 @@
                 <h4 class="rep-block-title">PROGRAM FLOW & METHODOLOGY</h4>
                 <p>
                   The session began with an orientation on the software architecture and dynamic shuffling rules. Students registered 
-                  using their official college Register Number and Full Name. Upon clicking a mystery slot, the underlying engine 
+                  using their official College Register Number and Full Name. Upon clicking a mystery slot, the underlying engine 
                   dynamically mapped an eligible faculty guide whose quota was not yet saturated. Real-time anti-collision rules 
-                  guaranteed that if a previous student received a guide from a specific slot, the very next student clicking that 
-                  same slot received a dynamically varied guide.
+                  guaranteed that if a previous student received a guide from a specific slot, subsequent students clicking that 
+                  same slot received dynamically varied guides.
                 </p>
               </div>
 
@@ -1064,13 +1066,13 @@
                 <h4 class="rep-block-title">CONCLUSION</h4>
                 <p>
                   The Project Guide Allocation and Elective Selection was concluded successfully. Feedback from students and 
-                  faculty was exceptionally positive, validating that the digital slot shuffling mechanism completely eliminated 
+                  faculty was exceptionally positive, validating that the digital slot mechanism completely eliminated 
                   disputes and established a streamlined, equitable platform for final year project supervision.
                 </p>
               </div>
             </div>
 
-            <!-- PAGE 5: SIGNATURES & APPENDIX -->
+            <!-- PAGE 5: SIGNATURES & DYNAMIC REAL RESULTS APPENDIX -->
             <div class="report-page page-5">
               <div class="rep-content-block">
                 <p>
@@ -1079,27 +1081,37 @@
                 </p>
               </div>
 
-              <div class="rep-official-signatures">
+              <!-- SIGNATURE BLOCK: ONLY TUTOR, HOD, PRINCIPAL -->
+              <div class="rep-official-signatures-3col">
                 <div class="rep-sig-col">
                   <div class="rep-sig-space"></div>
-                  <strong>STAFFS IN-CHARGE</strong>
+                  <strong>CLASS TUTOR</strong>
+                  <p>Dept. of CS with Data Analytics</p>
+                </div>
+                <div class="rep-sig-col text-center">
+                  <div class="rep-sig-space"></div>
+                  <strong>HEAD OF DEPARTMENT (HOD)</strong>
                   <p>Dept. of CS with Data Analytics</p>
                 </div>
                 <div class="rep-sig-col text-right">
                   <div class="rep-sig-space"></div>
-                  <strong>HOD</strong>
-                  <p>Dept. of CS with Data Analytics</p>
+                  <strong>PRINCIPAL</strong>
+                  <p>Sankara College of Science & Commerce (Autonomous)</p>
                 </div>
               </div>
 
               <hr class="report-divider">
 
+              <!-- REAL DYNAMIC RESULTS APPENDIX -->
               <div class="rep-content-block">
-                <h4 class="rep-block-title">APPENDIX: LIVE ALLOCATION & SELECTION ROSTER</h4>
+                <h4 class="rep-block-title">APPENDIX: LIVE ALLOCATION & SELECTION ROSTER (ACTUAL GENERATED RESULTS)</h4>
+                <h5 class="mt-2 mb-2"><i class="fa-solid fa-cube text-primary"></i> 1. Project Guide Allotment Results:</h5>
                 <div id="reportGuideTableContainer" class="table-responsive">
                   <p class="text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Awaiting student registrations...</p>
                 </div>
-                <div id="reportElectiveTableContainer" class="table-responsive mt-4">
+                
+                <h5 class="mt-4 mb-2"><i class="fa-solid fa-layer-group text-primary"></i> 2. Elective Course Preference Results:</h5>
+                <div id="reportElectiveTableContainer" class="table-responsive">
                   <p class="text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Awaiting elective submissions...</p>
                 </div>
               </div>
@@ -1111,51 +1123,81 @@
         <div id="staff-exports" class="staff-sub-pane d-none fade-in">
           <div class="admin-card">
             <div class="card-header">
-              <h3><i class="fa-solid fa-file-export"></i> Master Excel & Word Document Exports</h3>
+              <h3><i class="fa-solid fa-file-export"></i> Master Excel, Word Document & PDF Exports</h3>
             </div>
             <div class="exports-action-grid">
+              <!-- Export Card 1: Master Student List -->
               <div class="export-box">
                 <div class="export-icon"><i class="fa-solid fa-file-excel text-success"></i></div>
                 <div class="export-info">
-                  <h4>Project Guide Selection (Excel)</h4>
-                  <p>Includes Master Student Allocation and Guide-wise Distribution with student counts.</p>
+                  <h4>1. Master Student Allocation Roster</h4>
+                  <p>List of all 41 students with their College Register Number, Name, Slot, and Allocated Faculty Guide.</p>
                 </div>
-                <button class="btn btn-outline" onclick="downloadMasterExcel()">
-                  <i class="fa-solid fa-download"></i> Download .xlsx
-                </button>
+                <div class="export-btn-row">
+                  <button class="btn btn-sm btn-outline" onclick="downloadMasterStudentExcel()">
+                    <i class="fa-solid fa-file-excel text-success"></i> Excel (.xlsx)
+                  </button>
+                  <button class="btn btn-sm btn-outline" onclick="downloadMasterWord()">
+                    <i class="fa-solid fa-file-word text-primary"></i> Word (.docx)
+                  </button>
+                  <button class="btn btn-sm btn-outline" onclick="printMasterPDF()">
+                    <i class="fa-solid fa-print text-danger"></i> Print / PDF
+                  </button>
+                </div>
               </div>
 
+              <!-- Export Card 2: Guide-Wise Grouped Allocation -->
               <div class="export-box">
-                <div class="export-icon"><i class="fa-solid fa-file-excel text-success"></i></div>
+                <div class="export-icon"><i class="fa-solid fa-users text-primary"></i></div>
                 <div class="export-info">
-                  <h4>Elective Selection (Excel)</h4>
-                  <p>Student choices plus Elective Popularity Analytics and Highest-Chosen highlight.</p>
+                  <h4>2. Guide-Wise Grouped Student Allocation</h4>
+                  <p>Grouped by Faculty Guide Name, displaying each guide's allocated students with College Register Numbers and Names.</p>
                 </div>
-                <button class="btn btn-outline" onclick="downloadElectiveExcel()">
-                  <i class="fa-solid fa-download"></i> Download .xlsx
-                </button>
+                <div class="export-btn-row">
+                  <button class="btn btn-sm btn-outline" onclick="downloadGuideWiseExcel()">
+                    <i class="fa-solid fa-file-excel text-success"></i> Excel (.xlsx)
+                  </button>
+                  <button class="btn btn-sm btn-outline" onclick="downloadGuideWiseWord()">
+                    <i class="fa-solid fa-file-word text-primary"></i> Word (.docx)
+                  </button>
+                  <button class="btn btn-sm btn-outline" onclick="printGuideWisePDF()">
+                    <i class="fa-solid fa-print text-danger"></i> Print / PDF
+                  </button>
+                </div>
               </div>
 
+              <!-- Export Card 3: Elective Course Selection -->
               <div class="export-box">
-                <div class="export-icon"><i class="fa-solid fa-file-word text-primary"></i></div>
+                <div class="export-icon"><i class="fa-solid fa-book-open text-warning"></i></div>
                 <div class="export-info">
-                  <h4>Elective Selection Report (Word)</h4>
-                  <p>Official resolution formatted Word document (.docx) with signatures.</p>
+                  <h4>3. Elective Selection Resolution & Votes</h4>
+                  <p>Student choices for Elective II & III, leading course winners, and distribution percentages.</p>
                 </div>
-                <button class="btn btn-outline" onclick="downloadElectiveWord()">
-                  <i class="fa-solid fa-download"></i> Download .docx
-                </button>
+                <div class="export-btn-row">
+                  <button class="btn btn-sm btn-outline" onclick="downloadElectiveExcel()">
+                    <i class="fa-solid fa-file-excel text-success"></i> Excel (.xlsx)
+                  </button>
+                  <button class="btn btn-sm btn-outline" onclick="downloadElectiveWord()">
+                    <i class="fa-solid fa-file-word text-primary"></i> Word (.docx)
+                  </button>
+                  <button class="btn btn-sm btn-outline" onclick="window.print()">
+                    <i class="fa-solid fa-print text-danger"></i> Print / PDF
+                  </button>
+                </div>
               </div>
 
+              <!-- Export Card 4: JSON Backup -->
               <div class="export-box">
-                <div class="export-icon"><i class="fa-solid fa-database text-warning"></i></div>
+                <div class="export-icon"><i class="fa-solid fa-database text-secondary"></i></div>
                 <div class="export-info">
-                  <h4>Full System Data Backup</h4>
-                  <p>Export all submissions and configurations in JSON format for offline record.</p>
+                  <h4>4. Full System Database Backup</h4>
+                  <p>Complete JSON snapshot of all allocations, student submissions, and configurations.</p>
                 </div>
-                <button class="btn btn-outline" onclick="downloadBackupJSON()">
-                  <i class="fa-solid fa-download"></i> Download Backup
-                </button>
+                <div class="export-btn-row">
+                  <button class="btn btn-sm btn-outline" onclick="downloadBackupJSON()">
+                    <i class="fa-solid fa-download"></i> Download JSON Backup
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1204,7 +1246,7 @@
   <footer class="app-footer">
     <div class="container footer-content">
       <div class="footer-left">
-        <strong>Sankara College of Science and Commerce</strong> • Department of Computer Science with Data Analytics
+        <strong>Sankara College of Science and Commerce (Autonomous)</strong> • Department of Computer Science with Data Analytics
         <br>
         <span class="footer-sub">Semester VI Project Guide Allocation & Elective Selection System | Batch 2024–2027</span>
       </div>

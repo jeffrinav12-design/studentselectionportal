@@ -429,7 +429,7 @@ app.post('/api/guide/admin/reset', (req, res) => {
   res.json({ success: true, message: 'Guide submissions reset successfully.' });
 });
 
-// Guide Excel Export
+// Guide Excel Export (Master + Guide-Wise)
 app.get('/api/guide/export/excel', (req, res) => {
   const db = loadDB();
   const guidePortal = db.guidePortal;
@@ -438,12 +438,12 @@ app.get('/api/guide/export/excel', (req, res) => {
 
   // Sheet 1: Master Allocation List
   const masterData = [
-    ["SANKARA COLLEGE OF SCIENCE AND COMMERCE"],
+    ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
     ["Department of Computer Science with Data Analytics"],
     ["Batch 2024-2027 | Semester VI - Project Guide Selection Master List"],
     ["Generated on: " + new Date().toLocaleString()],
     [],
-    ["S.No", "Register Number", "Student Name", "Slot Chosen", "Allocated Project Guide", "Selection Date & Time"]
+    ["S.No", "College Register Number", "Student Name", "Slot Chosen", "Allocated Project Guide", "Selection Date & Time"]
   ];
 
   guidePortal.submissions.forEach((s, idx) => {
@@ -460,7 +460,7 @@ app.get('/api/guide/export/excel', (req, res) => {
   const wsMaster = XLSX.utils.aoa_to_sheet(masterData);
   wsMaster['!cols'] = [
     { wch: 8 },
-    { wch: 18 },
+    { wch: 22 },
     { wch: 28 },
     { wch: 14 },
     { wch: 30 },
@@ -470,15 +470,15 @@ app.get('/api/guide/export/excel', (req, res) => {
 
   // Sheet 2: Guide-wise Grouping
   const guideWiseData = [
-    ["SANKARA COLLEGE OF SCIENCE AND COMMERCE"],
+    ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
     ["Department of Computer Science with Data Analytics - Guide-wise Student Allocation"],
     []
   ];
 
   guidePortal.guides.forEach(g => {
     const students = guidePortal.submissions.filter(s => s.guideId === g.id);
-    guideWiseData.push([`GUIDE: ${g.name.toUpperCase()} (${g.designation})`, `Total Students: ${students.length} / ${g.maxStudents}`]);
-    guideWiseData.push(["S.No", "Register Number", "Student Name", "Slot Chosen", "Allocated Guide"]);
+    guideWiseData.push([`FACULTY GUIDE: ${g.name.toUpperCase()} (${g.designation})`, `Total Students: ${students.length} / ${g.maxStudents}`]);
+    guideWiseData.push(["S.No", "College Register Number", "Student Name", "Slot Chosen", "Allocated Guide"]);
     if (students.length === 0) {
       guideWiseData.push(["-", "No students allocated yet", "-", "-", "-"]);
     } else {
@@ -492,13 +492,60 @@ app.get('/api/guide/export/excel', (req, res) => {
   const wsGuideWise = XLSX.utils.aoa_to_sheet(guideWiseData);
   wsGuideWise['!cols'] = [
     { wch: 8 },
-    { wch: 20 },
+    { wch: 24 },
     { wch: 30 },
     { wch: 14 },
     { wch: 30 }
   ];
   XLSX.utils.book_append_sheet(wb, wsGuideWise, "Guide-wise Summary");
 
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  res.setHeader('Content-Disposition', 'attachment; filename="Project_Guide_Selection_Master.xlsx"');
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.send(buffer);
+});
+
+// Guide-Wise Dedicated Excel Export (.xlsx)
+app.get('/api/guide/export/excel-guidewise', (req, res) => {
+  const db = loadDB();
+  const guidePortal = db.guidePortal;
+  const wb = XLSX.utils.book_new();
+
+  const guideWiseData = [
+    ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
+    ["Department of Computer Science with Data Analytics - Guide-wise Allocated Students Roster"],
+    ["Academic Batch 2024-2027 | Semester VI"],
+    ["Generated on: " + new Date().toLocaleString()],
+    []
+  ];
+
+  guidePortal.guides.forEach((g, gIdx) => {
+    const students = guidePortal.submissions.filter(s => s.guideId === g.id);
+    guideWiseData.push([`GUIDE #${gIdx + 1}: ${g.name.toUpperCase()} - ${g.designation}`, `Allocated: ${students.length} / ${g.maxStudents}`]);
+    guideWiseData.push(["S.No", "College Register Number", "Student Name", "Slot Chosen", "Allocated Guide"]);
+    if (students.length === 0) {
+      guideWiseData.push(["-", "No students allocated yet", "-", "-", "-"]);
+    } else {
+      students.forEach((st, sIdx) => {
+        guideWiseData.push([sIdx + 1, st.regNo, st.studentName, "Slot " + st.slotChosen, g.name]);
+      });
+    }
+    guideWiseData.push([]); // blank row
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(guideWiseData);
+  ws['!cols'] = [
+    { wch: 8 },
+    { wch: 24 },
+    { wch: 30 },
+    { wch: 14 },
+    { wch: 30 }
+  ];
+  XLSX.utils.book_append_sheet(wb, ws, "Guide-wise Students");
+
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  res.setHeader('Content-Disposition', 'attachment; filename="Guide_Wise_Student_Allocations.xlsx"');
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.send(buffer);
 });
 
@@ -584,7 +631,7 @@ app.get('/api/guide/export/word', async (req, res) => {
         new Paragraph({
           alignment: AlignmentType.CENTER,
           children: [
-            new TextRun({ text: "SANKARA COLLEGE OF SCIENCE AND COMMERCE", bold: true, size: 28, color: "002B49" })
+            new TextRun({ text: "SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)", bold: true, size: 28, color: "002B49" })
           ]
         }),
         new Paragraph({
@@ -643,7 +690,131 @@ app.get('/api/guide/export/word', async (req, res) => {
   });
 
   const buffer = await Packer.toBuffer(doc);
-  res.setHeader('Content-Disposition', 'attachment; filename="Project_Guide_Allocation_Report.docx"');
+  res.setHeader('Content-Disposition', 'attachment; filename="Project_Guide_Allocation_Master_Report.docx"');
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  res.send(buffer);
+});
+
+// Guide-Wise Word Document (.docx) Export
+app.get('/api/guide/export/word-guidewise', async (req, res) => {
+  const db = loadDB();
+  const guidePortal = db.guidePortal;
+
+  const tableHeaderCell = (text, widthPct = 20) => new TableCell({
+    width: { size: widthPct, type: WidthType.PERCENTAGE },
+    children: [new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [new TextRun({ text, bold: true, color: "FFFFFF" })]
+    })],
+    shading: { fill: "002B49" }
+  });
+
+  const tableDataCell = (text, align = AlignmentType.LEFT, bold = false) => new TableCell({
+    children: [new Paragraph({
+      alignment: align,
+      children: [new TextRun({ text: String(text || '-'), bold })]
+    })]
+  });
+
+  const docChildren = [
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [
+        new TextRun({ text: "SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)", bold: true, size: 28, color: "002B49" })
+      ]
+    }),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [
+        new TextRun({ text: "Department of Computer Science with Data Analytics", bold: true, size: 24, color: "A6192E" })
+      ]
+    }),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [
+        new TextRun({ text: "Batch 2024 - 2027 | Semester VI - Guide-Wise Student Allocation Roster", italics: true, size: 20 })
+      ]
+    }),
+    new Paragraph({ text: "" })
+  ];
+
+  guidePortal.guides.forEach((g, gIdx) => {
+    const students = guidePortal.submissions.filter(s => s.guideId === g.id);
+
+    docChildren.push(
+      new Paragraph({
+        children: [
+          new TextRun({ text: `FACULTY GUIDE #${gIdx + 1}: ${g.name.toUpperCase()}`, bold: true, size: 22, color: "002B49" }),
+          new TextRun({ text: ` (${g.designation}) — Total Allocated: ${students.length} / ${g.maxStudents}`, italics: true, size: 20 })
+        ]
+      })
+    );
+
+    const rows = [
+      new TableRow({
+        children: [
+          tableHeaderCell("S.No", 10),
+          tableHeaderCell("College Register Number", 30),
+          tableHeaderCell("Student Name", 40),
+          tableHeaderCell("Slot Chosen", 20)
+        ]
+      })
+    ];
+
+    if (students.length === 0) {
+      rows.push(
+        new TableRow({
+          children: [
+            tableDataCell("-", AlignmentType.CENTER),
+            tableDataCell("No students allocated yet"),
+            tableDataCell("-"),
+            tableDataCell("-")
+          ]
+        })
+      );
+    } else {
+      students.forEach((st, sIdx) => {
+        rows.push(
+          new TableRow({
+            children: [
+              tableDataCell(sIdx + 1, AlignmentType.CENTER),
+              tableDataCell(st.regNo, AlignmentType.CENTER, true),
+              tableDataCell(st.studentName),
+              tableDataCell("Slot #" + st.slotChosen, AlignmentType.CENTER)
+            ]
+          })
+        );
+      });
+    }
+
+    docChildren.push(
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows
+      })
+    );
+
+    docChildren.push(new Paragraph({ text: "" }));
+  });
+
+  docChildren.push(new Paragraph({ text: "" }));
+  docChildren.push(
+    new Paragraph({
+      children: [
+        new TextRun({ text: "CLASS TUTOR                           HEAD OF DEPARTMENT (HOD)                           PRINCIPAL", bold: true })
+      ]
+    })
+  );
+
+  const doc = new Document({
+    sections: [{
+      properties: {},
+      children: docChildren
+    }]
+  });
+
+  const buffer = await Packer.toBuffer(doc);
+  res.setHeader('Content-Disposition', 'attachment; filename="Guide_Wise_Student_Allocations.docx"');
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
   res.send(buffer);
 });
