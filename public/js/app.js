@@ -1036,6 +1036,48 @@ function updateElectiveAnalyticsUI() {
 // 6. EXPORT ENGINES (EXCEL, WORD, PDF)
 // ==========================================
 
+// Helper: 100% Binary-Safe Excel Workbook Downloader
+function saveWorkbookAsExcel(wb, filename) {
+  try {
+    // Generate ArrayBuffer directly using SheetJS DEFLATE compression
+    const wbout = XLSX.write(wb, {
+      bookType: 'xlsx',
+      type: 'array',
+      compression: true
+    });
+
+    // Create Blob with official Microsoft Excel OpenXML MIME type
+    const blob = new Blob([wbout], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
+    });
+
+    // Native Microsoft Edge / IE fallback
+    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+      window.navigator.msSaveOrOpenBlob(blob, filename);
+      return;
+    }
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }, 2000);
+  } catch (err) {
+    console.error('Error saving Excel file:', err);
+    try {
+      XLSX.writeFile(wb, filename, { bookType: 'xlsx' });
+    } catch (e2) {
+      alert('Unable to download Excel file: ' + e2.message);
+    }
+  }
+}
+
 // 1. Master Student Allocation Excel (.xlsx)
 function downloadMasterStudentExcel() {
   const db = getLocalDB();
@@ -1048,31 +1090,103 @@ function downloadMasterStudentExcel() {
 
   const wb = XLSX.utils.book_new();
 
+  // --- SHEET 1: Master Student Allocation List ---
   const masterRows = [
     ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
+    ["Affiliated to Bharathiar University | Approved by AICTE | Re-Accredited with 'A' Grade by NAAC"],
     ["Department of Computer Science with Data Analytics"],
-    ["Semester VI Project Guide Allocation - Master Student List"],
-    ["Generated on: " + new Date().toLocaleString()],
+    ["ACADEMIC BATCH 2024–2027 | SEMESTER VI - PROJECT GUIDE ALLOCATION MASTER LIST"],
+    ["Total Target: 41 Students (4 Faculty Guides × 8 Quota + 1 Faculty Guide × 9 Quota = 41)"],
+    ["Report Generated: " + new Date().toLocaleString()],
     [],
-    ["S.No", "College Register Number", "Student Name", "Mystery Slot Chosen", "Allocated Faculty Guide", "Timestamp"]
+    ["S.No", "College Register Number", "Student Name", "Mystery Slot Chosen", "Allocated Faculty Guide", "Guide Designation", "Timestamp", "Status"]
   ];
 
-  gp.submissions.forEach((s, idx) => {
-    masterRows.push([
-      idx + 1,
-      s.regNo,
-      s.studentName,
-      `Slot #${s.slotChosen}`,
-      s.guideName || 'Guide Assigned',
-      s.timestamp || ''
-    ]);
+  if (!gp.submissions || gp.submissions.length === 0) {
+    masterRows.push([1, "SAMPLE - 24BDA101", "Student Name (Awaiting Registrations)", "Slot #1", "Dr. K. Meenakshi", "Assistant Professor, CS & DA", new Date().toLocaleString(), "PENDING"]);
+  } else {
+    gp.submissions.forEach((s, idx) => {
+      const guideObj = (gp.guides || []).find(g => g.id === s.guideId);
+      masterRows.push([
+        idx + 1,
+        String(s.regNo || ''),
+        String(s.studentName || ''),
+        `Slot #${s.slotChosen}`,
+        String(s.guideName || (guideObj ? guideObj.name : 'Guide Assigned')),
+        String(guideObj ? guideObj.designation : 'Assistant Professor, CS & DA'),
+        String(s.timestamp || new Date().toLocaleString()),
+        "CONFIRMED"
+      ]);
+    });
+  }
+
+  masterRows.push([]);
+  masterRows.push(["--- OFFICIAL VERIFICATION & AUTHORIZATION SIGNATURES ---"]);
+  masterRows.push(["CLASS TUTOR", "", "HEAD OF DEPARTMENT (HOD)", "", "PRINCIPAL"]);
+  masterRows.push(["Signature: _______________________", "", "Signature: _______________________", "", "Signature: _______________________"]);
+
+  const wsMaster = XLSX.utils.aoa_to_sheet(masterRows);
+  wsMaster['!cols'] = [
+    { wch: 8 },
+    { wch: 24 },
+    { wch: 30 },
+    { wch: 18 },
+    { wch: 30 },
+    { wch: 32 },
+    { wch: 24 },
+    { wch: 16 }
+  ];
+  XLSX.utils.book_append_sheet(wb, wsMaster, "Master Student Roster");
+
+  // --- SHEET 2: Guide-Wise Summary ---
+  const gwSummaryRows = [
+    ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
+    ["Department of Computer Science with Data Analytics - Guide-Wise Summary"],
+    ["Report Generated: " + new Date().toLocaleString()],
+    []
+  ];
+
+  (gp.guides || []).forEach((g, gIdx) => {
+    const students = (gp.submissions || []).filter(s => s.guideId === g.id);
+    gwSummaryRows.push([`FACULTY GUIDE #${gIdx + 1}: ${g.name.toUpperCase()} (${g.designation})`, `Allocated: ${students.length} / ${g.maxStudents} Students`]);
+    gwSummaryRows.push(["S.No", "College Register Number", "Student Name", "Slot Chosen", "Allocated Guide", "Status"]);
+
+    if (students.length === 0) {
+      gwSummaryRows.push(["N/A", "No students allocated to this guide yet", "Awaiting Selection", "N/A", g.name, "VACANT"]);
+    } else {
+      students.forEach((st, sIdx) => {
+        gwSummaryRows.push([sIdx + 1, String(st.regNo || ''), String(st.studentName || ''), `Slot #${st.slotChosen}`, g.name, "CONFIRMED"]);
+      });
+    }
+    gwSummaryRows.push([]);
   });
 
-  const ws = XLSX.utils.aoa_to_sheet(masterRows);
-  ws['!cols'] = [{ wch: 8 }, { wch: 24 }, { wch: 30 }, { wch: 18 }, { wch: 30 }, { wch: 24 }];
-  XLSX.utils.book_append_sheet(wb, ws, "Master Student Roster");
+  const wsSummary = XLSX.utils.aoa_to_sheet(gwSummaryRows);
+  wsSummary['!cols'] = [{ wch: 8 }, { wch: 24 }, { wch: 30 }, { wch: 16 }, { wch: 30 }, { wch: 16 }];
+  XLSX.utils.book_append_sheet(wb, wsSummary, "Guide-Wise Summary");
 
-  XLSX.writeFile(wb, "Master_Student_Guide_Allocations.xlsx");
+  // --- SHEET 3: Quota Statistics & System Rules ---
+  const statsRows = [
+    ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
+    ["Department of Computer Science with Data Analytics - Allocation Rules & Quota Status"],
+    [],
+    ["Metric / Rule Description", "Official Value / Configuration"],
+    ["Academic Department", "Department of Computer Science with Data Analytics"],
+    ["Academic Batch", "2024–2027 (Semester VI)"],
+    ["Total Target Student Strength", "41 Students"],
+    ["Total Registered Students", String(gp.submissions ? gp.submissions.length : 0)],
+    ["Remaining Students", String(Math.max(0, 41 - (gp.submissions ? gp.submissions.length : 0)))],
+    ["Completion Percentage", `${Math.round(((gp.submissions ? gp.submissions.length : 0) / 41) * 100)}%`],
+    ["Guide Quota Breakdown", "4 Guides × 8 Quota + 1 Guide × 9 Quota = 41 Students"],
+    ["Designated 9th Student Guide", "Dr. K. Meenakshi (Capacity: 9 students)"],
+    ["Automatic Termination Rule", "Guide automatically locked and terminated upon reaching capacity (8 or 9)"],
+    ["Per-Slot Anti-Collision Dynamic Shuffle", "Active (Successive picks on same slot allocate different available guides)"]
+  ];
+  const wsStats = XLSX.utils.aoa_to_sheet(statsRows);
+  wsStats['!cols'] = [{ wch: 40 }, { wch: 45 }];
+  XLSX.utils.book_append_sheet(wb, wsStats, "Quota Statistics");
+
+  saveWorkbookAsExcel(wb, "SCSC_Master_Project_Guide_Allocations_2024_2027.xlsx");
 }
 
 // 2. Guide-Wise Grouped Student Allocation Excel (.xlsx)
@@ -1087,35 +1201,73 @@ function downloadGuideWiseExcel() {
 
   const wb = XLSX.utils.book_new();
 
+  // --- SHEET 1: Combined Guide-Wise Master Grouping ---
   const guideWiseRows = [
     ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
+    ["Affiliated to Bharathiar University | Approved by AICTE | Re-Accredited with 'A' Grade by NAAC"],
     ["Department of Computer Science with Data Analytics"],
-    ["Semester VI Project Guide Allocation - Guide-Wise Grouped Allocation Roster"],
-    ["Academic Batch 2024-2027 | Total Students: 41 (4 Guides × 8 + 1 Guide × 9 = 41)"],
+    ["ACADEMIC BATCH 2024–2027 | SEMESTER VI - GUIDE-WISE GROUPED ALLOCATION ROSTER"],
+    ["Total Strength: 41 Students (4 Faculty Guides × 8 Quota + 1 Faculty Guide × 9 Quota = 41)"],
     ["Generated on: " + new Date().toLocaleString()],
     []
   ];
 
-  gp.guides.forEach((g, gIdx) => {
-    const students = gp.submissions.filter(s => s.guideId === g.id);
-    guideWiseRows.push([`FACULTY GUIDE #${gIdx + 1}: ${g.name.toUpperCase()} (${g.designation})`, `Allocated Students: ${students.length} / ${g.maxStudents}`]);
-    guideWiseRows.push(["S.No", "College Register Number", "Student Name", "Slot Chosen", "Allocated Guide"]);
+  (gp.guides || []).forEach((g, gIdx) => {
+    const students = (gp.submissions || []).filter(s => s.guideId === g.id);
+    guideWiseRows.push([`FACULTY GUIDE #${gIdx + 1}: ${g.name.toUpperCase()}`, `Designation: ${g.designation}`, `Allocated: ${students.length} / ${g.maxStudents} Students`]);
+    guideWiseRows.push(["S.No", "College Register Number", "Student Name", "Mystery Slot Chosen", "Allocated Faculty Guide", "Status"]);
 
     if (students.length === 0) {
-      guideWiseRows.push(["-", "No students allocated yet", "-", "-", "-"]);
+      guideWiseRows.push(["N/A", "No students allocated to this guide yet", "Awaiting Selection", "N/A", g.name, "VACANT"]);
     } else {
       students.forEach((st, sIdx) => {
-        guideWiseRows.push([sIdx + 1, st.regNo, st.studentName, `Slot #${st.slotChosen}`, g.name]);
+        guideWiseRows.push([sIdx + 1, String(st.regNo || ''), String(st.studentName || ''), `Slot #${st.slotChosen}`, g.name, "CONFIRMED"]);
       });
     }
     guideWiseRows.push([]); // blank row
   });
 
-  const ws = XLSX.utils.aoa_to_sheet(guideWiseRows);
-  ws['!cols'] = [{ wch: 8 }, { wch: 24 }, { wch: 30 }, { wch: 16 }, { wch: 30 }];
-  XLSX.utils.book_append_sheet(wb, ws, "Guide-Wise Groupings");
+  guideWiseRows.push(["--- OFFICIAL VERIFICATION & AUTHORIZATION SIGNATURES ---"]);
+  guideWiseRows.push(["CLASS TUTOR", "", "HEAD OF DEPARTMENT (HOD)", "", "PRINCIPAL"]);
+  guideWiseRows.push(["Signature: _______________________", "", "Signature: _______________________", "", "Signature: _______________________"]);
 
-  XLSX.writeFile(wb, "Guide_Wise_Student_Allocations.xlsx");
+  const wsAll = XLSX.utils.aoa_to_sheet(guideWiseRows);
+  wsAll['!cols'] = [{ wch: 8 }, { wch: 24 }, { wch: 30 }, { wch: 18 }, { wch: 30 }, { wch: 16 }];
+  XLSX.utils.book_append_sheet(wb, wsAll, "All Guides Roster");
+
+  // --- SHEETS 2 to 6: Dedicated Tab for Each Faculty Guide ---
+  (gp.guides || []).forEach((g, gIdx) => {
+    const students = (gp.submissions || []).filter(s => s.guideId === g.id);
+    const cleanTabName = `Guide ${gIdx + 1} - ${g.name.split(' ')[1] || g.name}`.slice(0, 30);
+
+    const individualRows = [
+      ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
+      ["Department of Computer Science with Data Analytics - Project Guide Allocation"],
+      [`FACULTY GUIDE: ${g.name.toUpperCase()} (${g.designation})`],
+      [`Academic Batch: 2024–2027 | Semester VI | Allocated: ${students.length} of ${g.maxStudents} Students`],
+      ["Generated on: " + new Date().toLocaleString()],
+      [],
+      ["S.No", "College Register Number", "Student Name", "Mystery Slot Chosen", "Allotment Date & Time", "Remarks"]
+    ];
+
+    if (students.length === 0) {
+      individualRows.push(["N/A", "No students allocated yet", "Awaiting Student Selection", "N/A", new Date().toLocaleString(), "Pending"]);
+    } else {
+      students.forEach((st, sIdx) => {
+        individualRows.push([sIdx + 1, String(st.regNo || ''), String(st.studentName || ''), `Slot #${st.slotChosen}`, String(st.timestamp || new Date().toLocaleString()), "Confirmed"]);
+      });
+    }
+
+    individualRows.push([]);
+    individualRows.push(["CLASS TUTOR", "", "FACULTY GUIDE", "", "HEAD OF DEPARTMENT (HOD)", "", "PRINCIPAL"]);
+    individualRows.push(["Signature: ______________", "", "Signature: ______________", "", "Signature: ______________", "", "Signature: ______________"]);
+
+    const wsInd = XLSX.utils.aoa_to_sheet(individualRows);
+    wsInd['!cols'] = [{ wch: 8 }, { wch: 24 }, { wch: 30 }, { wch: 18 }, { wch: 26 }, { wch: 16 }];
+    XLSX.utils.book_append_sheet(wb, wsInd, cleanTabName);
+  });
+
+  saveWorkbookAsExcel(wb, "SCSC_Guide_Wise_Student_Allocations_2024_2027.xlsx");
 }
 
 // 3. Word Document Exports (.docx)
@@ -1127,37 +1279,123 @@ function downloadGuideWiseWord() {
   window.location.href = '/api/guide/export/word-guidewise';
 }
 
+// 4. Elective Course Selections Excel (.xlsx)
 function downloadElectiveExcel() {
   const db = getLocalDB();
   const ep = db.electivePortal;
 
-  if (typeof XLSX === 'undefined') return;
+  if (typeof XLSX === 'undefined') {
+    window.location.href = '/api/elective/export/excel';
+    return;
+  }
 
   const wb = XLSX.utils.book_new();
+
+  // --- SHEET 1: Student Selections ---
   const rows = [
     ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
-    ["Department of Computer Science with Data Analytics - Elective Selection Roster"],
+    ["Affiliated to Bharathiar University | Approved by AICTE | Re-Accredited with 'A' Grade by NAAC"],
+    ["Department of Computer Science with Data Analytics"],
+    ["ACADEMIC BATCH 2024–2027 | SEMESTER VI - ELECTIVE COURSE SELECTION MASTER LIST"],
     ["Generated on: " + new Date().toLocaleString()],
     [],
-    ["S.No", "College Register Number", "Student Name", "Elective II Chosen", "Elective III Chosen", "Timestamp"]
+    ["S.No", "College Register Number", "Student Name", "Elective II Course Code & Title", "Elective III Course Code & Title", "Submission Timestamp", "Status"]
   ];
 
-  ep.submissions.forEach((s, idx) => {
-    rows.push([
-      idx + 1,
-      s.regNo,
-      s.studentName,
-      s.elective2Title || s.elective2Code,
-      s.elective3Title || s.elective3Code,
-      s.timestamp || ''
+  if (!ep.submissions || ep.submissions.length === 0) {
+    rows.push([1, "SAMPLE - 24BDA101", "Sample Student (Awaiting Elective Votes)", "24BSD63E05 - 5G & Future Network Technologies", "24BSD63E08 - Natural Language Processing", new Date().toLocaleString(), "PENDING"]);
+  } else {
+    ep.submissions.forEach((s, idx) => {
+      rows.push([
+        idx + 1,
+        String(s.regNo || ''),
+        String(s.studentName || ''),
+        String((s.elective2Code ? s.elective2Code + ' - ' : '') + (s.elective2Title || 'Elective II')),
+        String((s.elective3Code ? s.elective3Code + ' - ' : '') + (s.elective3Title || 'Elective III')),
+        String(s.timestamp || new Date().toLocaleString()),
+        "VOTED"
+      ]);
+    });
+  }
+
+  rows.push([]);
+  rows.push(["--- OFFICIAL VERIFICATION & AUTHORIZATION SIGNATURES ---"]);
+  rows.push(["CLASS TUTOR", "", "HEAD OF DEPARTMENT (HOD)", "", "PRINCIPAL"]);
+  rows.push(["Signature: _______________________", "", "Signature: _______________________", "", "Signature: _______________________"]);
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{ wch: 8 }, { wch: 24 }, { wch: 30 }, { wch: 40 }, { wch: 40 }, { wch: 24 }, { wch: 14 }];
+  XLSX.utils.book_append_sheet(wb, ws, "Student Choices");
+
+  // --- SHEET 2: Analytics & Course Resolution ---
+  const totalVotes = ep.submissions ? ep.submissions.length : 0;
+  const analyticsRows = [
+    ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
+    ["Department of Computer Science with Data Analytics - Elective Selection Resolution"],
+    [`Total Submissions Recorded: ${totalVotes} / ${ep.targetStudents || 43} Students`],
+    ["Report Generated: " + new Date().toLocaleString()],
+    [],
+    ["ELECTIVE II COURSE DISTRIBUTION & POPULARITY ANALYSIS"],
+    ["Option", "Course Code", "Course Title", "Total Student Votes", "Vote Share %", "Official Resolution"]
+  ];
+
+  // Count E2
+  const e2Counts = {};
+  (ep.elective2Options || []).forEach(opt => e2Counts[opt.code] = 0);
+  (ep.submissions || []).forEach(s => {
+    if (s.elective2Code && e2Counts[s.elective2Code] !== undefined) e2Counts[s.elective2Code]++;
+  });
+
+  const sortedE2 = [...(ep.elective2Options || [])].sort((a, b) => (e2Counts[b.code] || 0) - (e2Counts[a.code] || 0));
+  const maxE2Votes = sortedE2.length > 0 ? (e2Counts[sortedE2[0].code] || 0) : 0;
+
+  sortedE2.forEach(opt => {
+    const count = e2Counts[opt.code] || 0;
+    const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+    const isWinner = count > 0 && count === maxE2Votes;
+    analyticsRows.push([
+      opt.option,
+      opt.code,
+      opt.title,
+      count,
+      `${pct}%`,
+      isWinner ? "SELECTED (HIGHLY CHOSEN)" : "Alternative Option"
     ]);
   });
 
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [{ wch: 8 }, { wch: 24 }, { wch: 30 }, { wch: 35 }, { wch: 35 }, { wch: 22 }];
-  XLSX.utils.book_append_sheet(wb, ws, "Elective Voting");
+  analyticsRows.push([]);
+  analyticsRows.push(["ELECTIVE III COURSE DISTRIBUTION & POPULARITY ANALYSIS"]);
+  analyticsRows.push(["Option", "Course Code", "Course Title", "Total Student Votes", "Vote Share %", "Official Resolution"]);
 
-  XLSX.writeFile(wb, "Elective_Course_Selections.xlsx");
+  // Count E3
+  const e3Counts = {};
+  (ep.elective3Options || []).forEach(opt => e3Counts[opt.code] = 0);
+  (ep.submissions || []).forEach(s => {
+    if (s.elective3Code && e3Counts[s.elective3Code] !== undefined) e3Counts[s.elective3Code]++;
+  });
+
+  const sortedE3 = [...(ep.elective3Options || [])].sort((a, b) => (e3Counts[b.code] || 0) - (e3Counts[a.code] || 0));
+  const maxE3Votes = sortedE3.length > 0 ? (e3Counts[sortedE3[0].code] || 0) : 0;
+
+  sortedE3.forEach(opt => {
+    const count = e3Counts[opt.code] || 0;
+    const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+    const isWinner = count > 0 && count === maxE3Votes;
+    analyticsRows.push([
+      opt.option,
+      opt.code,
+      opt.title,
+      count,
+      `${pct}%`,
+      isWinner ? "SELECTED (HIGHLY CHOSEN)" : "Alternative Option"
+    ]);
+  });
+
+  const wsAnalytics = XLSX.utils.aoa_to_sheet(analyticsRows);
+  wsAnalytics['!cols'] = [{ wch: 10 }, { wch: 18 }, { wch: 40 }, { wch: 20 }, { wch: 14 }, { wch: 30 }];
+  XLSX.utils.book_append_sheet(wb, wsAnalytics, "Resolution Analytics");
+
+  saveWorkbookAsExcel(wb, "SCSC_Elective_Course_Selections_2024_2027.xlsx");
 }
 
 function downloadElectiveWord() {

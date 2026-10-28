@@ -480,7 +480,7 @@ app.get('/api/guide/export/excel', (req, res) => {
     guideWiseData.push([`FACULTY GUIDE: ${g.name.toUpperCase()} (${g.designation})`, `Total Students: ${students.length} / ${g.maxStudents}`]);
     guideWiseData.push(["S.No", "College Register Number", "Student Name", "Slot Chosen", "Allocated Guide"]);
     if (students.length === 0) {
-      guideWiseData.push(["-", "No students allocated yet", "-", "-", "-"]);
+      guideWiseData.push(["N/A", "No students allocated yet", "Awaiting Selection", "N/A", g.name]);
     } else {
       students.forEach((st, idx) => {
         guideWiseData.push([idx + 1, st.regNo, st.studentName, "Slot " + st.slotChosen, g.name]);
@@ -499,10 +499,11 @@ app.get('/api/guide/export/excel', (req, res) => {
   ];
   XLSX.utils.book_append_sheet(wb, wsGuideWise, "Guide-wise Summary");
 
-  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-  res.setHeader('Content-Disposition', 'attachment; filename="Project_Guide_Selection_Master.xlsx"');
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx', compression: true });
+  res.setHeader('Content-Disposition', 'attachment; filename="SCSC_Master_Project_Guide_Allocations_2024_2027.xlsx"');
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.send(buffer);
+  res.setHeader('Content-Length', buffer.length);
+  res.end(buffer);
 });
 
 // Guide-Wise Dedicated Excel Export (.xlsx)
@@ -524,7 +525,7 @@ app.get('/api/guide/export/excel-guidewise', (req, res) => {
     guideWiseData.push([`GUIDE #${gIdx + 1}: ${g.name.toUpperCase()} - ${g.designation}`, `Allocated: ${students.length} / ${g.maxStudents}`]);
     guideWiseData.push(["S.No", "College Register Number", "Student Name", "Slot Chosen", "Allocated Guide"]);
     if (students.length === 0) {
-      guideWiseData.push(["-", "No students allocated yet", "-", "-", "-"]);
+      guideWiseData.push(["N/A", "No students allocated yet", "Awaiting Selection", "N/A", g.name]);
     } else {
       students.forEach((st, sIdx) => {
         guideWiseData.push([sIdx + 1, st.regNo, st.studentName, "Slot " + st.slotChosen, g.name]);
@@ -543,10 +544,11 @@ app.get('/api/guide/export/excel-guidewise', (req, res) => {
   ];
   XLSX.utils.book_append_sheet(wb, ws, "Guide-wise Students");
 
-  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-  res.setHeader('Content-Disposition', 'attachment; filename="Guide_Wise_Student_Allocations.xlsx"');
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx', compression: true });
+  res.setHeader('Content-Disposition', 'attachment; filename="SCSC_Guide_Wise_Student_Allocations_2024_2027.xlsx"');
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.send(buffer);
+  res.setHeader('Content-Length', buffer.length);
+  res.end(buffer);
 });
 
 // Guide Word Document (.docx) Export
@@ -1063,12 +1065,13 @@ app.get('/api/elective/export/excel', (req, res) => {
     { wch: 14 },
     { wch: 30 }
   ];
-  XLSX.utils.book_append_sheet(wb, wsAnalytics, "Popularity & Selection Result");
+  XLSX.utils.book_append_sheet(wb, wsAnalytics, "Selection Resolution Analytics");
 
-  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-  res.setHeader('Content-Disposition', 'attachment; filename="Elective_Course_Selection_2024_2027.xlsx"');
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx', compression: true });
+  res.setHeader('Content-Disposition', 'attachment; filename="SCSC_Elective_Course_Selections_2024_2027.xlsx"');
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.send(buffer);
+  res.setHeader('Content-Length', buffer.length);
+  res.end(buffer);
 });
 
 // Elective Word Document (.docx) Export
