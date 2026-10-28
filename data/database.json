@@ -5,7 +5,7 @@
     "batch": "2024-2027",
     "semester": "Semester VI",
     "staffPassword": "data sorcerers",
-    "lastUpdated": "2026-10-28T02:05:37.630Z"
+    "lastUpdated": "2026-10-28T05:04:28.600Z"
   },
   "guidePortal": {
     "isLive": true,
@@ -13,9 +13,7 @@
     "baseQuota": 8,
     "ninthGuideId": "g1",
     "slotCount": 8,
-    "lastSlotGuideMap": {
-      "1": "g1"
-    },
+    "lastSlotGuideMap": {},
     "guides": [
       {
         "id": "g1",

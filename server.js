@@ -40,7 +40,7 @@ function loadDB() {
     console.error('Error reading database, creating default:', err);
     const defaultDB = {
       system: {
-        institutionName: "Sankara College of Science and Commerce",
+        institutionName: "Sankara College of Science and Commerce (Autonomous)",
         department: "Department of Computer Science with Data Analytics",
         batch: "2024-2027",
         semester: "Semester VI",
@@ -48,15 +48,19 @@ function loadDB() {
         lastUpdated: new Date().toISOString()
       },
       guidePortal: {
+        isLive: true,
         targetStudents: 41,
         slotCount: 8,
+        ninthGuideId: "g1",
         lastSlotGuideMap: {},
+        lastAllocatedGuideId: null,
+        slotHistory: {},
         guides: [
-          { id: "g1", name: "", designation: "Assistant Professor, CS & DA", maxStudents: 9, assignedCount: 0 },
-          { id: "g2", name: "", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 },
-          { id: "g3", name: "", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 },
-          { id: "g4", name: "", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 },
-          { id: "g5", name: "", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 }
+          { id: "g1", name: "Dr. K. Meenakshi", designation: "Assistant Professor, CS & DA", maxStudents: 9, assignedCount: 0 },
+          { id: "g2", name: "Prof. S. Kavitha", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 },
+          { id: "g3", name: "Dr. R. Malathi", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 },
+          { id: "g4", name: "Prof. P. Deepa", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 },
+          { id: "g5", name: "Dr. N. Priyanka", designation: "Assistant Professor, CS & DA", maxStudents: 8, assignedCount: 0 }
         ],
         submissions: []
       },

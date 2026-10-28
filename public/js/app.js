@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (adminUnlocked) {
       loadAdminData();
     }
-  }, 8000);
+  }, 3000);
 });
 
 // ==========================================
@@ -266,11 +266,22 @@ async function handleSlotSelection(slotNum) {
       const result = await res.json();
       if (result.success || result.isExisting) {
         completeGuideSubmission(result.submission || { regNo, studentName, slotChosen: slotNum });
+        loadGuideConfig(true);
+        if (adminUnlocked) loadAdminData();
+        return;
+      } else if (result.error) {
+        alert(result.error);
+        return;
+      }
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      if (errData.error) {
+        alert(errData.error);
         return;
       }
     }
   } catch (err) {
-    // Proceed to Local Dynamic Engine
+    console.warn('Server offline, using local dynamic allocation engine:', err);
   }
 
   // 2. Resilient In-Browser Fallback Engine
@@ -716,7 +727,39 @@ function toggleSubmissionsView(viewType) {
   }
 }
 
-function loadAdminData() {
+async function loadAdminData() {
+  try {
+    const [guideRes, electiveRes] = await Promise.all([
+      fetch('/api/guide/submissions').then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch('/api/elective/submissions').then(r => r.ok ? r.json() : null).catch(() => null)
+    ]);
+
+    const db = getLocalDB();
+
+    if (guideRes && guideRes.success) {
+      db.guidePortal.submissions = guideRes.submissions || [];
+      if (guideRes.guideGroups) {
+        guideRes.guideGroups.forEach(gg => {
+          const g = db.guidePortal.guides.find(x => x.id === gg.guideId);
+          if (g) {
+            if (gg.guideName) g.name = gg.guideName;
+            if (gg.designation) g.designation = gg.designation;
+            if (gg.maxStudents) g.maxStudents = gg.maxStudents;
+            g.assignedCount = gg.assignedCount !== undefined ? gg.assignedCount : (gg.students ? gg.students.length : 0);
+          }
+        });
+      }
+    }
+
+    if (electiveRes && electiveRes.success) {
+      db.electivePortal.submissions = electiveRes.submissions || [];
+    }
+
+    saveLocalDB(db);
+  } catch (err) {
+    console.warn('Live server sync warning:', err);
+  }
+
   const db = getLocalDB();
   const gp = db.guidePortal;
   const ep = db.electivePortal;
@@ -732,7 +775,7 @@ function loadAdminData() {
   const eCount = document.getElementById('adminElectiveCount');
   if (eCount) eCount.textContent = ep.submissions.length;
 
-  // Render Submissions Tables
+  // Render Submissions Tables with real live data
   renderAdminGuideMasterTable(gp.submissions);
   renderAdminGuideWiseView(gp.guides, gp.submissions);
   renderAdminElectiveTable(ep.submissions);
@@ -1079,7 +1122,19 @@ function saveWorkbookAsExcel(wb, filename) {
 }
 
 // 1. Master Student Allocation Excel (.xlsx)
-function downloadMasterStudentExcel() {
+async function downloadMasterStudentExcel() {
+  try {
+    const res = await fetch('/api/guide/submissions');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.submissions) {
+        const db = getLocalDB();
+        db.guidePortal.submissions = data.submissions;
+        saveLocalDB(db);
+      }
+    }
+  } catch (e) {}
+
   const db = getLocalDB();
   const gp = db.guidePortal;
 
@@ -1103,7 +1158,7 @@ function downloadMasterStudentExcel() {
   ];
 
   if (!gp.submissions || gp.submissions.length === 0) {
-    masterRows.push([1, "SAMPLE - 24BDA101", "Student Name (Awaiting Registrations)", "Slot #1", "Dr. K. Meenakshi", "Assistant Professor, CS & DA", new Date().toLocaleString(), "PENDING"]);
+    masterRows.push(["N/A", "No student submissions recorded yet", "Awaiting Live Registrations", "N/A", "Awaiting Allocation", "Assistant Professor, CS & DA", new Date().toLocaleString(), "AWAITING"]);
   } else {
     gp.submissions.forEach((s, idx) => {
       const guideObj = (gp.guides || []).find(g => g.id === s.guideId);
@@ -1190,7 +1245,19 @@ function downloadMasterStudentExcel() {
 }
 
 // 2. Guide-Wise Grouped Student Allocation Excel (.xlsx)
-function downloadGuideWiseExcel() {
+async function downloadGuideWiseExcel() {
+  try {
+    const res = await fetch('/api/guide/submissions');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.submissions) {
+        const db = getLocalDB();
+        db.guidePortal.submissions = data.submissions;
+        saveLocalDB(db);
+      }
+    }
+  } catch (e) {}
+
   const db = getLocalDB();
   const gp = db.guidePortal;
 
@@ -1280,7 +1347,19 @@ function downloadGuideWiseWord() {
 }
 
 // 4. Elective Course Selections Excel (.xlsx)
-function downloadElectiveExcel() {
+async function downloadElectiveExcel() {
+  try {
+    const res = await fetch('/api/elective/submissions');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.submissions) {
+        const db = getLocalDB();
+        db.electivePortal.submissions = data.submissions;
+        saveLocalDB(db);
+      }
+    }
+  } catch (e) {}
+
   const db = getLocalDB();
   const ep = db.electivePortal;
 
@@ -1303,7 +1382,7 @@ function downloadElectiveExcel() {
   ];
 
   if (!ep.submissions || ep.submissions.length === 0) {
-    rows.push([1, "SAMPLE - 24BDA101", "Sample Student (Awaiting Elective Votes)", "24BSD63E05 - 5G & Future Network Technologies", "24BSD63E08 - Natural Language Processing", new Date().toLocaleString(), "PENDING"]);
+    rows.push(["N/A", "No elective selections recorded yet", "Awaiting Student Votes", "N/A", "N/A", new Date().toLocaleString(), "AWAITING"]);
   } else {
     ep.submissions.forEach((s, idx) => {
       rows.push([
