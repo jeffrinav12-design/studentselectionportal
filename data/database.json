@@ -5,10 +5,10 @@
     "batch": "2024-2027",
     "semester": "Semester VI",
     "staffPassword": "data sorcerers",
-    "lastUpdated": "2026-10-27T16:04:20.205Z"
+    "lastUpdated": "2026-10-28T01:24:12.450Z"
   },
   "guidePortal": {
-    "isLive": false,
+    "isLive": true,
     "targetStudents": 41,
     "baseQuota": 8,
     "slotCount": 8,
@@ -16,42 +16,43 @@
     "guides": [
       {
         "id": "g1",
-        "name": "",
+        "name": "Dr. K. Meenakshi",
         "designation": "Assistant Professor, CS & DA",
         "maxStudents": 8,
         "assignedCount": 0
       },
       {
         "id": "g2",
-        "name": "",
+        "name": "Prof. S. Kavitha",
         "designation": "Assistant Professor, CS & DA",
         "maxStudents": 8,
         "assignedCount": 0
       },
       {
         "id": "g3",
-        "name": "",
+        "name": "Dr. R. Malathi",
         "designation": "Assistant Professor, CS & DA",
         "maxStudents": 8,
         "assignedCount": 0
       },
       {
         "id": "g4",
-        "name": "",
+        "name": "Prof. P. Deepa",
         "designation": "Assistant Professor, CS & DA",
         "maxStudents": 8,
         "assignedCount": 0
       },
       {
         "id": "g5",
-        "name": "",
+        "name": "Dr. N. Priyanka",
         "designation": "Assistant Professor, CS & DA",
         "maxStudents": 8,
         "assignedCount": 0
       }
     ],
     "submissions": [],
-    "lastAllocatedGuideId": "g3"
+    "lastAllocatedGuideId": null,
+    "slotHistory": {}
   },
   "electivePortal": {
     "targetStudents": 43,

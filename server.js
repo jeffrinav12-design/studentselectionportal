@@ -203,39 +203,55 @@ app.post('/api/guide/submit', (req, res) => {
     return res.status(400).json({ success: false, error: 'All 41 student slots for the batch are fully allocated!' });
   }
 
-  // STRICT 8-COUNT RULE:
-  // For the first 40 students (5 guides x 8 students): each guide is strictly capped at 8.
-  // Once a guide reaches 8 counts, that guide is terminated (no more students assigned to her).
-  // For the final 41st student (when totalRegistered === 40): exactly one guide will accept the 9th student.
+  // STRICT 8-COUNT TERMINATION & SINGLE 9-STUDENT GUIDE QUOTA RULE:
+  // - 5 Guide Faculty in total.
+  // - Exactly 4 guides have a strict cap of 8 students.
+  // - Exactly 1 guide alone is designated for 9 allocations (8 * 4 + 9 = 41).
+  // - Once a guide reaches 8 allocations, that guide is automatically terminated from receiving more students.
+  // - When totalRegistered reaches 40 (the 41st student), only the single designated guide can accept the 9th student.
+  const ninthGuideId = guidePortal.ninthGuideId || (guidePortal.guides[0] ? guidePortal.guides[0].id : 'g1');
+
   let eligibleGuides;
   if (totalRegistered < 40) {
-    eligibleGuides = guidePortal.guides.filter(g => g.assignedCount < 8);
+    // For first 40 students: all guides terminated at 8
+    eligibleGuides = guidePortal.guides.filter(g => (g.assignedCount || 0) < 8);
   } else {
-    // 41st student
-    eligibleGuides = guidePortal.guides.filter(g => g.assignedCount < 9);
+    // For the 41st student: only the single designated guide receives the 9th student
+    eligibleGuides = guidePortal.guides.filter(g => g.id === ninthGuideId && (g.assignedCount || 0) < 9);
+    if (eligibleGuides.length === 0) {
+      eligibleGuides = guidePortal.guides.filter(g => (g.assignedCount || 0) < 9);
+    }
   }
 
   if (eligibleGuides.length === 0) {
     return res.status(400).json({ success: false, error: 'No guide capacity remaining.' });
   }
 
-  // DYNAMIC SHUFFLE LOGIC (Anti-Collision Engine):
-  // 1. If slot S was previously chosen and yielded guide X, the next student who chooses slot S
-  //    MUST NEVER get guide X if other eligible guides exist!
-  // 2. Also avoid assigning the same guide consecutively across any back-to-back student picks if alternatives exist.
-  const lastGuideIdForSlot = guidePortal.lastSlotGuideMap ? guidePortal.lastSlotGuideMap[slot] : null;
+  // DYNAMIC ROTATION & ANTI-COLLISION LOGIC:
+  // If slot 1 is clicked by 3 students, all 3 MUST receive different guide allocations!
+  // We maintain a history of recently assigned guides for this slot.
+  guidePortal.slotHistory = guidePortal.slotHistory || {};
+  const recentGuidesForSlot = guidePortal.slotHistory[slot] || [];
   const lastOverallGuideId = guidePortal.lastAllocatedGuideId || null;
-  
+
   let candidates = eligibleGuides;
-  // Strict rule: if the same slot was clicked previously, strip out that guide
-  if (lastGuideIdForSlot && candidates.length > 1) {
-    const alternativeCandidates = candidates.filter(g => g.id !== lastGuideIdForSlot);
-    if (alternativeCandidates.length > 0) {
-      candidates = alternativeCandidates;
+
+  // Filter out recent guides for this slot so repeated clicks rotate through distinct guides
+  if (recentGuidesForSlot.length > 0 && candidates.length > 1) {
+    const nonRecent = candidates.filter(g => !recentGuidesForSlot.includes(g.id));
+    if (nonRecent.length > 0) {
+      candidates = nonRecent;
+    } else {
+      // If all candidates appear in history, exclude at least the most recent one
+      const mostRecentId = recentGuidesForSlot[recentGuidesForSlot.length - 1];
+      const withoutMostRecent = candidates.filter(g => g.id !== mostRecentId);
+      if (withoutMostRecent.length > 0) {
+        candidates = withoutMostRecent;
+      }
     }
   }
 
-  // Also avoid immediate consecutive guide assignment across all slots if multiple candidates remain
+  // Also prevent consecutive identical guide allocation across any two back-to-back student picks
   if (lastOverallGuideId && candidates.length > 1) {
     const alternativeCandidates = candidates.filter(g => g.id !== lastOverallGuideId);
     if (alternativeCandidates.length > 0) {
@@ -247,10 +263,16 @@ app.post('/api/guide/submit', (req, res) => {
   const chosenIndex = Math.floor(Math.random() * candidates.length);
   const selectedGuide = candidates[chosenIndex];
 
-  // Update tracking maps
+  // Update tracking maps & slot history (keep last 3 to guarantee at least 3 distinct guides on repeated clicks)
   if (!guidePortal.lastSlotGuideMap) guidePortal.lastSlotGuideMap = {};
   guidePortal.lastSlotGuideMap[slot] = selectedGuide.id;
   guidePortal.lastAllocatedGuideId = selectedGuide.id;
+
+  if (!guidePortal.slotHistory[slot]) guidePortal.slotHistory[slot] = [];
+  guidePortal.slotHistory[slot].push(selectedGuide.id);
+  if (guidePortal.slotHistory[slot].length > 4) {
+    guidePortal.slotHistory[slot].shift();
+  }
 
   // Create submission record (Persisted safely in backend DB)
   const submissionRecord = {
@@ -477,9 +499,152 @@ app.get('/api/guide/export/excel', (req, res) => {
   ];
   XLSX.utils.book_append_sheet(wb, wsGuideWise, "Guide-wise Summary");
 
-  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-  res.setHeader('Content-Disposition', 'attachment; filename="Project_Guide_Selection_2024_2027.xlsx"');
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.send(buffer);
+});
+
+// Guide Word Document (.docx) Export
+app.get('/api/guide/export/word', async (req, res) => {
+  const db = loadDB();
+  const guidePortal = db.guidePortal;
+  const total = guidePortal.submissions.length;
+
+  const tableHeaderCell = (text, widthPct = 20) => new TableCell({
+    width: { size: widthPct, type: WidthType.PERCENTAGE },
+    children: [new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [new TextRun({ text, bold: true, color: "FFFFFF" })]
+    })],
+    shading: { fill: "002B49" }
+  });
+
+  const tableDataCell = (text, align = AlignmentType.LEFT, bold = false) => new TableCell({
+    children: [new Paragraph({
+      alignment: align,
+      children: [new TextRun({ text: String(text || '-'), bold })]
+    })]
+  });
+
+  // Table of all students
+  const studentRows = [
+    new TableRow({
+      children: [
+        tableHeaderCell("S.No", 8),
+        tableHeaderCell("Reg. Number", 22),
+        tableHeaderCell("Student Name", 30),
+        tableHeaderCell("Slot Chosen", 15),
+        tableHeaderCell("Allocated Guide", 25)
+      ]
+    })
+  ];
+
+  guidePortal.submissions.forEach((s, idx) => {
+    studentRows.push(
+      new TableRow({
+        children: [
+          tableDataCell(idx + 1, AlignmentType.CENTER),
+          tableDataCell(s.regNo, AlignmentType.CENTER, true),
+          tableDataCell(s.studentName),
+          tableDataCell("Slot #" + s.slotChosen, AlignmentType.CENTER),
+          tableDataCell(s.guideName, AlignmentType.LEFT, true)
+        ]
+      })
+    );
+  });
+
+  // Table of guide-wise distribution
+  const guideDistRows = [
+    new TableRow({
+      children: [
+        tableHeaderCell("S.No", 10),
+        tableHeaderCell("Faculty Guide Name", 40),
+        tableHeaderCell("Designation", 30),
+        tableHeaderCell("Allocated Students", 20)
+      ]
+    })
+  ];
+
+  guidePortal.guides.forEach((g, idx) => {
+    const count = guidePortal.submissions.filter(s => s.guideId === g.id).length;
+    guideDistRows.push(
+      new TableRow({
+        children: [
+          tableDataCell(idx + 1, AlignmentType.CENTER),
+          tableDataCell(g.name || `Guide #${idx + 1}`, AlignmentType.LEFT, true),
+          tableDataCell(g.designation || 'Assistant Professor'),
+          tableDataCell(`${count} / ${g.maxStudents || 8}`, AlignmentType.CENTER, true)
+        ]
+      })
+    );
+  });
+
+  const doc = new Document({
+    sections: [{
+      properties: {},
+      children: [
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [
+            new TextRun({ text: "SANKARA COLLEGE OF SCIENCE AND COMMERCE", bold: true, size: 28, color: "002B49" })
+          ]
+        }),
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [
+            new TextRun({ text: "Department of Computer Science with Data Analytics", bold: true, size: 24, color: "A6192E" })
+          ]
+        }),
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [
+            new TextRun({ text: "Batch 2024 - 2027 | Semester VI - Project Guide Allocation Official Resolution", italics: true, size: 20 })
+          ]
+        }),
+        new Paragraph({ text: "" }),
+        new Paragraph({
+          children: [
+            new TextRun({ text: "Official Allocation Resolution: ", bold: true, size: 22 }),
+            new TextRun({ text: `Total Students Enrolled: 41 | Total Registered: ${total}` })
+          ]
+        }),
+        new Paragraph({
+          children: [
+            new TextRun({ text: "Each faculty guide is allocated strictly 8 students, with one guide allocated the 9th student (8 × 4 + 9 = 41). All slot choices were cast confidentially and recorded in the departmental vault." })
+          ]
+        }),
+        new Paragraph({ text: "" }),
+        new Paragraph({
+          children: [
+            new TextRun({ text: "Faculty Guide Capacity & Allocation Summary", bold: true, size: 22 })
+          ]
+        }),
+        new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          rows: guideDistRows
+        }),
+        new Paragraph({ text: "" }),
+        new Paragraph({
+          children: [
+            new TextRun({ text: "Master Student Guide Allocation Roster", bold: true, size: 22 })
+          ]
+        }),
+        new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          rows: studentRows
+        }),
+        new Paragraph({ text: "" }),
+        new Paragraph({ text: "" }),
+        new Paragraph({
+          children: [
+            new TextRun({ text: "CLASS TUTOR                           HEAD OF DEPARTMENT (HOD)                           PRINCIPAL", bold: true })
+          ]
+        })
+      ]
+    }]
+  });
+
+  const buffer = await Packer.toBuffer(doc);
+  res.setHeader('Content-Disposition', 'attachment; filename="Project_Guide_Allocation_Report.docx"');
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
   res.send(buffer);
 });
 
@@ -864,7 +1029,7 @@ app.get('/api/elective/export/word', async (req, res) => {
         new Paragraph({ text: "" }),
         new Paragraph({
           children: [
-            new TextRun({ text: "Staff Coordinator              Class Tutor               Head of Department               Principal", bold: true })
+            new TextRun({ text: "CLASS TUTOR                           HEAD OF DEPARTMENT (HOD)                           PRINCIPAL", bold: true })
           ]
         })
       ]

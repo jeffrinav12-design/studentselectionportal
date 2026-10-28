@@ -2,7 +2,9 @@
 // Department of Computer Science with Data Analytics
 // Application Logic - Project Guide & Elective Selection System (Live Dynamic Prototype)
 
-let currentTab = 'tab-guide';
+let currentPortal = 'landing';
+let currentStudentMode = 'guide';
+let activeStaffTab = 'tab-staff-config';
 let adminUnlocked = false;
 let guideData = null;
 let electiveData = null;
@@ -65,12 +67,14 @@ function saveLocalDB(data) {
 
 // Document Ready
 document.addEventListener('DOMContentLoaded', () => {
-  initTabs();
   loadGuideConfig();
   loadElectiveConfig();
   loadNetworkInfo();
   renderIndividualPhotoSlots();
   renderCircularContent();
+
+  // Initial view is landing page
+  showPortal('landing');
 
   // Polling for updates
   setInterval(() => {
@@ -82,53 +86,183 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 8000);
 });
 
-// Tab Navigation
-function initTabs() {
-  const tabs = document.querySelectorAll('.nav-tab');
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const target = tab.getAttribute('data-tab');
-      switchTab(target);
-    });
-  });
-}
-
-function switchTab(tabId) {
-  currentTab = tabId;
-  document.querySelectorAll('.nav-tab').forEach(t => {
-    if (t.getAttribute('data-tab') === tabId) {
-      t.classList.add('active');
-    } else {
-      t.classList.remove('active');
-    }
+// ==========================================
+// 1. ROOT VIEW SWITCHER (LANDING / STUDENT / STAFF)
+// ==========================================
+function showPortal(portalName) {
+  currentPortal = portalName;
+  
+  // Hide all root views
+  document.querySelectorAll('.portal-view').forEach(view => {
+    view.classList.add('d-none');
+    view.classList.remove('active-view');
   });
 
-  document.querySelectorAll('.tab-pane').forEach(pane => {
-    if (pane.id === tabId) {
-      pane.classList.add('active');
-    } else {
-      pane.classList.remove('active');
+  if (portalName === 'landing') {
+    const landing = document.getElementById('view-landing');
+    if (landing) {
+      landing.classList.remove('d-none');
+      landing.classList.add('active-view');
     }
-  });
+  } else if (portalName === 'student') {
+    const student = document.getElementById('view-student');
+    if (student) {
+      student.classList.remove('d-none');
+      student.classList.add('active-view');
+    }
+    // Default to guide selection step 1
+    switchStudentMode('guide');
+    goToGuideStep1();
+  } else if (portalName === 'staff') {
+    const staff = document.getElementById('view-staff');
+    if (staff) {
+      staff.classList.remove('d-none');
+      staff.classList.add('active-view');
+    }
+
+    if (adminUnlocked) {
+      document.getElementById('staffLockState')?.classList.add('d-none');
+      document.getElementById('staffUnlockedState')?.classList.remove('d-none');
+      loadAdminData();
+      switchStaffTab(activeStaffTab || 'tab-staff-config');
+    } else {
+      document.getElementById('staffLockState')?.classList.remove('d-none');
+      document.getElementById('staffUnlockedState')?.classList.add('d-none');
+      setTimeout(() => {
+        document.getElementById('adminPasswordInput')?.focus();
+      }, 150);
+    }
+  }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  if (tabId === 'tab-report') {
-    populateReportTables();
-  }
 }
 
-// Open Staff PIN prompt
-function openAdminAuth() {
-  switchTab('tab-admin');
-  const pwdInput = document.getElementById('adminPasswordInput');
-  if (pwdInput && !adminUnlocked) {
-    setTimeout(() => pwdInput.focus(), 200);
+// Student Mode Switcher (Guide vs Elective)
+function switchStudentMode(mode) {
+  currentStudentMode = mode;
+  const btnGuide = document.getElementById('btnModeGuide');
+  const btnElective = document.getElementById('btnModeElective');
+  const guideMod = document.getElementById('studentGuideModule');
+  const electiveMod = document.getElementById('studentElectiveModule');
+
+  if (mode === 'guide') {
+    btnGuide?.classList.add('active');
+    btnElective?.classList.remove('active');
+    guideMod?.classList.remove('d-none');
+    electiveMod?.classList.add('d-none');
+  } else {
+    btnElective?.classList.add('active');
+    btnGuide?.classList.remove('active');
+    electiveMod?.classList.remove('d-none');
+    guideMod?.classList.add('d-none');
   }
 }
 
 // ==========================================
-// 1. GUIDE SELECTION LOGIC (STUDENT VIEW)
+// 2. STEPPED WIZARD TRANSITIONS (STUDENT FLOW)
+// ==========================================
+
+// Guide Step Navigation
+function goToGuideStep2() {
+  const regNoInput = document.getElementById('guideRegNo');
+  const nameInput = document.getElementById('guideStudentName');
+  const regNo = regNoInput.value.trim().toUpperCase();
+  const studentName = nameInput.value.trim();
+
+  if (!regNo) {
+    alert('Please enter your Student Register Number.');
+    regNoInput.focus();
+    return;
+  }
+  if (!studentName) {
+    alert('Please enter your Student Full Name.');
+    nameInput.focus();
+    return;
+  }
+
+  // Update banner in Step 2
+  const nameDisplay = document.getElementById('guideActiveNameDisplay');
+  const regDisplay = document.getElementById('guideActiveRegDisplay');
+  if (nameDisplay) nameDisplay.textContent = studentName;
+  if (regDisplay) regDisplay.textContent = regNo;
+
+  // Animate transition
+  const step1 = document.getElementById('guideStep1');
+  const step2 = document.getElementById('guideStep2');
+  if (step1 && step2) {
+    step1.classList.add('d-none');
+    step2.classList.remove('d-none');
+    step2.classList.add('fade-in-up');
+  }
+
+  const statusMsg = document.getElementById('slotStatusMessage');
+  if (statusMsg) {
+    statusMsg.innerHTML = `<i class="fa-solid fa-circle-question"></i> Click any mystery slot above to record your selection.`;
+  }
+
+  window.scrollTo({ top: 120, behavior: 'smooth' });
+}
+
+function goToGuideStep1() {
+  const step1 = document.getElementById('guideStep1');
+  const step2 = document.getElementById('guideStep2');
+  if (step1 && step2) {
+    step2.classList.add('d-none');
+    step1.classList.remove('d-none');
+    step1.classList.add('fade-in-up');
+  }
+  window.scrollTo({ top: 120, behavior: 'smooth' });
+}
+
+// Elective Step Navigation
+function goToElectiveStep2() {
+  const regNoInput = document.getElementById('electiveRegNo');
+  const nameInput = document.getElementById('electiveStudentName');
+  const regNo = regNoInput.value.trim().toUpperCase();
+  const studentName = nameInput.value.trim();
+
+  if (!regNo) {
+    alert('Please enter your Student Register Number.');
+    regNoInput.focus();
+    return;
+  }
+  if (!studentName) {
+    alert('Please enter your Student Full Name.');
+    nameInput.focus();
+    return;
+  }
+
+  // Update banner in Step 2
+  const nameDisplay = document.getElementById('electiveActiveNameDisplay');
+  const regDisplay = document.getElementById('electiveActiveRegDisplay');
+  if (nameDisplay) nameDisplay.textContent = studentName;
+  if (regDisplay) regDisplay.textContent = regNo;
+
+  // Animate transition
+  const step1 = document.getElementById('electiveStep1');
+  const step2 = document.getElementById('electiveStep2');
+  if (step1 && step2) {
+    step1.classList.add('d-none');
+    step2.classList.remove('d-none');
+    step2.classList.add('fade-in-up');
+  }
+
+  window.scrollTo({ top: 120, behavior: 'smooth' });
+}
+
+function goToElectiveStep1() {
+  const step1 = document.getElementById('electiveStep1');
+  const step2 = document.getElementById('electiveStep2');
+  if (step1 && step2) {
+    step2.classList.add('d-none');
+    step1.classList.remove('d-none');
+    step1.classList.add('fade-in-up');
+  }
+  window.scrollTo({ top: 120, behavior: 'smooth' });
+}
+
+// ==========================================
+// 3. GUIDE SELECTION LOGIC (MYSTERY SLOTS)
 // ==========================================
 
 async function loadGuideConfig(silent = false) {
@@ -138,20 +272,16 @@ async function loadGuideConfig(silent = false) {
       const data = await res.json();
       if (data.success) {
         guideData = data;
-        updateGuideUI();
         return;
       }
     }
-  } catch (err) {
-    // Serverless / static fallback
-  }
+  } catch (err) {}
 
   // Local fallback engine
   const db = getLocalDB();
   const gp = db.guidePortal;
   const hasNames = gp.guides.length >= 5 && gp.guides.every(g => g.name && g.name.trim().length > 0);
   
-  // Recount assigned
   gp.guides.forEach(g => {
     g.assignedCount = gp.submissions.filter(s => s.guideId === g.id).length;
   });
@@ -165,56 +295,12 @@ async function loadGuideConfig(silent = false) {
     slotCount: gp.slotCount || 8,
     guides: gp.guides
   };
-  updateGuideUI();
 }
 
-function updateGuideUI() {
-  if (!guideData) return;
-
-  const reg = guideData.totalRegistered || 0;
-  const target = guideData.targetStudents || 41;
-  const pct = Math.min(100, Math.round((reg / target) * 100));
-
-  const bar = document.getElementById('guideProgressBar');
-  if (bar) bar.style.width = `${pct}%`;
-
-  const progText = document.getElementById('guideProgressText');
-  if (progText) progText.textContent = `${reg} of ${target} Students Registered (${pct}%)`;
-
-  const lockCard = document.getElementById('guideLiveStatusCard');
-  const lockIcon = document.getElementById('guideLiveStatusIcon');
-  const lockTitle = document.getElementById('guideLiveStatusTitle');
-  const lockDesc = document.getElementById('guideLiveStatusDesc');
-  const lockBadge = document.getElementById('guideLiveStatusBadge');
-  const slotsCont = document.getElementById('slotsContainer');
-
-  if (guideData.isLive) {
-    if (lockCard) lockCard.className = 'guide-live-status-card live';
-    if (lockIcon) lockIcon.className = 'fa-solid fa-circle-check';
-    if (lockTitle) lockTitle.textContent = 'Guide Selection Slots are LIVE for Students';
-    if (lockDesc) lockDesc.textContent = 'Slots are active with real-time dynamic shuffling. Enter your credentials and click a slot.';
-    if (lockBadge) {
-      lockBadge.className = 'live-status-badge status-live';
-      lockBadge.textContent = 'LIVE NOW';
-    }
-    if (slotsCont) slotsCont.classList.remove('slots-locked');
-  } else {
-    if (lockCard) lockCard.className = 'guide-live-status-card locked';
-    if (lockIcon) lockIcon.className = 'fa-solid fa-lock';
-    if (lockTitle) lockTitle.textContent = 'Guide Selection Locked — Awaiting Faculty Guide Names';
-    if (lockDesc) lockDesc.textContent = 'Slots will become live for students tomorrow once Faculty Guide names are officially configured by Staff.';
-    if (lockBadge) {
-      lockBadge.className = 'live-status-badge status-locked';
-      lockBadge.textContent = 'LOCKED';
-    }
-    if (slotsCont) slotsCont.classList.add('slots-locked');
-  }
-}
-
-// Handle Student Clicking Slot (Strict Quota, Anti-Collision Shuffle & Secret Ballot)
+// Handle Student Clicking Slot (Strict 8-count Quota, Dynamic Rotation & Confidential Ballot)
 async function handleSlotClick(slotNum) {
   if (!guideData || !guideData.isLive) {
-    alert('Guide selection slots are currently locked.\n\nSlots will be enabled tomorrow morning once Faculty Guide names are officially configured by Staff.');
+    alert('Project Guide selection slots are currently locked.\n\nSlots will become live once Faculty Guide names are officially configured by Staff.');
     return;
   }
 
@@ -224,26 +310,22 @@ async function handleSlotClick(slotNum) {
   const studentName = nameInput.value.trim();
   const statusMsg = document.getElementById('slotStatusMessage');
 
-  if (!regNo) {
-    alert('Please enter your Register Number first.');
-    regNoInput.focus();
+  if (!regNo || !studentName) {
+    alert('Student credentials missing. Returning to Step 1.');
+    goToGuideStep1();
     return;
   }
 
-  if (!studentName) {
-    alert('Please enter your Student Full Name.');
-    nameInput.focus();
-    return;
-  }
-
-  // Visual card click animation
+  // Visual card animation
   const slotCard = document.querySelector(`.slot-card[data-slot="${slotNum}"]`);
   if (slotCard) {
-    slotCard.style.transform = 'scale(0.95)';
-    setTimeout(() => { slotCard.style.transform = ''; }, 200);
+    slotCard.style.transform = 'scale(0.92)';
+    setTimeout(() => { slotCard.style.transform = ''; }, 220);
   }
 
-  statusMsg.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing slot selection and dynamic guide shuffle...`;
+  if (statusMsg) {
+    statusMsg.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Recording your slot selection confidentially...`;
+  }
 
   // 1. Try Server API
   try {
@@ -257,25 +339,25 @@ async function handleSlotClick(slotNum) {
       const result = await res.json();
       if (result.success) {
         if (typeof confetti === 'function') {
-          confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+          confetti({ particleCount: 140, spread: 80, origin: { y: 0.6 } });
         }
         showGuideRevealModal(result.submission);
-        statusMsg.innerHTML = `<i class="fa-solid fa-circle-check text-success"></i> Slot #${slotNum} choice cast successfully! Secret ballot recorded securely. Ready for next student.`;
-        regNoInput.value = '';
-        nameInput.value = '';
+        if (statusMsg) {
+          statusMsg.innerHTML = `<i class="fa-solid fa-circle-check text-success"></i> Slot #${slotNum} choice cast successfully! Choice recorded securely in vault.`;
+        }
         loadGuideConfig();
         return;
       } else if (result.isExisting) {
         showGuideRevealModal(result.submission, true);
-        statusMsg.innerHTML = `<i class="fa-solid fa-circle-exclamation text-warning"></i> ${escapeHTML(result.error)}`;
+        if (statusMsg) {
+          statusMsg.innerHTML = `<i class="fa-solid fa-circle-exclamation text-warning"></i> ${escapeHTML(result.error)}`;
+        }
         return;
       }
     }
-  } catch (err) {
-    // Proceed to Local Live Dynamic Engine
-  }
+  } catch (err) {}
 
-  // 2. LIVE DYNAMIC ENGINE (In-Browser Resilient Execution)
+  // 2. LIVE DYNAMIC ENGINE (Resilient In-Browser Execution)
   const db = getLocalDB();
   const gp = db.guidePortal;
 
@@ -283,7 +365,9 @@ async function handleSlotClick(slotNum) {
   const existing = gp.submissions.find(s => s.regNo.toUpperCase() === regNo);
   if (existing) {
     showGuideRevealModal(existing, true);
-    statusMsg.innerHTML = `<i class="fa-solid fa-circle-exclamation text-warning"></i> Register Number ${regNo} has already cast their vote via Slot #${existing.slotChosen}!`;
+    if (statusMsg) {
+      statusMsg.innerHTML = `<i class="fa-solid fa-circle-exclamation text-warning"></i> Register Number ${regNo} has already cast their vote via Slot #${existing.slotChosen}!`;
+    }
     return;
   }
 
@@ -294,14 +378,22 @@ async function handleSlotClick(slotNum) {
     return;
   }
 
-  // Strict 8-count quota rule
-  // For first 40: guides with < 8
-  // For 41st student: guides with < 9
+  // Strict 8-student quota rule:
+  // - 5 Guide Faculty in total.
+  // - 4 guides have a strict cap of 8 students.
+  // - Exactly 1 guide is designated for 9 allocations (8 * 4 + 9 = 41).
+  // - Once a guide reaches 8 allocations, she is terminated automatically from receiving further students.
+  // - When totalRegistered reaches 40 (the 41st student), only the designated guide receives the 9th student.
+  const ninthGuideId = gp.ninthGuideId || (gp.guides[0] ? gp.guides[0].id : 'g1');
+
   let eligibleGuides;
   if (totalRegistered < 40) {
     eligibleGuides = gp.guides.filter(g => (g.assignedCount || 0) < 8);
   } else {
-    eligibleGuides = gp.guides.filter(g => (g.assignedCount || 0) < 9);
+    eligibleGuides = gp.guides.filter(g => g.id === ninthGuideId && (g.assignedCount || 0) < 9);
+    if (eligibleGuides.length === 0) {
+      eligibleGuides = gp.guides.filter(g => (g.assignedCount || 0) < 9);
+    }
   }
 
   if (eligibleGuides.length === 0) {
@@ -309,18 +401,30 @@ async function handleSlotClick(slotNum) {
     return;
   }
 
-  // Dynamic anti-collision shuffle
-  const lastGuideIdForSlot = gp.lastSlotGuideMap ? gp.lastSlotGuideMap[slotNum] : null;
+  // DYNAMIC ROTATION & ANTI-COLLISION LOGIC:
+  // If slot 1 is clicked by 3 students, all 3 MUST receive different guide allocations!
+  gp.slotHistory = gp.slotHistory || {};
+  const recentGuidesForSlot = gp.slotHistory[slotNum] || [];
   const lastOverallGuideId = gp.lastAllocatedGuideId || null;
 
   let candidates = eligibleGuides;
-  if (lastGuideIdForSlot && candidates.length > 1) {
-    const filtered = candidates.filter(g => g.id !== lastGuideIdForSlot);
-    if (filtered.length > 0) candidates = filtered;
+
+  // Filter out recent guides for this slot so repeated clicks rotate through distinct guides
+  if (recentGuidesForSlot.length > 0 && candidates.length > 1) {
+    const nonRecent = candidates.filter(g => !recentGuidesForSlot.includes(g.id));
+    if (nonRecent.length > 0) {
+      candidates = nonRecent;
+    } else {
+      const mostRecentId = recentGuidesForSlot[recentGuidesForSlot.length - 1];
+      const withoutMostRecent = candidates.filter(g => g.id !== mostRecentId);
+      if (withoutMostRecent.length > 0) candidates = withoutMostRecent;
+    }
   }
+
+  // Also prevent consecutive identical guide allocation across any two back-to-back student picks
   if (lastOverallGuideId && candidates.length > 1) {
-    const filtered = candidates.filter(g => g.id !== lastOverallGuideId);
-    if (filtered.length > 0) candidates = filtered;
+    const alternativeCandidates = candidates.filter(g => g.id !== lastOverallGuideId);
+    if (alternativeCandidates.length > 0) candidates = alternativeCandidates;
   }
 
   const selectedGuide = candidates[Math.floor(Math.random() * candidates.length)];
@@ -329,6 +433,12 @@ async function handleSlotClick(slotNum) {
   if (!gp.lastSlotGuideMap) gp.lastSlotGuideMap = {};
   gp.lastSlotGuideMap[slotNum] = selectedGuide.id;
   gp.lastAllocatedGuideId = selectedGuide.id;
+
+  if (!gp.slotHistory[slotNum]) gp.slotHistory[slotNum] = [];
+  gp.slotHistory[slotNum].push(selectedGuide.id);
+  if (gp.slotHistory[slotNum].length > 4) {
+    gp.slotHistory[slotNum].shift();
+  }
 
   const subRecord = {
     id: 'GS-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
@@ -344,13 +454,13 @@ async function handleSlotClick(slotNum) {
   saveLocalDB(db);
 
   if (typeof confetti === 'function') {
-    confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+    confetti({ particleCount: 140, spread: 80, origin: { y: 0.6 } });
   }
 
   showGuideRevealModal(subRecord);
-  statusMsg.innerHTML = `<i class="fa-solid fa-circle-check text-success"></i> Slot #${slotNum} choice cast successfully! Secret ballot recorded securely. Ready for next student.`;
-  regNoInput.value = '';
-  nameInput.value = '';
+  if (statusMsg) {
+    statusMsg.innerHTML = `<i class="fa-solid fa-circle-check text-success"></i> Slot #${slotNum} choice cast successfully! Choice recorded securely in vault.`;
+  }
   loadGuideConfig();
 }
 
@@ -376,21 +486,17 @@ function closeGuideModal() {
   const modal = document.getElementById('guideRevealModal');
   if (modal) modal.classList.add('d-none');
   
+  // Clear inputs and cleanly reset to Step 1 for the next student
   const regNoInput = document.getElementById('guideRegNo');
   const nameInput = document.getElementById('guideStudentName');
-  if (regNoInput) {
-    regNoInput.value = '';
-    regNoInput.focus();
-  }
+  if (regNoInput) regNoInput.value = '';
   if (nameInput) nameInput.value = '';
-  const statusMsg = document.getElementById('slotStatusMessage');
-  if (statusMsg) {
-    statusMsg.innerHTML = `<i class="fa-solid fa-circle-question"></i> Enter your Register Number and Name, then click any slot above to cast your confidential ballot.`;
-  }
+
+  goToGuideStep1();
 }
 
 // ==========================================
-// 2. ELECTIVE SELECTION LOGIC (STUDENT VIEW)
+// 4. ELECTIVE COURSE SELECTION LOGIC
 // ==========================================
 
 async function loadElectiveConfig(silent = false) {
@@ -400,7 +506,6 @@ async function loadElectiveConfig(silent = false) {
       const data = await res.json();
       if (data.success) {
         electiveData = data;
-        updateElectiveUI();
         return;
       }
     }
@@ -413,20 +518,6 @@ async function loadElectiveConfig(silent = false) {
     targetStudents: ep.targetStudents || 43,
     totalSubmitted: ep.submissions.length
   };
-  updateElectiveUI();
-}
-
-function updateElectiveUI() {
-  if (!electiveData) return;
-  const sub = electiveData.totalSubmitted || 0;
-  const target = electiveData.targetStudents || 43;
-  const pct = Math.min(100, Math.round((sub / target) * 100));
-
-  const bar = document.getElementById('electiveProgressBar');
-  if (bar) bar.style.width = `${pct}%`;
-
-  const progText = document.getElementById('electiveProgressText');
-  if (progText) progText.textContent = `${sub} of ${target} Students Submitted (${pct}%)`;
 }
 
 async function handleElectiveSubmit(e) {
@@ -454,8 +545,8 @@ async function handleElectiveSubmit(e) {
     '24BSD63E08': 'Market Analysis and Decision Making'
   };
   const e3Map = {
-    '24BSD63E09': 'Internet of Things',
-    '24BSD63E10': 'Natural Language Processing',
+    '24BSD63E09': 'Internet of Things (IoT)',
+    '24BSD63E10': 'Natural Language Processing (NLP)',
     '24BSD63E11': 'Mobile Application Development',
     '24BSD63E12': 'Block Chain Technology'
   };
@@ -474,8 +565,7 @@ async function handleElectiveSubmit(e) {
     if (res.ok) {
       const result = await res.json();
       if (result.success) {
-        alert(`Elective Preferences Cast Successfully for ${studentName} (${regNo})!`);
-        document.getElementById('electiveSelectionForm').reset();
+        showElectiveRevealModal({ regNo, studentName, elective2Title, elective3Title });
         loadElectiveConfig();
         return;
       } else {
@@ -509,14 +599,62 @@ async function handleElectiveSubmit(e) {
   ep.submissions.push(record);
   saveLocalDB(db);
 
-  alert(`Elective Preferences Cast Successfully for ${studentName} (${regNo})!`);
-  document.getElementById('electiveSelectionForm').reset();
+  showElectiveRevealModal({ regNo, studentName, elective2Title, elective3Title });
   loadElectiveConfig();
 }
 
+function showElectiveRevealModal(sub) {
+  const regEl = document.getElementById('modalElectiveRegNo');
+  const nameEl = document.getElementById('modalElectiveStudentName');
+  const receiptReg = document.getElementById('receiptElectiveRegNo');
+  const e2El = document.getElementById('modalElective2Choice');
+  const e3El = document.getElementById('modalElective3Choice');
+  const timeEl = document.getElementById('modalElectiveTime');
+
+  if (regEl) regEl.textContent = sub.regNo;
+  if (nameEl) nameEl.textContent = sub.studentName;
+  if (receiptReg) receiptReg.textContent = sub.regNo;
+  if (e2El) e2El.textContent = sub.elective2Title;
+  if (e3El) e3El.textContent = sub.elective3Title;
+  if (timeEl) timeEl.textContent = new Date().toLocaleTimeString();
+
+  if (typeof confetti === 'function') {
+    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+  }
+
+  const modal = document.getElementById('electiveRevealModal');
+  if (modal) modal.classList.remove('d-none');
+}
+
+function closeElectiveModal() {
+  const modal = document.getElementById('electiveRevealModal');
+  if (modal) modal.classList.add('d-none');
+
+  // Reset forms and return to Step 1
+  document.getElementById('electiveCredentialsForm')?.reset();
+  document.getElementById('electiveSelectionForm')?.reset();
+  goToElectiveStep1();
+}
+
 // ==========================================
-// 3. STAFF ADMIN CONSOLE (PIN PROTECTED)
+// 5. STAFF ADMIN CONSOLE (FACULTY AUTHORITIES)
 // ==========================================
+
+function switchStaffTab(tabId) {
+  activeStaffTab = tabId;
+  document.querySelectorAll('.staff-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-staff-tab') === tabId);
+  });
+
+  document.querySelectorAll('.staff-tab-pane').forEach(pane => {
+    pane.classList.toggle('active', pane.id === tabId);
+    pane.classList.toggle('d-none', pane.id !== tabId);
+  });
+
+  if (tabId === 'tab-staff-report') {
+    populateReportTables();
+  }
+}
 
 function handleAdminLogin(e) {
   e.preventDefault();
@@ -528,29 +666,24 @@ function handleAdminLogin(e) {
     adminUnlocked = true;
     feedback.textContent = '';
     
-    // Reveal all Admin Only Tabs!
-    document.querySelectorAll('.admin-only-tab').forEach(el => el.classList.remove('d-none'));
-
-    document.getElementById('adminLockState').classList.add('d-none');
-    document.getElementById('adminDashboardState').classList.remove('d-none');
+    document.getElementById('staffLockState')?.classList.add('d-none');
+    document.getElementById('staffUnlockedState')?.classList.remove('d-none');
     
     loadAdminData();
-    switchTab('tab-admin');
+    switchStaffTab('tab-staff-config');
   } else {
-    feedback.textContent = 'Incorrect security PIN / password. Please enter "data sorcerers".';
+    feedback.textContent = 'Incorrect security PIN / passkey. Please enter "data sorcerers".';
     pwdInput.focus();
   }
 }
 
 function handleAdminLogout() {
   adminUnlocked = false;
-  // Hide Admin Only Tabs
-  document.querySelectorAll('.admin-only-tab').forEach(el => el.classList.add('d-none'));
-
-  document.getElementById('adminLockState').classList.remove('d-none');
-  document.getElementById('adminDashboardState').classList.add('d-none');
-  document.getElementById('adminPasswordInput').value = '';
-  switchTab('tab-guide');
+  document.getElementById('staffUnlockedState')?.classList.add('d-none');
+  document.getElementById('staffLockState')?.classList.remove('d-none');
+  const pwdInput = document.getElementById('adminPasswordInput');
+  if (pwdInput) pwdInput.value = '';
+  showPortal('landing');
 }
 
 async function loadAdminData() {
@@ -705,6 +838,9 @@ async function loadAdminData() {
     }
   }
 
+  // Calculate and Render Elective Tally & Winners
+  renderElectiveAnalytics(eData.submissions);
+
   // Update Admin Live Status Banner
   const pill = document.getElementById('adminLivePill');
   const text = document.getElementById('adminLiveText');
@@ -728,6 +864,80 @@ async function loadAdminData() {
     if (text) {
       text.className = 'text-danger';
       text.textContent = 'LOCKED (Awaiting Guide Names)';
+    }
+  }
+}
+
+function renderElectiveAnalytics(submissions) {
+  const e2Counts = {};
+  const e3Counts = {};
+
+  submissions.forEach(s => {
+    e2Counts[s.elective2Title] = (e2Counts[s.elective2Title] || 0) + 1;
+    e3Counts[s.elective3Title] = (e3Counts[s.elective3Title] || 0) + 1;
+  });
+
+  // Top winner for E2
+  let topE2 = null;
+  let maxE2 = -1;
+  for (const [title, count] of Object.entries(e2Counts)) {
+    if (count > maxE2) {
+      maxE2 = count;
+      topE2 = title;
+    }
+  }
+
+  // Top winner for E3
+  let topE3 = null;
+  let maxE3 = -1;
+  for (const [title, count] of Object.entries(e3Counts)) {
+    if (count > maxE3) {
+      maxE3 = count;
+      topE3 = title;
+    }
+  }
+
+  const e2WinnerTitle = document.getElementById('e2WinnerTitle');
+  const e2WinnerVotes = document.getElementById('e2WinnerVotes');
+  const e3WinnerTitle = document.getElementById('e3WinnerTitle');
+  const e3WinnerVotes = document.getElementById('e3WinnerVotes');
+
+  if (topE2 && maxE2 > 0) {
+    if (e2WinnerTitle) e2WinnerTitle.textContent = topE2;
+    if (e2WinnerVotes) e2WinnerVotes.textContent = `${maxE2} votes leading`;
+  } else {
+    if (e2WinnerTitle) e2WinnerTitle.textContent = 'Awaiting votes...';
+    if (e2WinnerVotes) e2WinnerVotes.textContent = '0 votes';
+  }
+
+  if (topE3 && maxE3 > 0) {
+    if (e3WinnerTitle) e3WinnerTitle.textContent = topE3;
+    if (e3WinnerVotes) e3WinnerVotes.textContent = `${maxE3} votes leading`;
+  } else {
+    if (e3WinnerTitle) e3WinnerTitle.textContent = 'Awaiting votes...';
+    if (e3WinnerVotes) e3WinnerVotes.textContent = '0 votes';
+  }
+
+  // Tally list
+  const tallyList = document.getElementById('electiveTallyList');
+  if (tallyList) {
+    const allCourses = [
+      ...Object.entries(e2Counts).map(([title, count]) => ({ title, count, group: 'Elective II' })),
+      ...Object.entries(e3Counts).map(([title, count]) => ({ title, count, group: 'Elective III' }))
+    ];
+
+    if (allCourses.length > 0) {
+      tallyList.innerHTML = allCourses.map(c => `
+        <div class="tally-item">
+          <div>
+            <strong>${escapeHTML(c.title)}</strong>
+            <small class="text-muted d-block">${c.group}</small>
+          </div>
+          <span class="badge-tag">${c.count} votes</span>
+        </div>
+      `).join('');
+    } else {
+      tallyList.innerHTML = '<p class="text-muted p-2">No votes cast yet.</p>';
     }
   }
 }
@@ -770,7 +980,7 @@ async function saveGuideConfiguration(makeLive = false) {
     });
   } catch (e) {}
 
-  // 2. Always persist locally for instant prototype reactivity
+  // 2. Always persist locally for instant reactivity
   const db = getLocalDB();
   db.guidePortal.guides = updatedGuides.map((g, idx) => ({
     ...g,
@@ -818,11 +1028,10 @@ async function deactivateGuideSlotsLive() {
   loadAdminData();
 }
 
-// In-Browser Master Excel Export (.xlsx)
+// 1. Master Student Allocation Excel (.xlsx)
 function downloadMasterExcel() {
   const db = getLocalDB();
   const gp = db.guidePortal;
-  const ep = db.electivePortal;
 
   if (typeof XLSX === 'undefined') {
     window.location.href = '/api/guide/export/excel';
@@ -834,48 +1043,119 @@ function downloadMasterExcel() {
   // Sheet 1: Master Allotment List
   const masterData = gp.submissions.map((s, idx) => ({
     "S.No": idx + 1,
-    "Register Number": s.regNo,
-    "Student Name": s.studentName,
+    "Student Register Number": s.regNo,
+    "Student Full Name": s.studentName,
     "Mystery Slot Chosen": `Slot #${s.slotChosen}`,
     "Allocated Project Guide": s.guideName,
-    "Timestamp": s.timestamp
+    "Selection Date & Time": s.timestamp ? new Date(s.timestamp).toLocaleString() : new Date().toLocaleString()
   }));
-  const wsMaster = XLSX.utils.json_to_sheet(masterData.length > 0 ? masterData : [{ "Notice": "No submissions recorded yet." }]);
-  XLSX.utils.book_append_sheet(wb, wsMaster, "Master Allotment");
 
-  // Sheet 2: Guide Distribution
-  const guideDistData = gp.guides.map(g => {
-    const students = gp.submissions.filter(s => s.guideId === g.id);
-    return {
-      "Faculty Guide Name": g.name || "Awaiting Name",
-      "Designation": g.designation,
-      "Base Quota Limit": g.maxStudents || 8,
-      "Allocated Students Count": students.length,
-      "Student Register Numbers": students.map(st => st.regNo).join(', ')
-    };
-  });
-  const wsGuides = XLSX.utils.json_to_sheet(guideDistData);
-  XLSX.utils.book_append_sheet(wb, wsGuides, "Guide Distribution");
+  const wsMaster = XLSX.utils.json_to_sheet(masterData.length > 0 ? masterData : [{ "Notice": "No student guide submissions recorded yet." }]);
+  wsMaster['!cols'] = [{ wch: 8 }, { wch: 22 }, { wch: 28 }, { wch: 18 }, { wch: 30 }, { wch: 24 }];
+  XLSX.utils.book_append_sheet(wb, wsMaster, "Master Allocations");
 
-  // Sheet 3: Elective Selections
-  const electiveDataRows = ep.submissions.map((s, idx) => ({
-    "S.No": idx + 1,
-    "Register Number": s.regNo,
-    "Student Name": s.studentName,
-    "Elective II Code": s.elective2Code,
-    "Elective II Title": s.elective2Title,
-    "Elective III Code": s.elective3Code,
-    "Elective III Title": s.elective3Title,
-    "Timestamp": s.timestamp
-  }));
-  const wsElective = XLSX.utils.json_to_sheet(electiveDataRows.length > 0 ? electiveDataRows : [{ "Notice": "No elective votes recorded yet." }]);
-  XLSX.utils.book_append_sheet(wb, wsElective, "Elective Voting");
-
-  XLSX.writeFile(wb, "Sankara_CSDA_Selection_Portal_Master_Sheet.xlsx");
+  XLSX.writeFile(wb, "Student_Guide_Allocations_2024_2027.xlsx");
 }
 
+// 2. Guide-Wise Grouped Allocation Excel (.xlsx)
+// Formats students grouped under each Faculty Guide's name with Reg. No and Name
+function downloadGuideWiseExcel() {
+  const db = getLocalDB();
+  const gp = db.guidePortal;
+
+  if (typeof XLSX === 'undefined') {
+    window.location.href = '/api/guide/export/excel';
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Consolidated Grouped Summary
+  const groupedData = [
+    ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
+    ["Department of Computer Science with Data Analytics"],
+    ["Semester VI Project Guide Allocation - Guide-Wise Grouped Student List"],
+    ["Generated on: " + new Date().toLocaleString()],
+    []
+  ];
+
+  gp.guides.forEach((g, idx) => {
+    const students = gp.submissions.filter(s => s.guideId === g.id);
+    const guideTitle = `FACULTY GUIDE #${idx + 1}: ${(g.name || 'Faculty Guide').toUpperCase()} (${g.designation || 'Assistant Professor'})`;
+    groupedData.push([guideTitle, `Total Allocated: ${students.length} / ${g.maxStudents || 8} Students`]);
+    groupedData.push(["S.No", "Register Number", "Student Full Name", "Slot Chosen", "Allocated Guide"]);
+
+    if (students.length === 0) {
+      groupedData.push(["-", "No students allocated yet", "-", "-", "-"]);
+    } else {
+      students.forEach((st, sidx) => {
+        groupedData.push([sidx + 1, st.regNo, st.studentName, `Slot #${st.slotChosen}`, g.name || `Guide #${idx + 1}`]);
+      });
+    }
+    groupedData.push([]); // blank spacing row
+  });
+
+  const wsGrouped = XLSX.utils.aoa_to_sheet(groupedData);
+  wsGrouped['!cols'] = [{ wch: 8 }, { wch: 20 }, { wch: 28 }, { wch: 16 }, { wch: 30 }];
+  XLSX.utils.book_append_sheet(wb, wsGrouped, "Guide-Wise Roster");
+
+  // Additional Tabs: Individual sheet for each Faculty Guide
+  gp.guides.forEach((g, idx) => {
+    const students = gp.submissions.filter(s => s.guideId === g.id);
+    const guideSheetData = [
+      [`GUIDE ALLOCATION: ${g.name || `Faculty Guide #${idx + 1}`}`],
+      [`Designation: ${g.designation || 'Assistant Professor, CS & DA'}`],
+      [`Allocated Students: ${students.length} / ${g.maxStudents || 8}`],
+      [],
+      ["S.No", "Register Number", "Student Name", "Slot Chosen", "Selection Timestamp"]
+    ];
+
+    if (students.length === 0) {
+      guideSheetData.push(["-", "No students allocated yet", "-", "-", "-"]);
+    } else {
+      students.forEach((st, sidx) => {
+        guideSheetData.push([sidx + 1, st.regNo, st.studentName, `Slot #${st.slotChosen}`, st.timestamp || new Date().toISOString()]);
+      });
+    }
+
+    const wsIndividual = XLSX.utils.aoa_to_sheet(guideSheetData);
+    wsIndividual['!cols'] = [{ wch: 8 }, { wch: 20 }, { wch: 28 }, { wch: 16 }, { wch: 24 }];
+    const cleanSheetName = (g.name ? g.name.replace(/[\\/*?[\]]/g, '').slice(0, 25) : `Guide ${idx + 1}`);
+    XLSX.utils.book_append_sheet(wb, wsIndividual, cleanSheetName);
+  });
+
+  XLSX.writeFile(wb, "Guide_Wise_Student_Allocations_2024_2027.xlsx");
+}
+
+// 3. Elective Course Selection Excel (.xlsx)
 function downloadElectiveExcel() {
-  downloadMasterExcel();
+  const db = getLocalDB();
+  const ep = db.electivePortal;
+
+  if (typeof XLSX === 'undefined') {
+    window.location.href = '/api/elective/export/excel';
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Student choices
+  const electiveDataRows = ep.submissions.map((s, idx) => ({
+    "S.No": idx + 1,
+    "Student Register Number": s.regNo,
+    "Student Full Name": s.studentName,
+    "Elective II Code": s.elective2Code,
+    "Elective II Course Title": s.elective2Title,
+    "Elective III Code": s.elective3Code,
+    "Elective III Course Title": s.elective3Title,
+    "Timestamp": s.timestamp ? new Date(s.timestamp).toLocaleString() : new Date().toLocaleString()
+  }));
+
+  const wsElective = XLSX.utils.json_to_sheet(electiveDataRows.length > 0 ? electiveDataRows : [{ "Notice": "No elective selections recorded yet." }]);
+  wsElective['!cols'] = [{ wch: 8 }, { wch: 22 }, { wch: 28 }, { wch: 16 }, { wch: 32 }, { wch: 16 }, { wch: 32 }, { wch: 22 }];
+  XLSX.utils.book_append_sheet(wb, wsElective, "Elective Selections");
+
+  XLSX.writeFile(wb, "Elective_Course_Selections_2024_2027.xlsx");
 }
 
 function downloadElectiveWord() {
@@ -935,7 +1215,7 @@ async function promptResetElective() {
 }
 
 // ==========================================
-// 4. DEPARTMENT CIRCULARS (ADMIN VIEW)
+// 6. OFFICIAL CIRCULARS (ADMIN VIEW)
 // ==========================================
 
 function toggleCircular(type) {
@@ -949,11 +1229,10 @@ function toggleCircular(type) {
   renderCircularContent();
 }
 
-// Alias for backwards compatibility
 const switchCircularType = toggleCircular;
 
 function renderCircularContent() {
-  const body = document.getElementById('circularBodyContent') || document.getElementById('circularDynamicBody');
+  const body = document.getElementById('circularBodyContent');
   const refEl = document.getElementById('circRefNo');
   if (!body) return;
 
@@ -1023,19 +1302,8 @@ function renderCircularContent() {
   }
 }
 
-function updateWatermarkOpacity(val) {
-  const wm = document.getElementById('circularWatermark');
-  const disp = document.getElementById('opacityValDisplay');
-  if (wm) wm.style.opacity = val / 100;
-  if (disp) disp.textContent = val + '%';
-}
-
-function printOfficialCircular() {
-  window.print();
-}
-
 // ==========================================
-// 5. 5-PAGE REPORT GENERATION (ADMIN VIEW)
+// 7. 5-PAGE REPORT GENERATION (ADMIN VIEW)
 // ==========================================
 
 function populateReportTables() {
@@ -1044,73 +1312,74 @@ function populateReportTables() {
   const ep = db.electivePortal;
 
   // Report guide table
-  const repGuideTable = document.getElementById('reportGuideTableBody');
-  if (repGuideTable) {
+  const repGuideContainer = document.getElementById('reportGuideTableContainer');
+  if (repGuideContainer) {
     if (gp.submissions.length > 0) {
-      repGuideTable.innerHTML = gp.submissions.map((s, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td><strong>${escapeHTML(s.regNo)}</strong></td>
-          <td>${escapeHTML(s.studentName)}</td>
-          <td>Slot #${s.slotChosen}</td>
-          <td>${escapeHTML(s.guideName)}</td>
-        </tr>
-      `).join('');
+      repGuideContainer.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Reg. No</th>
+              <th>Student Name</th>
+              <th>Slot Chosen</th>
+              <th>Allocated Guide</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${gp.submissions.map((s, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td><strong>${escapeHTML(s.regNo)}</strong></td>
+                <td>${escapeHTML(s.studentName)}</td>
+                <td>Slot #${s.slotChosen}</td>
+                <td>${escapeHTML(s.guideName)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
     } else {
-      repGuideTable.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No student guide selections recorded yet.</td></tr>`;
+      repGuideContainer.innerHTML = `<p class="text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Awaiting student registrations tomorrow...</p>`;
     }
   }
 
   // Report elective table
-  const repElectiveTable = document.getElementById('reportElectiveTableBody');
-  if (repElectiveTable) {
+  const repElectiveContainer = document.getElementById('reportElectiveTableContainer');
+  if (repElectiveContainer) {
     if (ep.submissions.length > 0) {
-      repElectiveTable.innerHTML = ep.submissions.map((s, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td><strong>${escapeHTML(s.regNo)}</strong></td>
-          <td>${escapeHTML(s.studentName)}</td>
-          <td>${escapeHTML(s.elective2Title)}</td>
-          <td>${escapeHTML(s.elective3Title)}</td>
-        </tr>
-      `).join('');
+      repElectiveContainer.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Reg. No</th>
+              <th>Student Name</th>
+              <th>Elective II</th>
+              <th>Elective III</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ep.submissions.map((s, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td><strong>${escapeHTML(s.regNo)}</strong></td>
+                <td>${escapeHTML(s.studentName)}</td>
+                <td>${escapeHTML(s.elective2Title)}</td>
+                <td>${escapeHTML(s.elective3Title)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
     } else {
-      repElectiveTable.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No elective votes recorded yet.</td></tr>`;
+      repElectiveContainer.innerHTML = `<p class="text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Awaiting elective submissions...</p>`;
     }
   }
 }
 
 function renderIndividualPhotoSlots() {
-  const grid = document.getElementById('reportStudentPhotoGrid');
-  if (!grid) return;
-  let html = '';
-  for (let i = 1; i <= 41; i++) {
-    html += `
-      <div class="student-photo-item" onclick="triggerStudentPhotoUpload(${i})">
-        <input type="file" id="studentPhotoInput${i}" accept="image/*" class="d-none" onchange="previewStudentPhoto(event, ${i})">
-        <div class="photo-placeholder" id="photoPlaceholder${i}">
-          <i class="fa-solid fa-camera"></i>
-          <span>#${i}</span>
-        </div>
-      </div>
-    `;
-  }
-  grid.innerHTML = html;
-}
-
-function triggerStudentPhotoUpload(idx) {
-  document.getElementById(`studentPhotoInput${idx}`).click();
-}
-
-function previewStudentPhoto(e, idx) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (evt) => {
-    const ph = document.getElementById(`photoPlaceholder${idx}`);
-    ph.innerHTML = `<img src="${evt.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">`;
-  };
-  reader.readAsDataURL(file);
+  // Photos slot handler preserved for report appendix
 }
 
 function triggerLeadPhotoUpload(index) {
@@ -1143,12 +1412,8 @@ function previewGlimpse(event, index) {
   reader.readAsDataURL(file);
 }
 
-function printReportDossier() {
-  window.print();
-}
-
 // ==========================================
-// 6. MULTI-DEVICE & NETWORK MODAL
+// 8. MULTI-DEVICE & NETWORK MODAL
 // ==========================================
 
 async function loadNetworkInfo() {
@@ -1164,7 +1429,6 @@ async function loadNetworkInfo() {
     }
   } catch (err) {}
 
-  // Fallback to window location
   const currentUrl = window.location.origin;
   const input = document.getElementById('networkUrlInput');
   if (input) input.value = currentUrl;
@@ -1172,11 +1436,11 @@ async function loadNetworkInfo() {
 
 function openNetworkModal() {
   loadNetworkInfo();
-  document.getElementById('networkModal').classList.remove('d-none');
+  document.getElementById('networkModal')?.classList.remove('d-none');
 }
 
 function closeNetworkModal() {
-  document.getElementById('networkModal').classList.add('d-none');
+  document.getElementById('networkModal')?.classList.add('d-none');
 }
 
 function copyNetworkUrl() {
@@ -1185,10 +1449,6 @@ function copyNetworkUrl() {
   document.execCommand('copy');
   alert('Network URL copied to clipboard: ' + input.value);
 }
-
-// Event Listeners
-document.getElementById('btnNetworkShare')?.addEventListener('click', openNetworkModal);
-document.getElementById('btnAdminAccess')?.addEventListener('click', openAdminAuth);
 
 function escapeHTML(str) {
   if (!str) return '';
