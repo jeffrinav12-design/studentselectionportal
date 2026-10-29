@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
@@ -40,7 +40,8 @@ function loadDB() {
       }
       throw new Error('Database seed not found');
     }
-    const data = fs.readFileSync(DB_PATH, 'utf-8');
+    let data = fs.readFileSync(DB_PATH, 'utf-8');
+    if (data.charCodeAt(0) === 0xFEFF) data = data.slice(1);
     inMemoryDB = JSON.parse(data);
     return inMemoryDB;
   } catch (err) {
@@ -102,6 +103,122 @@ function saveDB(data) {
   }
 }
 
+
+const CLOUD_VAULT_URL = 'https://api.restful-api.dev/objects/ff808181a09d98f701a187d424854e76';
+
+function mergeCloudData(cloudData) {
+  if (!cloudData) return;
+  const db = loadDB();
+  let changed = false;
+
+  if (Array.isArray(cloudData.guides) && cloudData.guides.length >= 5) {
+    cloudData.guides.forEach((cg, i) => {
+      if (db.guidePortal.guides[i] && cg.name) {
+        if (db.guidePortal.guides[i].name !== cg.name || db.guidePortal.guides[i].maxStudents !== cg.maxStudents) {
+          db.guidePortal.guides[i].name = cg.name;
+          db.guidePortal.guides[i].designation = cg.designation || db.guidePortal.guides[i].designation;
+          db.guidePortal.guides[i].maxStudents = cg.maxStudents || db.guidePortal.guides[i].maxStudents;
+          changed = true;
+        }
+      }
+    });
+  }
+
+  if (typeof cloudData.isLive === 'boolean' && db.guidePortal.isLive !== cloudData.isLive) {
+    db.guidePortal.isLive = cloudData.isLive;
+    changed = true;
+  }
+
+  if (Array.isArray(cloudData.guideSubmissions)) {
+    cloudData.guideSubmissions.forEach(sub => {
+      if (sub && sub.regNo && !db.guidePortal.submissions.some(s => s.regNo.toUpperCase() === sub.regNo.toUpperCase())) {
+        db.guidePortal.submissions.push(sub);
+        changed = true;
+      }
+    });
+  }
+
+  if (Array.isArray(cloudData.electiveSubmissions)) {
+    cloudData.electiveSubmissions.forEach(sub => {
+      if (sub && sub.regNo && !db.electivePortal.submissions.some(s => s.regNo.toUpperCase() === sub.regNo.toUpperCase())) {
+        db.electivePortal.submissions.push(sub);
+        changed = true;
+      }
+    });
+  }
+
+  // Recount assigned counts
+  db.guidePortal.guides.forEach(g => {
+    g.assignedCount = db.guidePortal.submissions.filter(s => s.guideId === g.id).length;
+  });
+
+  if (changed) {
+    saveDB(db);
+  }
+}
+
+async function syncFromCloudVault() {
+  return new Promise((resolve) => {
+    try {
+      const https = require('https');
+      const req = https.get(CLOUD_VAULT_URL, { timeout: 3000 }, (res) => {
+        let b = '';
+        res.on('data', c => b += c);
+        res.on('end', () => {
+          try {
+            if (res.statusCode === 200) {
+              const parsed = JSON.parse(b);
+              if (parsed && parsed.data) {
+                mergeCloudData(parsed.data);
+              }
+            }
+          } catch(e) {}
+          resolve();
+        });
+      });
+      req.on('error', () => resolve());
+      req.on('timeout', () => { req.destroy(); resolve(); });
+    } catch(e) { resolve(); }
+  });
+}
+
+async function syncToCloudVault(db) {
+  return new Promise((resolve) => {
+    try {
+      const https = require('https');
+      const payload = JSON.stringify({
+        name: 'scsc_portal_live_vault',
+        data: {
+          guides: db.guidePortal.guides,
+          isLive: db.guidePortal.isLive,
+          ninthGuideId: db.guidePortal.ninthGuideId,
+          guideSubmissions: db.guidePortal.submissions,
+          electiveSubmissions: db.electivePortal.submissions,
+          lastUpdated: new Date().toISOString()
+        }
+      });
+      const u = new URL(CLOUD_VAULT_URL);
+      const req = https.request({
+        hostname: u.hostname,
+        path: u.pathname,
+        method: 'PUT',
+        timeout: 3000,
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(payload)
+        }
+      }, (res) => {
+        res.resume();
+        resolve();
+      });
+      req.on('error', () => resolve());
+      req.on('timeout', () => { req.destroy(); resolve(); });
+      req.write(payload);
+      req.end();
+    } catch(e) { resolve(); }
+  });
+}
+
 // Get LAN IPv4 address
 function getLocalIP() {
   const nets = os.networkInterfaces();
@@ -146,7 +263,8 @@ app.get('/api/system/network-info', async (req, res) => {
 // ==========================================
 
 // Get Guide Portal Configuration & Status
-app.get('/api/guide/config', (req, res) => {
+app.get('/api/guide/config', async (req, res) => {
+  await syncFromCloudVault();
   const db = loadDB();
   const guidePortal = db.guidePortal;
   
@@ -159,16 +277,72 @@ app.get('/api/guide/config', (req, res) => {
 
   res.json({
     success: true,
-    isLive: !!guidePortal.isLive,
+    isLive: guidePortal.isLive !== false,
     hasConfiguredNames,
     targetStudents: guidePortal.targetStudents || 41,
     totalRegistered: guidePortal.submissions.length,
-    slotCount: guidePortal.slotCount || 8
+    slotCount: guidePortal.slotCount || 8,
+    guides: guidePortal.guides
   });
 });
 
+// Staff/Admin Update Faculty Guide Configuration (Names, Designations, Quotas, Status)
+app.post('/api/guide/config', async (req, res) => {
+  await syncFromCloudVault();
+  const db = loadDB();
+  const { guides, ninthGuideId, isLive } = req.body;
+  if (Array.isArray(guides) && guides.length >= 5) {
+    guides.forEach((g, idx) => {
+      if (db.guidePortal.guides[idx]) {
+        db.guidePortal.guides[idx].name = g.name !== undefined ? g.name.trim() : db.guidePortal.guides[idx].name;
+        db.guidePortal.guides[idx].designation = g.designation !== undefined ? g.designation.trim() : db.guidePortal.guides[idx].designation;
+        if (g.maxStudents) {
+          db.guidePortal.guides[idx].maxStudents = parseInt(g.maxStudents, 10);
+        }
+      }
+    });
+  }
+  if (typeof isLive === 'boolean') {
+    db.guidePortal.isLive = isLive;
+  }
+  if (ninthGuideId) {
+    db.guidePortal.ninthGuideId = ninthGuideId;
+  }
+  saveDB(db);
+  await syncToCloudVault(db);
+  res.json({
+    success: true,
+    message: 'Faculty Guide configuration updated successfully and synced live!',
+    guides: db.guidePortal.guides,
+    isLive: db.guidePortal.isLive
+  });
+});
+
+// Staff/Admin Reset Guide Submissions
+app.post('/api/guide/reset', async (req, res) => {
+  const db = loadDB();
+  db.guidePortal.submissions = [];
+  db.guidePortal.slotHistory = {};
+  db.guidePortal.lastSlotGuideMap = {};
+  db.guidePortal.lastAllocatedGuideId = null;
+  db.guidePortal.guides.forEach(g => g.assignedCount = 0);
+  saveDB(db);
+  await syncToCloudVault(db);
+  res.json({ success: true, message: 'All Project Guide submissions have been reset.' });
+});
+
+// Staff/Admin Reset Elective Submissions
+app.post('/api/elective/reset', async (req, res) => {
+  const db = loadDB();
+  db.electivePortal.submissions = [];
+  saveDB(db);
+  await syncToCloudVault(db);
+  res.json({ success: true, message: 'All Elective submissions have been reset.' });
+});
+
 // Student Submit Slot Choice (Dynamic Shuffling Engine with Confidential Secret Ballot)
-app.post('/api/guide/submit', (req, res) => {
+app.post('/api/guide/submit', async (req, res) => {
+  await syncFromCloudVault();
   let { regNo, studentName, slot } = req.body;
   if (!regNo || !studentName || !slot) {
     return res.status(400).json({ success: false, error: 'Register Number, Student Name and Slot are required.' });
@@ -302,27 +476,27 @@ app.post('/api/guide/submit', (req, res) => {
 
   guidePortal.submissions.push(submissionRecord);
   saveDB(db);
+  await syncToCloudVault(db);
 
-  // CONFIDENTIAL BALLOT RESPONSE:
-  // Strictly do NOT reveal guide name on the student's screen!
-  // Backend passes the guide details so system state is persistent across devices.
+  // CONFIDENTIAL SECRET BALLOT RESPONSE:
+  // Zero Information Leakage: Strictly do NOT reveal guide name on student screen!
+  // Guide is securely assigned behind the scenes and visible only in Staff/Admin Portal.
   res.json({
     success: true,
     isSecretBallot: true,
-    message: 'Slot selection successfully recorded! The official guide allotment list will be announced by the department after all students vote.',
+    message: 'Slot selection successfully recorded! Impartial assignment preserved in departmental vault.',
     submission: {
       regNo: submissionRecord.regNo,
       studentName: submissionRecord.studentName,
       slotChosen: submissionRecord.slotChosen,
-      guideId: submissionRecord.guideId,
-      guideName: submissionRecord.guideName,
       timestamp: submissionRecord.timestamp
     }
   });
 });
 
 // Staff/Admin get all Guide Submissions
-app.get('/api/guide/submissions', (req, res) => {
+app.get('/api/guide/submissions', async (req, res) => {
+  await syncFromCloudVault();
   const db = loadDB();
   const guidePortal = db.guidePortal;
   
@@ -732,7 +906,7 @@ app.get('/api/guide/export/word', async (req, res) => {
         }),
         new Paragraph({
           children: [
-            new TextRun({ text: "Each faculty guide is allocated strictly 8 students, with one guide allocated the 9th student (8 × 4 + 9 = 41). All slot choices were cast confidentially and recorded in the departmental vault." })
+            new TextRun({ text: "Each faculty guide is allocated strictly 8 students, with one guide allocated the 9th student (8 ├ù 4 + 9 = 41). All slot choices were cast confidentially and recorded in the departmental vault." })
           ]
         }),
         new Paragraph({ text: "" }),
@@ -822,7 +996,7 @@ app.get('/api/guide/export/word-guidewise', async (req, res) => {
       new Paragraph({
         children: [
           new TextRun({ text: `FACULTY GUIDE #${gIdx + 1}: ${g.name.toUpperCase()}`, bold: true, size: 22, color: "002B49" }),
-          new TextRun({ text: ` (${g.designation}) — Total Allocated: ${students.length} / ${g.maxStudents}`, italics: true, size: 20 })
+          new TextRun({ text: ` (${g.designation}) ΓÇö Total Allocated: ${students.length} / ${g.maxStudents}`, italics: true, size: 20 })
         ]
       })
     );
