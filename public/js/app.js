@@ -760,19 +760,13 @@ async function loadAdminData(isManual = false) {
     if (gRes.ok) {
       const gData = await gRes.json();
       if (gData.success && Array.isArray(gData.submissions)) {
-        gData.submissions.forEach(sub => {
-          const idx = db.guidePortal.submissions.findIndex(s => s.regNo.toUpperCase() === sub.regNo.toUpperCase());
-          if (idx >= 0) {
-            db.guidePortal.submissions[idx] = sub;
-          } else {
-            db.guidePortal.submissions.push(sub);
-          }
-        });
+        db.guidePortal.submissions = gData.submissions;
         if (Array.isArray(gData.guides) && gData.guides.length > 0) {
           gData.guides.forEach((srvG, i) => {
             if (db.guidePortal.guides[i] && srvG.name) {
               db.guidePortal.guides[i].name = srvG.name;
               db.guidePortal.guides[i].designation = srvG.designation || db.guidePortal.guides[i].designation;
+              if (srvG.maxStudents) db.guidePortal.guides[i].maxStudents = srvG.maxStudents;
             }
           });
         }
@@ -782,31 +776,7 @@ async function loadAdminData(isManual = false) {
     if (eRes.ok) {
       const eData = await eRes.json();
       if (eData.success && Array.isArray(eData.submissions)) {
-        eData.submissions.forEach(sub => {
-          const idx = db.electivePortal.submissions.findIndex(s => s.regNo.toUpperCase() === sub.regNo.toUpperCase());
-          if (idx >= 0) {
-            db.electivePortal.submissions[idx] = sub;
-          } else {
-            db.electivePortal.submissions.push(sub);
-          }
-        });
-      }
-    }
-
-    // 2. Bi-directional sync: ensure server knows about any locally-recorded submissions
-    const syncRes = await fetch('/api/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        guideSubmissions: db.guidePortal.submissions,
-        electiveSubmissions: db.electivePortal.submissions
-      })
-    });
-    if (syncRes.ok) {
-      const syncData = await syncRes.json();
-      if (syncData.success) {
-        if (syncData.guidePortal?.submissions) db.guidePortal.submissions = syncData.guidePortal.submissions;
-        if (syncData.electivePortal?.submissions) db.electivePortal.submissions = syncData.electivePortal.submissions;
+        db.electivePortal.submissions = eData.submissions;
       }
     }
   } catch (err) {
@@ -891,6 +861,7 @@ function renderAdminGuideMasterTable(submissions) {
           <th>Slot</th>
           <th>Allocated Guide (Mam)</th>
           <th>Time</th>
+          <th style="text-align: center;">Action</th>
         </tr>
       </thead>
       <tbody>
@@ -905,6 +876,11 @@ function renderAdminGuideMasterTable(submissions) {
         <td><span class="badge-tag">Slot #${s.slotChosen}</span></td>
         <td><strong class="text-primary">${escapeHTML(s.guideName || 'Guide Assigned')}</strong></td>
         <td><small class="text-muted">${s.timestamp || '-'}</small></td>
+        <td style="text-align: center;">
+          <button class="btn btn-xs btn-outline-danger" title="Reset this student allocation" onclick="promptResetSpecificStudent('${escapeHTML(s.regNo)}', '${escapeHTML(s.studentName)}')">
+            <i class="fa-solid fa-rotate-left"></i> Reset Student
+          </button>
+        </td>
       </tr>
     `;
   });
@@ -937,17 +913,18 @@ function renderAdminGuideWiseView(guides, submissions) {
         <table class="guide-wise-students-table">
           <thead>
             <tr>
-              <th style="width: 12%;">#</th>
-              <th style="width: 38%;">College Reg. No</th>
-              <th style="width: 32%;">Student Name</th>
-              <th style="width: 18%; text-align: center;">Slot</th>
+              <th style="width: 8%;">#</th>
+              <th style="width: 32%;">College Reg. No</th>
+              <th style="width: 34%;">Student Name</th>
+              <th style="width: 14%; text-align: center;">Slot</th>
+              <th style="width: 12%; text-align: center;">Reset</th>
             </tr>
           </thead>
           <tbody>
     `;
 
     if (students.length === 0) {
-      html += `<tr><td colspan="4" class="text-muted text-center" style="padding: 14px 6px;">No students allocated yet to this guide</td></tr>`;
+      html += `<tr><td colspan="5" class="text-muted text-center" style="padding: 14px 6px;">No students allocated yet to this guide</td></tr>`;
     } else {
       students.forEach((st, sIdx) => {
         html += `
@@ -956,6 +933,11 @@ function renderAdminGuideWiseView(guides, submissions) {
             <td><strong>${escapeHTML(st.regNo)}</strong></td>
             <td>${escapeHTML(st.studentName)}</td>
             <td style="text-align: center;"><span class="badge-tag">Slot #${st.slotChosen}</span></td>
+            <td style="text-align: center;">
+              <button class="btn btn-xs btn-outline-danger" title="Reset this student" onclick="promptResetSpecificStudent('${escapeHTML(st.regNo)}', '${escapeHTML(st.studentName)}')">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </td>
           </tr>
         `;
       });
@@ -1802,8 +1784,53 @@ function printGuideWisePDF() {
   printWindow.document.close();
 }
 
-function promptResetGuide() {
-  if (!confirm('Are you sure you want to reset all Project Guide Submissions? This action cannot be undone.')) return;
+async function promptResetSpecificStudent(regNo, studentName) {
+  if (!confirm(`Are you sure you want to reset the allocation for student:\n\n${studentName || ''} (${regNo})\n\nThis will remove their allocation, restore their guide's slot capacity, and allow the student to choose a mystery slot again.`)) {
+    return;
+  }
+
+  // 1. Send delete request to server
+  try {
+    const res = await fetch('/api/guide/submissions/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ regNo })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showFacultySaveToast(`Reset allocation for ${regNo} (${studentName}) successfully!`);
+    } else {
+      alert(data.error || 'Failed to reset student allocation on server.');
+    }
+  } catch (err) {
+    console.warn('Network notice on single student reset:', err);
+  }
+
+  // 2. Update local state
+  const db = getLocalDB();
+  db.guidePortal.submissions = (db.guidePortal.submissions || []).filter(s => s.regNo.toUpperCase() !== regNo.toUpperCase());
+  db.guidePortal.guides.forEach(g => {
+    g.assignedCount = db.guidePortal.submissions.filter(s => s.guideId === g.id).length;
+  });
+  saveLocalDB(db);
+
+  // 3. Immediately refresh admin UI and student config
+  loadAdminData(true);
+  loadGuideConfig(true);
+}
+
+async function promptResetGuide() {
+  if (!confirm('Are you sure you want to reset ALL 41 Project Guide Submissions? This action cannot be undone.')) return;
+  
+  try {
+    await fetch('/api/guide/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (err) {
+    console.warn('Network notice on reset:', err);
+  }
+
   const db = getLocalDB();
   db.guidePortal.submissions = [];
   db.guidePortal.slotHistory = {};
@@ -1811,17 +1838,31 @@ function promptResetGuide() {
   db.guidePortal.lastAllocatedGuideId = null;
   db.guidePortal.guides.forEach(g => g.assignedCount = 0);
   saveLocalDB(db);
-  alert('Project Guide submissions have been reset.');
-  loadAdminData();
+
+  showFacultySaveToast('All Project Guide submissions have been reset live.');
+  loadAdminData(true);
+  loadGuideConfig(true);
 }
 
-function promptResetElective() {
+async function promptResetElective() {
   if (!confirm('Are you sure you want to reset all Elective Submissions? This action cannot be undone.')) return;
+
+  try {
+    await fetch('/api/elective/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (err) {
+    console.warn('Network notice on elective reset:', err);
+  }
+
   const db = getLocalDB();
   db.electivePortal.submissions = [];
   saveLocalDB(db);
-  alert('Elective submissions have been reset.');
-  loadAdminData();
+
+  showFacultySaveToast('All Elective submissions have been reset live.');
+  loadAdminData(true);
+  loadElectiveConfig(true);
 }
 
 // ==========================================

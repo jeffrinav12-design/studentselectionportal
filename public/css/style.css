@@ -326,6 +326,12 @@ body {
   font-size: 0.8rem;
 }
 
+.btn-xs {
+  padding: 3px 8px;
+  font-size: 0.74rem;
+  border-radius: var(--radius-sm);
+}
+
 .btn-block {
   width: 100%;
 }
@@ -371,14 +377,17 @@ body {
   background: #dc2626;
 }
 
-.btn-danger-outline {
+.btn-danger-outline,
+.btn-outline-danger {
   background: transparent;
   color: var(--danger);
   border-color: #FCA5A5;
 }
 
-.btn-danger-outline:hover {
+.btn-danger-outline:hover,
+.btn-outline-danger:hover {
   background: var(--danger-bg);
+  border-color: var(--danger);
 }
 
 /* HERO SECTION IN HUB */

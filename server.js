@@ -109,6 +109,16 @@ const CLOUD_VAULT_URL = 'https://api.restful-api.dev/objects/ff808181a09d98f701a
 function mergeCloudData(cloudData) {
   if (!cloudData) return;
   const db = loadDB();
+
+  // If local DB is strictly newer than cloudData, don't overwrite local changes that haven't propagated
+  if (cloudData.lastUpdated && db.system.lastUpdated) {
+    const cloudTime = new Date(cloudData.lastUpdated).getTime();
+    const localTime = new Date(db.system.lastUpdated).getTime();
+    if (localTime > cloudTime + 500) {
+      return;
+    }
+  }
+
   let changed = false;
 
   if (Array.isArray(cloudData.guides) && cloudData.guides.length >= 5) {
@@ -130,29 +140,23 @@ function mergeCloudData(cloudData) {
   }
 
   if (Array.isArray(cloudData.guideSubmissions)) {
-    cloudData.guideSubmissions.forEach(sub => {
-      if (sub && sub.regNo && !db.guidePortal.submissions.some(s => s.regNo.toUpperCase() === sub.regNo.toUpperCase())) {
-        db.guidePortal.submissions.push(sub);
-        changed = true;
-      }
-    });
+    db.guidePortal.submissions = cloudData.guideSubmissions;
+    changed = true;
   }
 
   if (Array.isArray(cloudData.electiveSubmissions)) {
-    cloudData.electiveSubmissions.forEach(sub => {
-      if (sub && sub.regNo && !db.electivePortal.submissions.some(s => s.regNo.toUpperCase() === sub.regNo.toUpperCase())) {
-        db.electivePortal.submissions.push(sub);
-        changed = true;
-      }
-    });
+    db.electivePortal.submissions = cloudData.electiveSubmissions;
+    changed = true;
   }
 
-  // Recount assigned counts
   db.guidePortal.guides.forEach(g => {
     g.assignedCount = db.guidePortal.submissions.filter(s => s.guideId === g.id).length;
   });
 
   if (changed) {
+    if (cloudData.lastUpdated) {
+      db.system.lastUpdated = cloudData.lastUpdated;
+    }
     saveDB(db);
   }
 }
@@ -319,6 +323,41 @@ app.post('/api/guide/config', async (req, res) => {
 });
 
 // Staff/Admin Reset Guide Submissions
+// Staff/Admin Reset Single Specific Student Allocation
+app.post('/api/guide/submissions/delete', async (req, res) => {
+  let { regNo } = req.body;
+  if (!regNo) return res.status(400).json({ success: false, error: 'Register Number is required' });
+  regNo = regNo.trim().toUpperCase();
+
+  await syncFromCloudVault();
+  const db = loadDB();
+
+  const initialCount = db.guidePortal.submissions.length;
+  const deletedSub = db.guidePortal.submissions.find(s => s.regNo.toUpperCase() === regNo);
+  db.guidePortal.submissions = db.guidePortal.submissions.filter(s => s.regNo.toUpperCase() !== regNo);
+
+  if (db.guidePortal.submissions.length < initialCount) {
+    // Recalculate assigned counts
+    db.guidePortal.guides.forEach(g => {
+      g.assignedCount = db.guidePortal.submissions.filter(s => s.guideId === g.id).length;
+    });
+    // Remove from slot history
+    if (deletedSub && db.guidePortal.slotHistory && db.guidePortal.slotHistory[deletedSub.slotChosen]) {
+      db.guidePortal.slotHistory[deletedSub.slotChosen] = db.guidePortal.slotHistory[deletedSub.slotChosen].filter(id => id !== deletedSub.guideId);
+    }
+    saveDB(db);
+    await syncToCloudVault(db);
+    return res.json({
+      success: true,
+      message: `Successfully reset allocation for student with Register Number ${regNo}. That student can now select again.`,
+      submissions: db.guidePortal.submissions,
+      guides: db.guidePortal.guides
+    });
+  } else {
+    return res.status(404).json({ success: false, error: `Student with Register Number ${regNo} not found.` });
+  }
+});
+
 app.post('/api/guide/reset', async (req, res) => {
   const db = loadDB();
   db.guidePortal.submissions = [];
@@ -536,37 +575,9 @@ app.get('/api/guide/submissions', async (req, res) => {
 });
 
 // Bi-directional state synchronization across distributed devices & Vercel lambdas
-app.post('/api/sync', (req, res) => {
-  const { guideSubmissions, electiveSubmissions } = req.body;
+app.post('/api/sync', async (req, res) => {
+  await syncFromCloudVault();
   const db = loadDB();
-  let modified = false;
-
-  if (Array.isArray(guideSubmissions)) {
-    guideSubmissions.forEach(sub => {
-      if (sub && sub.regNo && !db.guidePortal.submissions.some(s => s.regNo.toUpperCase() === sub.regNo.toUpperCase())) {
-        db.guidePortal.submissions.push(sub);
-        modified = true;
-      }
-    });
-  }
-
-  if (Array.isArray(electiveSubmissions)) {
-    electiveSubmissions.forEach(sub => {
-      if (sub && sub.regNo && !db.electivePortal.submissions.some(s => s.regNo.toUpperCase() === sub.regNo.toUpperCase())) {
-        db.electivePortal.submissions.push(sub);
-        modified = true;
-      }
-    });
-  }
-
-  if (modified) {
-    db.guidePortal.guides.forEach(g => {
-      g.assignedCount = db.guidePortal.submissions.filter(s => s.guideId === g.id).length;
-    });
-    saveDB(db);
-  }
-
-  // Recount
   db.guidePortal.guides.forEach(g => {
     g.assignedCount = db.guidePortal.submissions.filter(s => s.guideId === g.id).length;
   });
@@ -584,619 +595,6 @@ app.post('/api/sync', (req, res) => {
       submissions: db.electivePortal.submissions
     }
   });
-});
-
-// Admin Update Guide Faculty Names and Capacities (Password Protected)
-app.post('/api/guide/admin/update-guides', (req, res) => {
-  const { password, guides, slotCount, targetStudents } = req.body;
-  const db = loadDB();
-  
-  if (password !== db.system.staffPassword) {
-    return res.status(401).json({ success: false, error: 'Invalid staff password.' });
-  }
-
-  if (Array.isArray(guides)) {
-    guides.forEach((g, idx) => {
-      if (!db.guidePortal.guides[idx]) {
-        db.guidePortal.guides[idx] = {
-          id: `g${idx + 1}`,
-          name: '',
-          designation: 'Assistant Professor, CS & DA',
-          maxStudents: 8,
-          assignedCount: 0
-        };
-      }
-      if (g.name !== undefined) db.guidePortal.guides[idx].name = g.name.trim();
-      if (g.designation !== undefined) db.guidePortal.guides[idx].designation = g.designation.trim();
-      if (g.maxStudents !== undefined) db.guidePortal.guides[idx].maxStudents = parseInt(g.maxStudents, 10);
-    });
-
-    // Update names in existing submissions as well so exports stay consistent
-    db.guidePortal.submissions.forEach(sub => {
-      const match = db.guidePortal.guides.find(g => g.id === sub.guideId);
-      if (match) {
-        sub.guideName = match.name;
-      }
-    });
-  }
-
-  if (slotCount) db.guidePortal.slotCount = parseInt(slotCount, 10);
-  if (targetStudents) db.guidePortal.targetStudents = parseInt(targetStudents, 10);
-  
-  // If isLive is explicitly passed or if faculty names are provided, update live status
-  if (req.body.isLive !== undefined) {
-    db.guidePortal.isLive = !!req.body.isLive;
-  } else {
-    const hasNames = db.guidePortal.guides.every(g => g.name && g.name.trim().length > 0);
-    if (hasNames) {
-      db.guidePortal.isLive = true;
-    }
-  }
-
-  saveDB(db);
-  res.json({ 
-    success: true, 
-    isLive: db.guidePortal.isLive,
-    message: db.guidePortal.isLive 
-      ? 'Faculty Guide details saved and slots are now LIVE for students!' 
-      : 'Faculty Guide details saved.' 
-  });
-});
-
-// Admin Toggle Slots Live / Locked
-app.post('/api/guide/admin/toggle-live', (req, res) => {
-  const { password, isLive } = req.body;
-  const db = loadDB();
-  
-  if (password !== db.system.staffPassword) {
-    return res.status(401).json({ success: false, error: 'Invalid staff password.' });
-  }
-
-  db.guidePortal.isLive = !!isLive;
-  saveDB(db);
-  res.json({ 
-    success: true, 
-    isLive: db.guidePortal.isLive,
-    message: `Slots are now ${db.guidePortal.isLive ? 'LIVE' : 'LOCKED'}` 
-  });
-});
-
-// Admin Reset Guide Submissions (Password Protected)
-app.post('/api/guide/admin/reset', (req, res) => {
-  const { password } = req.body;
-  const db = loadDB();
-  
-  if (password !== db.system.staffPassword) {
-    return res.status(401).json({ success: false, error: 'Invalid staff password.' });
-  }
-
-  db.guidePortal.submissions = [];
-  db.guidePortal.lastSlotGuideMap = {};
-  db.guidePortal.guides.forEach(g => g.assignedCount = 0);
-
-  saveDB(db);
-  res.json({ success: true, message: 'Guide submissions reset successfully.' });
-});
-
-// Guide Excel Export (Master + Guide-Wise)
-app.get('/api/guide/export/excel', (req, res) => {
-  const db = loadDB();
-  const guidePortal = db.guidePortal;
-
-  const wb = XLSX.utils.book_new();
-
-  // Sheet 1: Master Allocation List
-  const masterData = [
-    ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
-    ["Department of Computer Science with Data Analytics"],
-    ["Batch 2024-2027 | Semester VI - Project Guide Selection Master List"],
-    ["Generated on: " + new Date().toLocaleString()],
-    [],
-    ["S.No", "College Register Number", "Student Name", "Slot Chosen", "Allocated Project Guide", "Selection Date & Time"]
-  ];
-
-  guidePortal.submissions.forEach((s, idx) => {
-    masterData.push([
-      idx + 1,
-      s.regNo,
-      s.studentName,
-      "Slot " + s.slotChosen,
-      s.guideName,
-      new Date(s.timestamp).toLocaleString()
-    ]);
-  });
-
-  const wsMaster = XLSX.utils.aoa_to_sheet(masterData);
-  wsMaster['!cols'] = [
-    { wch: 8 },
-    { wch: 22 },
-    { wch: 28 },
-    { wch: 14 },
-    { wch: 30 },
-    { wch: 24 }
-  ];
-  XLSX.utils.book_append_sheet(wb, wsMaster, "Master Allocation");
-
-  // Sheet 2: Guide-wise Grouping
-  const guideWiseData = [
-    ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
-    ["Department of Computer Science with Data Analytics - Guide-wise Student Allocation"],
-    []
-  ];
-
-  guidePortal.guides.forEach(g => {
-    const students = guidePortal.submissions.filter(s => s.guideId === g.id);
-    guideWiseData.push([`FACULTY GUIDE: ${g.name.toUpperCase()} (${g.designation})`, `Total Students: ${students.length} / ${g.maxStudents}`]);
-    guideWiseData.push(["S.No", "College Register Number", "Student Name", "Slot Chosen", "Allocated Guide"]);
-    if (students.length === 0) {
-      guideWiseData.push(["N/A", "No students allocated yet", "Awaiting Selection", "N/A", g.name]);
-    } else {
-      students.forEach((st, idx) => {
-        guideWiseData.push([idx + 1, st.regNo, st.studentName, "Slot " + st.slotChosen, g.name]);
-      });
-    }
-    guideWiseData.push([]); // blank row
-  });
-
-  const wsGuideWise = XLSX.utils.aoa_to_sheet(guideWiseData);
-  wsGuideWise['!cols'] = [
-    { wch: 8 },
-    { wch: 24 },
-    { wch: 30 },
-    { wch: 14 },
-    { wch: 30 }
-  ];
-  XLSX.utils.book_append_sheet(wb, wsGuideWise, "Guide-wise Summary");
-
-  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx', compression: true });
-  res.setHeader('Content-Disposition', 'attachment; filename="SCSC_Master_Project_Guide_Allocations_2024_2027.xlsx"');
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Length', buffer.length);
-  res.end(buffer);
-});
-
-// Guide-Wise Dedicated Excel Export (.xlsx)
-app.get('/api/guide/export/excel-guidewise', (req, res) => {
-  const db = loadDB();
-  const guidePortal = db.guidePortal;
-  const wb = XLSX.utils.book_new();
-
-  const guideWiseData = [
-    ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
-    ["Department of Computer Science with Data Analytics - Guide-wise Allocated Students Roster"],
-    ["Academic Batch 2024-2027 | Semester VI"],
-    ["Generated on: " + new Date().toLocaleString()],
-    []
-  ];
-
-  guidePortal.guides.forEach((g, gIdx) => {
-    const students = guidePortal.submissions.filter(s => s.guideId === g.id);
-    guideWiseData.push([`GUIDE #${gIdx + 1}: ${g.name.toUpperCase()} - ${g.designation}`, `Allocated: ${students.length} / ${g.maxStudents}`]);
-    guideWiseData.push(["S.No", "College Register Number", "Student Name", "Slot Chosen", "Allocated Guide"]);
-    if (students.length === 0) {
-      guideWiseData.push(["N/A", "No students allocated yet", "Awaiting Selection", "N/A", g.name]);
-    } else {
-      students.forEach((st, sIdx) => {
-        guideWiseData.push([sIdx + 1, st.regNo, st.studentName, "Slot " + st.slotChosen, g.name]);
-      });
-    }
-    guideWiseData.push([]); // blank row
-  });
-
-  const ws = XLSX.utils.aoa_to_sheet(guideWiseData);
-  ws['!cols'] = [
-    { wch: 8 },
-    { wch: 24 },
-    { wch: 30 },
-    { wch: 14 },
-    { wch: 30 }
-  ];
-  XLSX.utils.book_append_sheet(wb, ws, "Guide-wise Students");
-
-  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx', compression: true });
-  res.setHeader('Content-Disposition', 'attachment; filename="SCSC_Guide_Wise_Student_Allocations_2024_2027.xlsx"');
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Length', buffer.length);
-  res.end(buffer);
-});
-
-// Guide Word Document (.docx) Export
-app.get('/api/guide/export/word', async (req, res) => {
-  const db = loadDB();
-  const guidePortal = db.guidePortal;
-  const total = guidePortal.submissions.length;
-
-  const tableHeaderCell = (text, widthPct = 20) => new TableCell({
-    width: { size: widthPct, type: WidthType.PERCENTAGE },
-    children: [new Paragraph({
-      alignment: AlignmentType.CENTER,
-      children: [new TextRun({ text, bold: true, color: "FFFFFF" })]
-    })],
-    shading: { fill: "002B49" }
-  });
-
-  const tableDataCell = (text, align = AlignmentType.LEFT, bold = false) => new TableCell({
-    children: [new Paragraph({
-      alignment: align,
-      children: [new TextRun({ text: String(text || '-'), bold })]
-    })]
-  });
-
-  // Table of all students
-  const studentRows = [
-    new TableRow({
-      children: [
-        tableHeaderCell("S.No", 8),
-        tableHeaderCell("Reg. Number", 22),
-        tableHeaderCell("Student Name", 30),
-        tableHeaderCell("Slot Chosen", 15),
-        tableHeaderCell("Allocated Guide", 25)
-      ]
-    })
-  ];
-
-  guidePortal.submissions.forEach((s, idx) => {
-    studentRows.push(
-      new TableRow({
-        children: [
-          tableDataCell(idx + 1, AlignmentType.CENTER),
-          tableDataCell(s.regNo, AlignmentType.CENTER, true),
-          tableDataCell(s.studentName),
-          tableDataCell("Slot #" + s.slotChosen, AlignmentType.CENTER),
-          tableDataCell(s.guideName, AlignmentType.LEFT, true)
-        ]
-      })
-    );
-  });
-
-  // Table of guide-wise distribution
-  const guideDistRows = [
-    new TableRow({
-      children: [
-        tableHeaderCell("S.No", 10),
-        tableHeaderCell("Faculty Guide Name", 40),
-        tableHeaderCell("Designation", 30),
-        tableHeaderCell("Allocated Students", 20)
-      ]
-    })
-  ];
-
-  guidePortal.guides.forEach((g, idx) => {
-    const count = guidePortal.submissions.filter(s => s.guideId === g.id).length;
-    guideDistRows.push(
-      new TableRow({
-        children: [
-          tableDataCell(idx + 1, AlignmentType.CENTER),
-          tableDataCell(g.name || `Guide #${idx + 1}`, AlignmentType.LEFT, true),
-          tableDataCell(g.designation || 'Assistant Professor'),
-          tableDataCell(`${count} / ${g.maxStudents || 8}`, AlignmentType.CENTER, true)
-        ]
-      })
-    );
-  });
-
-  const doc = new Document({
-    sections: [{
-      properties: {},
-      children: [
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          children: [
-            new TextRun({ text: "SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)", bold: true, size: 28, color: "002B49" })
-          ]
-        }),
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          children: [
-            new TextRun({ text: "Department of Computer Science with Data Analytics", bold: true, size: 24, color: "A6192E" })
-          ]
-        }),
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          children: [
-            new TextRun({ text: "Batch 2024 - 2027 | Semester VI - Project Guide Allocation Official Resolution", italics: true, size: 20 })
-          ]
-        }),
-        new Paragraph({ text: "" }),
-        new Paragraph({
-          children: [
-            new TextRun({ text: "Official Allocation Resolution: ", bold: true, size: 22 }),
-            new TextRun({ text: `Total Students Enrolled: 41 | Total Registered: ${total}` })
-          ]
-        }),
-        new Paragraph({
-          children: [
-            new TextRun({ text: "Each faculty guide is allocated strictly 8 students, with one guide allocated the 9th student (8 ├ù 4 + 9 = 41). All slot choices were cast confidentially and recorded in the departmental vault." })
-          ]
-        }),
-        new Paragraph({ text: "" }),
-        new Paragraph({
-          children: [
-            new TextRun({ text: "Faculty Guide Capacity & Allocation Summary", bold: true, size: 22 })
-          ]
-        }),
-        new Table({
-          width: { size: 100, type: WidthType.PERCENTAGE },
-          rows: guideDistRows
-        }),
-        new Paragraph({ text: "" }),
-        new Paragraph({
-          children: [
-            new TextRun({ text: "Master Student Guide Allocation Roster", bold: true, size: 22 })
-          ]
-        }),
-        new Table({
-          width: { size: 100, type: WidthType.PERCENTAGE },
-          rows: studentRows
-        }),
-        new Paragraph({ text: "" }),
-        new Paragraph({ text: "" }),
-        new Paragraph({
-          children: [
-            new TextRun({ text: "CLASS TUTOR                           HEAD OF DEPARTMENT (HOD)                           PRINCIPAL", bold: true })
-          ]
-        })
-      ]
-    }]
-  });
-
-  const buffer = await Packer.toBuffer(doc);
-  res.setHeader('Content-Disposition', 'attachment; filename="Project_Guide_Allocation_Master_Report.docx"');
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-  res.send(buffer);
-});
-
-// Guide-Wise Word Document (.docx) Export
-app.get('/api/guide/export/word-guidewise', async (req, res) => {
-  const db = loadDB();
-  const guidePortal = db.guidePortal;
-
-  const tableHeaderCell = (text, widthPct = 20) => new TableCell({
-    width: { size: widthPct, type: WidthType.PERCENTAGE },
-    children: [new Paragraph({
-      alignment: AlignmentType.CENTER,
-      children: [new TextRun({ text, bold: true, color: "FFFFFF" })]
-    })],
-    shading: { fill: "002B49" }
-  });
-
-  const tableDataCell = (text, align = AlignmentType.LEFT, bold = false) => new TableCell({
-    children: [new Paragraph({
-      alignment: align,
-      children: [new TextRun({ text: String(text || '-'), bold })]
-    })]
-  });
-
-  const docChildren = [
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      children: [
-        new TextRun({ text: "SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)", bold: true, size: 28, color: "002B49" })
-      ]
-    }),
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      children: [
-        new TextRun({ text: "Department of Computer Science with Data Analytics", bold: true, size: 24, color: "A6192E" })
-      ]
-    }),
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      children: [
-        new TextRun({ text: "Batch 2024 - 2027 | Semester VI - Guide-Wise Student Allocation Roster", italics: true, size: 20 })
-      ]
-    }),
-    new Paragraph({ text: "" })
-  ];
-
-  guidePortal.guides.forEach((g, gIdx) => {
-    const students = guidePortal.submissions.filter(s => s.guideId === g.id);
-
-    docChildren.push(
-      new Paragraph({
-        children: [
-          new TextRun({ text: `FACULTY GUIDE #${gIdx + 1}: ${g.name.toUpperCase()}`, bold: true, size: 22, color: "002B49" }),
-          new TextRun({ text: ` (${g.designation}) — Total Allocated: ${students.length} / ${g.maxStudents}`, italics: true, size: 20 })
-        ]
-      })
-    );
-
-    const rows = [
-      new TableRow({
-        children: [
-          tableHeaderCell("S.No", 10),
-          tableHeaderCell("College Register Number", 30),
-          tableHeaderCell("Student Name", 40),
-          tableHeaderCell("Slot Chosen", 20)
-        ]
-      })
-    ];
-
-    if (students.length === 0) {
-      rows.push(
-        new TableRow({
-          children: [
-            tableDataCell("-", AlignmentType.CENTER),
-            tableDataCell("No students allocated yet"),
-            tableDataCell("-"),
-            tableDataCell("-")
-          ]
-        })
-      );
-    } else {
-      students.forEach((st, sIdx) => {
-        rows.push(
-          new TableRow({
-            children: [
-              tableDataCell(sIdx + 1, AlignmentType.CENTER),
-              tableDataCell(st.regNo, AlignmentType.CENTER, true),
-              tableDataCell(st.studentName),
-              tableDataCell("Slot #" + st.slotChosen, AlignmentType.CENTER)
-            ]
-          })
-        );
-      });
-    }
-
-    docChildren.push(
-      new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        rows
-      })
-    );
-
-    docChildren.push(new Paragraph({ text: "" }));
-  });
-
-  docChildren.push(new Paragraph({ text: "" }));
-  docChildren.push(
-    new Paragraph({
-      children: [
-        new TextRun({ text: "CLASS TUTOR                           HEAD OF DEPARTMENT (HOD)                           PRINCIPAL", bold: true })
-      ]
-    })
-  );
-
-  const doc = new Document({
-    sections: [{
-      properties: {},
-      children: docChildren
-    }]
-  });
-
-  const buffer = await Packer.toBuffer(doc);
-  res.setHeader('Content-Disposition', 'attachment; filename="Guide_Wise_Student_Allocations.docx"');
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-  res.send(buffer);
-});
-
-// ==========================================
-// 2. ELECTIVE COURSE SELECTION APIS
-// ==========================================
-
-// Get Elective Portal Config & Analytics
-app.get('/api/elective/config', (req, res) => {
-  const db = loadDB();
-  const electivePortal = db.electivePortal;
-
-  // Compute popularity metrics
-  const e2Counts = {};
-  electivePortal.elective2Options.forEach(opt => e2Counts[opt.code] = 0);
-  const e3Counts = {};
-  electivePortal.elective3Options.forEach(opt => e3Counts[opt.code] = 0);
-
-  electivePortal.submissions.forEach(s => {
-    if (e2Counts[s.elective2Code] !== undefined) e2Counts[s.elective2Code]++;
-    if (e3Counts[s.elective3Code] !== undefined) e3Counts[s.elective3Code]++;
-  });
-
-  const total = electivePortal.submissions.length;
-
-  const e2Analytics = electivePortal.elective2Options.map(opt => ({
-    ...opt,
-    votes: e2Counts[opt.code] || 0,
-    percentage: total > 0 ? Math.round(((e2Counts[opt.code] || 0) / total) * 100) : 0
-  })).sort((a, b) => b.votes - a.votes);
-
-  const e3Analytics = electivePortal.elective3Options.map(opt => ({
-    ...opt,
-    votes: e3Counts[opt.code] || 0,
-    percentage: total > 0 ? Math.round(((e3Counts[opt.code] || 0) / total) * 100) : 0
-  })).sort((a, b) => b.votes - a.votes);
-
-  const highestChosenE2 = e2Analytics.length > 0 && e2Analytics[0].votes > 0 ? e2Analytics[0] : null;
-  const highestChosenE3 = e3Analytics.length > 0 && e3Analytics[0].votes > 0 ? e3Analytics[0] : null;
-
-  res.json({
-    success: true,
-    targetStudents: electivePortal.targetStudents,
-    totalRegistered: total,
-    elective2Options: electivePortal.elective2Options,
-    elective3Options: electivePortal.elective3Options,
-    e2Analytics,
-    e3Analytics,
-    highestChosenE2,
-    highestChosenE3
-  });
-});
-
-// Student Submit Elective Choice
-app.post('/api/elective/submit', (req, res) => {
-  let { regNo, studentName, elective2Code, elective3Code } = req.body;
-  if (!regNo || !studentName || !elective2Code || !elective3Code) {
-    return res.status(400).json({ success: false, error: 'Register Number, Student Name, Elective II and Elective III selections are required.' });
-  }
-
-  regNo = regNo.trim().toUpperCase();
-  studentName = studentName.trim();
-
-  const db = loadDB();
-  const electivePortal = db.electivePortal;
-
-  // Prevent duplicate registration
-  const existing = electivePortal.submissions.find(s => s.regNo.toUpperCase() === regNo);
-  if (existing) {
-    return res.status(409).json({
-      success: false,
-      isExisting: true,
-      error: `Register Number ${regNo} has already submitted elective selections!`,
-      submission: existing
-    });
-  }
-
-  const opt2 = electivePortal.elective2Options.find(o => o.code === elective2Code);
-  const opt3 = electivePortal.elective3Options.find(o => o.code === elective3Code);
-
-  if (!opt2 || !opt3) {
-    return res.status(400).json({ success: false, error: 'Invalid elective course choice.' });
-  }
-
-  const submissionRecord = {
-    id: 'EL-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-    regNo,
-    studentName,
-    elective2Code: opt2.code,
-    elective2Title: opt2.title,
-    elective2Option: opt2.option,
-    elective3Code: opt3.code,
-    elective3Title: opt3.title,
-    elective3Option: opt3.option,
-    timestamp: new Date().toISOString()
-  };
-
-  electivePortal.submissions.push(submissionRecord);
-  saveDB(db);
-
-  res.json({
-    success: true,
-    message: 'Elective course selection saved successfully!',
-    submission: submissionRecord
-  });
-});
-
-// Admin get all Elective Submissions & Breakdown
-app.get('/api/elective/submissions', (req, res) => {
-  const db = loadDB();
-  res.json({
-    success: true,
-    totalTarget: db.electivePortal.targetStudents,
-    totalSubmissions: db.electivePortal.submissions.length,
-    submissions: db.electivePortal.submissions
-  });
-});
-
-// Admin Reset Elective Submissions (Password Protected)
-app.post('/api/elective/admin/reset', (req, res) => {
-  const { password } = req.body;
-  const db = loadDB();
-  
-  if (password !== db.system.staffPassword) {
-    return res.status(401).json({ success: false, error: 'Invalid staff password.' });
-  }
-
-  db.electivePortal.submissions = [];
-  saveDB(db);
-  res.json({ success: true, message: 'Elective submissions reset successfully.' });
 });
 
 // Elective Excel Export
