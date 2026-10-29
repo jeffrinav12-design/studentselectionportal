@@ -928,7 +928,7 @@ function renderAdminGuideWiseView(guides, submissions) {
         <div class="guide-wise-header">
           <div>
             <div class="guide-wise-title">${escapeHTML(g.name || `Faculty Guide #${idx + 1}`)}</div>
-            <small class="text-muted">${escapeHTML(g.designation || 'Assistant Professor')} ${isNine ? 'ΓÇó 9 Quota (Designated)' : 'ΓÇó 8 Quota'}</small>
+            <small class="text-muted">${escapeHTML(g.designation || 'Assistant Professor')} ${isNine ? '• 9 Quota (Designated)' : '• 8 Quota'}</small>
           </div>
           <span class="guide-wise-count ${students.length >= (g.maxStudents || 8) ? 'bg-danger text-white' : ''}">
             ${students.length} / ${g.maxStudents || 8}
@@ -1007,6 +1007,19 @@ function renderAdminElectiveTable(submissions) {
   cont.innerHTML = html;
 }
 
+function showFacultySaveToast(message = 'Faculty Guide configurations saved & synced live!') {
+  let toast = document.getElementById('facultySaveToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'facultySaveToast';
+    toast.className = 'faculty-save-toast';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = '<i class="fa-solid fa-circle-check"></i> <span>' + escapeHTML(message) + '</span>';
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
 function renderFacultyConfigList(guides, ninthGuideId) {
   const cont = document.getElementById('facultyConfigList');
   if (!cont) return;
@@ -1014,24 +1027,85 @@ function renderFacultyConfigList(guides, ninthGuideId) {
   let html = '';
   guides.forEach((g, idx) => {
     const isNinth = (g.id === (ninthGuideId || 'g1')) || (g.maxStudents === 9);
+    const assigned = g.assignedCount || 0;
+    const maxQuota = g.maxStudents || (isNinth ? 9 : 8);
+    const percent = Math.min(100, Math.round((assigned / maxQuota) * 100));
+
+    let statusText = 'VACANT';
+    let statusClass = 'status-vacant';
+    let progressClass = 'fill-active';
+    let footerHint = '<i class="fa-solid fa-circle-check text-success"></i> Open & ready for live slot allocations';
+
+    if (assigned >= maxQuota) {
+      statusText = 'TERMINATED';
+      statusClass = 'status-terminated';
+      progressClass = 'fill-terminated';
+      footerHint = '<i class="fa-solid fa-ban text-danger"></i> Quota full (' + assigned + '/' + maxQuota + ') • Terminated automatically';
+    } else if (assigned > 0) {
+      statusText = 'ACTIVE';
+      statusClass = 'status-active';
+      footerHint = '<i class="fa-solid fa-arrows-rotate text-primary"></i> In active rotation (' + assigned + '/' + maxQuota + ' allocated)';
+    }
+
     html += `
-      <div class="faculty-config-card" data-guide-id="${g.id}">
-        <div class="f-card-header">
-          <span class="f-badge">Faculty Guide #${idx + 1} ${isNinth ? 'Γÿà (9-Student Quota)' : '(8-Student Quota)'}</span>
-          <span class="f-assigned-count">${g.assignedCount || 0} / ${g.maxStudents || 8} Allocated</span>
+      <div class="faculty-card-pro ${isNinth ? 'is-ninth-guide' : ''}" data-guide-id="${g.id}">
+        <div class="f-card-top">
+          <div class="f-avatar-group">
+            <div class="f-avatar-circle">
+              <i class="fa-solid fa-chalkboard-user"></i>
+            </div>
+            <div>
+              <span class="f-guide-badge">Faculty Guide 0${idx + 1}</span>
+              <h4 class="f-guide-title">${escapeHTML(g.name || 'Faculty Guide ' + (idx + 1))}</h4>
+            </div>
+          </div>
+          <span class="f-quota-pill ${isNinth ? 'pill-ninth' : 'pill-standard'}">
+            ${isNinth ? '<i class="fa-solid fa-crown text-warning"></i> 9th-Quota Guide' : '<i class="fa-solid fa-shield-halved"></i> 8-Quota Guide'}
+          </span>
         </div>
-        <div class="form-group mb-2">
-          <label>Faculty Name (Ma'am)</label>
-          <input type="text" class="guide-name-input form-control" value="${escapeHTML(g.name || '')}" placeholder="e.g. Dr. K. Meenakshi">
+
+        <div class="f-card-body">
+          <div class="f-input-field">
+            <label><i class="fa-solid fa-user-pen"></i> Faculty Guide Name (Ma'am)</label>
+            <div class="f-input-wrap">
+              <i class="fa-solid fa-user-graduate field-icon"></i>
+              <input type="text" class="guide-name-input form-control-pro" value="${escapeHTML(g.name || '')}" placeholder="e.g. Dr. K. Meenakshi" required autocomplete="off">
+            </div>
+          </div>
+
+          <div class="f-input-field">
+            <label><i class="fa-solid fa-id-badge"></i> Academic Designation</label>
+            <div class="f-input-wrap">
+              <i class="fa-solid fa-briefcase field-icon"></i>
+              <input type="text" class="guide-desig-input form-control-pro" value="${escapeHTML(g.designation || 'Assistant Professor, CS & DA')}" placeholder="e.g. Assistant Professor, CS & DA">
+            </div>
+          </div>
+
+          <div class="f-input-2col">
+            <div class="f-input-field">
+              <label><i class="fa-solid fa-calculator"></i> Capacity Quota</label>
+              <div class="f-input-wrap">
+                <i class="fa-solid fa-hashtag field-icon"></i>
+                <input type="number" class="guide-quota-input form-control-pro" value="${maxQuota}" min="1" max="15">
+              </div>
+              <small class="text-muted" style="font-size: 0.72rem;">${isNinth ? 'Designated for 9th student' : 'Terminates at 8'}</small>
+            </div>
+
+            <div class="f-capacity-box">
+              <div class="f-capacity-top">
+                <span class="f-cap-count">${assigned} <small>/ ${maxQuota}</small></span>
+                <span class="f-cap-status ${statusClass}">${statusText}</span>
+              </div>
+              <div class="f-cap-bar">
+                <div class="f-cap-fill ${progressClass}" style="width: ${percent}%;"></div>
+              </div>
+              <small class="text-muted" style="font-size: 0.72rem;">${percent}% filled</small>
+            </div>
+          </div>
         </div>
-        <div class="form-group mb-2">
-          <label>Designation</label>
-          <input type="text" class="guide-desig-input form-control" value="${escapeHTML(g.designation || 'Assistant Professor, CS & DA')}">
-        </div>
-        <div class="form-group mb-0">
-          <label>Capacity Quota (Auto-Terminated upon reaching)</label>
-          <input type="number" class="guide-quota-input form-control" value="${g.maxStudents || 8}" min="1" max="15">
-          <small class="text-muted">${isNinth ? 'Designated for 9th student allocation' : 'Terminated automatically at 8'}</small>
+
+        <div class="f-card-footer">
+          <span class="f-footer-hint">${footerHint}</span>
         </div>
       </div>
     `;
@@ -1042,7 +1116,7 @@ function renderFacultyConfigList(guides, ninthGuideId) {
 
 async function saveGuideConfiguration(makeLive = true) {
   const db = getLocalDB();
-  const cards = document.querySelectorAll('.faculty-config-card');
+  const cards = document.querySelectorAll('.faculty-card-pro, .faculty-config-card');
   const updatedGuides = [];
 
   cards.forEach(card => {
@@ -1089,8 +1163,31 @@ async function saveGuideConfiguration(makeLive = true) {
     console.warn('Network sync notice on saveGuideConfiguration:', err);
   }
 
-  alert('Faculty Guide configuration saved successfully! The 5 Faculty Guide names are now live across all student mystery slots.');
+  showFacultySaveToast('Faculty Guide configuration saved! All 5 Guide names are now live across all student mystery slots.');
   loadAdminData(true);
+}
+
+async function resetFacultyToDefaults() {
+  if (!confirm('Reset all 5 Faculty Guide names to Department of CS & DA defaults?')) return;
+  const defaults = [
+    { id: 'g1', name: 'Dr. K. Meenakshi', designation: 'Assistant Professor, CS & DA', maxStudents: 9 },
+    { id: 'g2', name: 'Prof. S. Kavitha', designation: 'Assistant Professor, CS & DA', maxStudents: 8 },
+    { id: 'g3', name: 'Dr. R. Malathi', designation: 'Assistant Professor, CS & DA', maxStudents: 8 },
+    { id: 'g4', name: 'Prof. P. Deepa', designation: 'Assistant Professor, CS & DA', maxStudents: 8 },
+    { id: 'g5', name: 'Dr. N. Priyanka', designation: 'Assistant Professor, CS & DA', maxStudents: 8 }
+  ];
+  const db = getLocalDB();
+  db.guidePortal.guides = defaults;
+  saveLocalDB(db);
+  try {
+    await fetch('/api/guide/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ guides: defaults, isLive: true, ninthGuideId: 'g1' })
+    });
+  } catch(e) {}
+  loadAdminData(true);
+  showFacultySaveToast('Reset to default faculty profiles successfully.');
 }
 
 function activateGuideSlotsLive() {
@@ -1233,7 +1330,7 @@ function downloadMasterStudentExcel() {
     ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
     ["Affiliated to Bharathiar University | Approved by AICTE | Re-Accredited with 'A' Grade by NAAC"],
     ["Department of Computer Science with Data Analytics"],
-    ["ACADEMIC BATCH 2024ΓÇô2027 | SEMESTER VI - PROJECT GUIDE ALLOCATION MASTER LIST"],
+    ["ACADEMIC BATCH 2024-2027 | SEMESTER VI - PROJECT GUIDE ALLOCATION MASTER LIST"],
     ["Total Target: 41 Students (4 Faculty Guides ├ù 8 Quota + 1 Faculty Guide ├ù 9 Quota = 41)"],
     ["Report Generated: " + new Date().toLocaleString()],
     [],
@@ -1310,7 +1407,7 @@ function downloadMasterStudentExcel() {
     [],
     ["Metric / Rule Description", "Official Value / Configuration"],
     ["Academic Department", "Department of Computer Science with Data Analytics"],
-    ["Academic Batch", "2024ΓÇô2027 (Semester VI)"],
+    ["Academic Batch", "2024-2027 (Semester VI)"],
     ["Total Target Student Strength", "41 Students"],
     ["Total Registered Students", String(gp.submissions ? gp.submissions.length : 0)],
     ["Remaining Students", String(Math.max(0, 41 - (gp.submissions ? gp.submissions.length : 0)))],
@@ -1344,7 +1441,7 @@ function downloadGuideWiseExcel() {
     ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
     ["Affiliated to Bharathiar University | Approved by AICTE | Re-Accredited with 'A' Grade by NAAC"],
     ["Department of Computer Science with Data Analytics"],
-    ["ACADEMIC BATCH 2024ΓÇô2027 | SEMESTER VI - GUIDE-WISE GROUPED ALLOCATION ROSTER"],
+    ["ACADEMIC BATCH 2024-2027 | SEMESTER VI - GUIDE-WISE GROUPED ALLOCATION ROSTER"],
     ["Total Strength: 41 Students (4 Faculty Guides ├ù 8 Quota + 1 Faculty Guide ├ù 9 Quota = 41)"],
     ["Generated on: " + new Date().toLocaleString()],
     []
@@ -1382,7 +1479,7 @@ function downloadGuideWiseExcel() {
       ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
       ["Department of Computer Science with Data Analytics - Project Guide Allocation"],
       [`FACULTY GUIDE: ${g.name.toUpperCase()} (${g.designation})`],
-      [`Academic Batch: 2024ΓÇô2027 | Semester VI | Allocated: ${students.length} of ${g.maxStudents} Students`],
+      [`Academic Batch: 2024-2027 | Semester VI | Allocated: ${students.length} of ${g.maxStudents} Students`],
       ["Generated on: " + new Date().toLocaleString()],
       [],
       ["S.No", "College Register Number", "Student Name", "Mystery Slot Chosen", "Allotment Date & Time", "Remarks"]
@@ -1434,7 +1531,7 @@ function downloadElectiveExcel() {
     ["SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)"],
     ["Affiliated to Bharathiar University | Approved by AICTE | Re-Accredited with 'A' Grade by NAAC"],
     ["Department of Computer Science with Data Analytics"],
-    ["ACADEMIC BATCH 2024ΓÇô2027 | SEMESTER VI - ELECTIVE COURSE SELECTION MASTER LIST"],
+    ["ACADEMIC BATCH 2024-2027 | SEMESTER VI - ELECTIVE COURSE SELECTION MASTER LIST"],
     ["Generated on: " + new Date().toLocaleString()],
     [],
     ["S.No", "College Register Number", "Student Name", "Elective II Course Code & Title", "Elective III Course Code & Title", "Submission Timestamp", "Status"]
@@ -1595,7 +1692,7 @@ function printMasterPDF() {
       <div class="inst-header">
         <h1 class="inst-name">SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)</h1>
         <p class="dept-name">DEPARTMENT OF COMPUTER SCIENCE WITH DATA ANALYTICS</p>
-        <p class="sub-title">Semester VI Capstone Project Guide Allocation - Master Student Roster (Batch 2024ΓÇô2027)</p>
+        <p class="sub-title">Semester VI Capstone Project Guide Allocation - Master Student Roster (Batch 2024-2027)</p>
       </div>
       <table>
         <thead>
@@ -1634,7 +1731,7 @@ function printGuideWisePDF() {
       <div style="margin-top: 24px;">
         <h3 style="color: #002B49; margin-bottom: 6px; font-size: 1.05rem;">
           FACULTY GUIDE #${gIdx + 1}: ${escapeHTML(g.name.toUpperCase())} (${escapeHTML(g.designation)}) 
-          <span style="color: #9B1C2E; font-size: 0.9rem;">ΓÇö Allocated: ${students.length} / ${g.maxStudents || 8}</span>
+          <span style="color: #9B1C2E; font-size: 0.9rem;">— Allocated: ${students.length} / ${g.maxStudents || 8}</span>
         </h3>
         <table>
           <thead>
@@ -1753,7 +1850,7 @@ function renderCircularContent() {
     if (dateEl) dateEl.textContent = 'Date: 28.10.2026';
     bodyEl.innerHTML = `
       <p style="margin-bottom: 16px; text-indent: 40px; text-align: justify;">
-        This is to officially inform all students of the <strong>III B.Sc. Computer Science with Data Analytics (Academic Batch 2024ΓÇô2027)</strong> that the selection and allotment of Faculty Project Guides for the <strong>Semester VI Capstone Project (Course Code: 24BSD63V01)</strong> is scheduled to commence as per departmental autonomy regulations.
+        This is to officially inform all students of the <strong>III B.Sc. Computer Science with Data Analytics (Academic Batch 2024-2027)</strong> that the selection and allotment of Faculty Project Guides for the <strong>Semester VI Capstone Project (Course Code: 24BSD63V01)</strong> is scheduled to commence as per departmental autonomy regulations.
       </p>
       <p style="margin-bottom: 16px; text-align: justify;">
         To ensure absolute merit, transparency, and impartiality, the allotment process is conducted via the <strong>Data Sorcerers Dynamic Selection Suite</strong>. Each of the 5 Faculty Guide members (Ma'ams) is assigned an equal base student quota of strictly <strong>8 students</strong> (with exactly one faculty receiving the 41st student).
@@ -1779,7 +1876,7 @@ function renderCircularContent() {
     if (dateEl) dateEl.textContent = 'Date: 28.10.2026';
     bodyEl.innerHTML = `
       <p style="margin-bottom: 16px; text-indent: 40px; text-align: justify;">
-        This is to officially inform all students of the <strong>III B.Sc. Computer Science with Data Analytics (Academic Batch 2024ΓÇô2027)</strong> that the choice of Elective Courses for <strong>Semester VI</strong> is open for registration.
+        This is to officially inform all students of the <strong>III B.Sc. Computer Science with Data Analytics (Academic Batch 2024-2027)</strong> that the choice of Elective Courses for <strong>Semester VI</strong> is open for registration.
       </p>
       <p style="margin-bottom: 16px; text-align: justify;">
         Students are required to register their choices for <strong>Elective II</strong> and <strong>Elective III</strong> as per the prescribed Autonomous curriculum. The course with the highest aggregate student votes will be officially offered by the department.

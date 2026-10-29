@@ -4046,3 +4046,454 @@ tbody tr:hover {
 
 
 
+
+
+/* ========================================================
+   PROFESSIONAL FACULTY GUIDE SETUP & CONFIGURATION STYLES
+   ======================================================== */
+
+.faculty-setup-container {
+  padding: 8px 0 24px 0;
+}
+
+.faculty-setup-header {
+  background: linear-gradient(135deg, #002B49 0%, #001A2C 100%);
+  color: #FFFFFF;
+  border-radius: 14px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(0, 43, 73, 0.12);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.faculty-header-left h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0 0 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.faculty-header-left h3 i {
+  color: #D4AF37;
+}
+
+.faculty-header-left p {
+  color: #CBD5E1;
+  font-size: 0.92rem;
+  margin: 0 0 12px 0;
+  max-width: 680px;
+  line-height: 1.45;
+}
+
+.faculty-meta-pills {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #F1F5F9;
+  letter-spacing: 0.3px;
+}
+
+.meta-pill i {
+  color: #D4AF37;
+}
+
+.faculty-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-save-faculty {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #FFFFFF;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  transition: all 0.25s ease;
+}
+
+.btn-save-faculty:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.btn-reset-faculty {
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 11px 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-reset-faculty:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* Faculty Grid */
+.faculty-config-grid-pro {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 22px;
+  margin-bottom: 24px;
+}
+
+/* Faculty Card */
+.faculty-card-pro {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.faculty-card-pro:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 43, 73, 0.09);
+  border-color: #CBD5E1;
+}
+
+/* Guide 1 Highlight (Designated 9th Guide) */
+.faculty-card-pro.is-ninth-guide {
+  border: 2px solid #D4AF37;
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.15);
+}
+
+.faculty-card-pro.is-ninth-guide::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #D4AF37 0%, #F59E0B 100%);
+}
+
+.faculty-card-pro:not(.is-ninth-guide)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #002B49 0%, #9B1C2E 100%);
+}
+
+/* Card Top Header */
+.f-card-top {
+  padding: 18px 20px 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #F1F5F9;
+  background: #FAFAFC;
+}
+
+.f-avatar-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.f-avatar-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #002B49;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  box-shadow: 0 3px 8px rgba(0, 43, 73, 0.18);
+}
+
+.faculty-card-pro.is-ninth-guide .f-avatar-circle {
+  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+  color: #002B49;
+  box-shadow: 0 3px 10px rgba(212, 175, 55, 0.35);
+}
+
+.f-guide-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #64748B;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.f-guide-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.f-quota-pill {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.f-quota-pill.pill-ninth {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FCD34D;
+}
+
+.f-quota-pill.pill-standard {
+  background: #EFF6FF;
+  color: #1E40AF;
+  border: 1px solid #BFDBFE;
+}
+
+/* Card Body & Form Fields */
+.f-card-body {
+  padding: 18px 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.f-input-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.f-input-field label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.f-input-field label i {
+  color: #64748B;
+  font-size: 0.82rem;
+}
+
+.f-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.f-input-wrap .field-icon {
+  position: absolute;
+  left: 14px;
+  color: #94A3B8;
+  font-size: 0.92rem;
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.form-control-pro {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #0F172A;
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 8px;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.form-control-pro:focus {
+  border-color: #002B49;
+  box-shadow: 0 0 0 3px rgba(0, 43, 73, 0.1);
+}
+
+.form-control-pro:focus + .field-icon,
+.f-input-wrap:focus-within .field-icon {
+  color: #002B49;
+}
+
+.f-input-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.f-capacity-box {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.f-capacity-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.f-cap-count {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.f-cap-count small {
+  color: #64748B;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.f-cap-status {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
+.f-cap-status.status-vacant {
+  background: #F1F5F9;
+  color: #475569;
+}
+
+.f-cap-status.status-active {
+  background: #DCFCE7;
+  color: #166534;
+}
+
+.f-cap-status.status-terminated {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+.f-cap-bar {
+  width: 100%;
+  height: 6px;
+  background: #E2E8F0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 3px;
+}
+
+.f-cap-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.f-cap-fill.fill-active {
+  background: linear-gradient(90deg, #10B981, #059669);
+}
+
+.f-cap-fill.fill-terminated {
+  background: linear-gradient(90deg, #EF4444, #DC2626);
+}
+
+/* Card Footer */
+.f-card-footer {
+  padding: 10px 20px 14px 20px;
+  background: #FAFAFC;
+  border-top: 1px solid #F1F5F9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.f-footer-hint {
+  font-size: 0.76rem;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.f-footer-hint i {
+  color: #94A3B8;
+}
+
+/* Floating Save Toast */
+.faculty-save-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #002B49;
+  color: #FFFFFF;
+  padding: 14px 22px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  z-index: 9999;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.faculty-save-toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.faculty-save-toast i {
+  color: #10B981;
+  font-size: 1.2rem;
+}

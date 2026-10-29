@@ -35,7 +35,7 @@
       <div class="nav-bar-left">
         <span class="live-pulse"><i class="fa-solid fa-circle"></i> SYSTEM ONLINE</span>
         <span class="divider">|</span>
-        <span><i class="fa-solid fa-graduation-cap"></i> Batch 2024ΓÇô2027 ΓÇó Semester VI</span>
+        <span><i class="fa-solid fa-graduation-cap"></i> Batch 2024-2027 • Semester VI</span>
         <span class="divider">|</span>
         <span>Dept. of CS with Data Analytics</span>
       </div>
@@ -60,7 +60,7 @@
         <h1 class="college-name">SANKARA COLLEGE OF SCIENCE AND COMMERCE (AUTONOMOUS)</h1>
         <p class="college-affil">Affiliated to Bharathiar University, Coimbatore | Approved by AICTE, New Delhi</p>
         <p class="college-accred">Re-Accredited by NAAC with 'A+' Grade (Cycle II) | An ISO 9001:2015 Certified Institution</p>
-        <p class="college-addr">Saravanampatty, Coimbatore, Tamil Nadu ΓÇô 641035</p>
+        <p class="college-addr">Saravanampatty, Coimbatore, Tamil Nadu - 641035</p>
         <div class="dept-badge">
           <i class="fa-solid fa-chart-line"></i> DEPARTMENT OF COMPUTER SCIENCE WITH DATA ANALYTICS
         </div>
@@ -79,7 +79,7 @@
     <!-- ========================================================================= -->
     <section id="view-gateway" class="app-view active fade-in">
       <div class="gateway-hero">
-        <span class="sub-badge"><i class="fa-solid fa-landmark"></i> ACADEMIC YEAR 2026ΓÇô2027</span>
+        <span class="sub-badge"><i class="fa-solid fa-landmark"></i> ACADEMIC YEAR 2026-2027</span>
         <h2 class="gateway-title">Welcome to the Academic Selection Portal</h2>
         <p class="gateway-subtitle">Please select your designated portal below to proceed with course and guide selection.</p>
       </div>
@@ -329,15 +329,15 @@
           <div class="ballot-receipt-box">
             <div class="receipt-row">
               <span class="receipt-label"><i class="fa-solid fa-hashtag"></i> College Register Number:</span>
-              <strong class="receipt-val" id="receiptGuideRegNo">ΓÇö</strong>
+              <strong class="receipt-val" id="receiptGuideRegNo">—</strong>
             </div>
             <div class="receipt-row">
               <span class="receipt-label"><i class="fa-solid fa-user"></i> Student Name:</span>
-              <strong class="receipt-val" id="receiptGuideName">ΓÇö</strong>
+              <strong class="receipt-val" id="receiptGuideName">—</strong>
             </div>
             <div class="receipt-row">
               <span class="receipt-label"><i class="fa-solid fa-cube"></i> Mystery Slot Chosen:</span>
-              <span class="slot-chosen-badge" id="receiptGuideSlot">ΓÇö</span>
+              <span class="slot-chosen-badge" id="receiptGuideSlot">—</span>
             </div>
             <div class="receipt-row">
               <span class="receipt-label"><i class="fa-solid fa-shield-halved"></i> Selection Status:</span>
@@ -541,11 +541,11 @@
           <div class="ballot-receipt-box">
             <div class="receipt-row">
               <span class="receipt-label"><i class="fa-solid fa-hashtag"></i> College Register Number:</span>
-              <strong class="receipt-val" id="receiptElectiveRegNo">ΓÇö</strong>
+              <strong class="receipt-val" id="receiptElectiveRegNo">—</strong>
             </div>
             <div class="receipt-row">
               <span class="receipt-label"><i class="fa-solid fa-user"></i> Student Name:</span>
-              <strong class="receipt-val" id="receiptElectiveName">ΓÇö</strong>
+              <strong class="receipt-val" id="receiptElectiveName">—</strong>
             </div>
             <div class="receipt-row">
               <span class="receipt-label"><i class="fa-solid fa-book-open"></i> Elective II Chosen:</span>
@@ -709,37 +709,32 @@
 
         <!-- STAFF SUB-PANE 2: FACULTY SETUP & LIVE CONTROLS -->
         <div id="staff-faculty" class="staff-sub-pane d-none fade-in">
-          <!-- Live Slots Status & Activation Banner -->
-          <div class="admin-live-toggle-banner">
-            <div class="live-toggle-info">
-              <span class="live-pill" id="adminLivePill"><i class="fa-solid fa-circle-check"></i> SLOTS STATUS: LIVE</span>
-              <h4>Student Slot Selection Status: <span id="adminLiveText" class="text-success">LIVE (Open for Students)</span></h4>
-              <p>Configure the 5 Project Guide Faculty (Ma'am) names below. 4 guides have a quota of 8 students; 1 guide has 9 allocations (Total = 41 students). Changes reflect instantly.</p>
-            </div>
-            <div class="live-toggle-btns">
-              <button class="btn btn-success" onclick="activateGuideSlotsLive()">
-                <i class="fa-solid fa-bolt"></i> Enable Slots LIVE
-              </button>
-              <button class="btn btn-secondary" onclick="deactivateGuideSlotsLive()">
-                <i class="fa-solid fa-lock"></i> Lock Slots
-              </button>
-            </div>
-          </div>
-
-          <!-- Faculty Names Editor -->
-          <div class="admin-card">
-            <div class="card-header">
-              <div>
-                <h3><i class="fa-solid fa-user-pen"></i> 5 Guide Faculty Names & Capacity Setup</h3>
-                <p class="subtitle">Update the official faculty names. Base quota is strictly 8 students each (one guide alone receives the 9th student for 41 total). Once 8 students are allocated, that guide is terminated automatically.</p>
+          <div class="faculty-setup-container">
+            <!-- Executive Banner Header -->
+            <div class="faculty-setup-header">
+              <div class="faculty-header-left">
+                <h3><i class="fa-solid fa-chalkboard-user"></i> Faculty Guide Allocation & Quota Setup</h3>
+                <p>Configure the 5 Project Guide Faculty (Ma'am) profiles, academic designations, and allocation capacities. Changes sync immediately to all student mystery slots in the background.</p>
+                <div class="faculty-meta-pills">
+                  <span class="meta-pill"><i class="fa-solid fa-users"></i> 41 Total Students</span>
+                  <span class="meta-pill"><i class="fa-solid fa-scale-balanced"></i> 4 Guides × 8 + 1 Guide × 9 Quota</span>
+                  <span class="meta-pill"><i class="fa-solid fa-ban"></i> Automatic Termination at Capacity</span>
+                  <span class="meta-pill" id="facultyLiveStatusPill"><i class="fa-solid fa-circle-check"></i> Slots Status: LIVE</span>
+                </div>
               </div>
-              <button class="btn btn-primary" onclick="saveGuideConfiguration(true)">
-                <i class="fa-solid fa-floppy-disk"></i> Save Configuration
-              </button>
+              <div class="faculty-header-actions">
+                <button class="btn btn-save-faculty" onclick="saveGuideConfiguration(true)" title="Save and deploy faculty guide names to live student slots">
+                  <i class="fa-solid fa-floppy-disk"></i> Save All 5 Guide Names (Live)
+                </button>
+                <button class="btn btn-reset-faculty" onclick="resetFacultyToDefaults()" title="Reset to standard departmental faculty names">
+                  <i class="fa-solid fa-arrow-rotate-left"></i> Reset Defaults
+                </button>
+              </div>
             </div>
 
-            <div class="faculty-config-grid" id="facultyConfigList">
-              <!-- 5 Editable Guide Cards dynamically rendered -->
+            <!-- 5 Editable Guide Cards Grid -->
+            <div class="faculty-config-grid-pro" id="facultyConfigList">
+              <!-- Dynamically populated by renderFacultyConfigList -->
             </div>
           </div>
         </div>
@@ -867,7 +862,7 @@
 
               <!-- Footer Watermark Note -->
               <div class="circular-footer-note">
-                <span>Powered by <strong>Data Sorcerers</strong> Software Suite ΓÇó Academic Batch 2024ΓÇô2027</span>
+                <span>Powered by <strong>Data Sorcerers</strong> Software Suite • Academic Batch 2024-2027</span>
               </div>
             </div>
           </div>
@@ -933,7 +928,7 @@
 
               <div class="cover-main-title-box">
                 <h2 class="cover-event-title">PROJECT GUIDE ALLOCATION & ELECTIVE SELECTION</h2>
-                <div class="cover-for-badge">FOR III BSC CSDA (BATCH 2024ΓÇô2027)</div>
+                <div class="cover-for-badge">FOR III BSC CSDA (BATCH 2024-2027)</div>
                 <div class="cover-topic-line">
                   <strong>TOPIC:</strong> Semester VI Project Guide Allocation & Elective Selection Outcome
                 </div>
@@ -994,7 +989,7 @@
                 <p>
                   The Department of Computer Science with Data Analytics organized the official digital selection process for 
                   <strong>Semester VI Project Guide Allocation</strong> and <strong>Elective Courses</strong> exclusively for the 
-                  students of III B.Sc CSDA (Batch 2024ΓÇô2027). The selection was conducted via custom-designed software engineered 
+                  students of III B.Sc CSDA (Batch 2024-2027). The selection was conducted via custom-designed software engineered 
                   by <strong>Data Sorcerers</strong>. The event was aimed at equipping the department with an automated, 
                   impartial, and transparent system for allocating 41 project students across five faculty guide members and 
                   determining the most preferred elective courses for 43 students.
@@ -1254,9 +1249,9 @@
   <footer class="app-footer">
     <div class="container footer-content">
       <div class="footer-left">
-        <strong>Sankara College of Science and Commerce (Autonomous)</strong> ΓÇó Department of Computer Science with Data Analytics
+        <strong>Sankara College of Science and Commerce (Autonomous)</strong> • Department of Computer Science with Data Analytics
         <br>
-        <span class="footer-sub">Semester VI Project Guide Allocation & Elective Selection System | Batch 2024ΓÇô2027</span>
+        <span class="footer-sub">Semester VI Project Guide Allocation & Elective Selection System | Batch 2024-2027</span>
       </div>
       <div class="footer-right">
         <span class="badge-ds"><i class="fa-solid fa-wand-magic-sparkles"></i> Data Sorcerers Portal Engine</span>

@@ -996,7 +996,7 @@ app.get('/api/guide/export/word-guidewise', async (req, res) => {
       new Paragraph({
         children: [
           new TextRun({ text: `FACULTY GUIDE #${gIdx + 1}: ${g.name.toUpperCase()}`, bold: true, size: 22, color: "002B49" }),
-          new TextRun({ text: ` (${g.designation}) ΓÇö Total Allocated: ${students.length} / ${g.maxStudents}`, italics: true, size: 20 })
+          new TextRun({ text: ` (${g.designation}) — Total Allocated: ${students.length} / ${g.maxStudents}`, italics: true, size: 20 })
         ]
       })
     );
