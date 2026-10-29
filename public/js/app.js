@@ -2085,3 +2085,68 @@ function escapeHTML(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+
+// ==========================================
+// 8. PROGRESSIVE WEB APP (PWA) MOBILE INSTALL ENGINE
+// ==========================================
+
+let deferredInstallPrompt = null;
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('[PWA SW] Registered successfully with scope:', reg.scope))
+      .catch(err => console.warn('[PWA SW] Registration failed:', err));
+  });
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  console.log('[PWA] beforeinstallprompt captured, ready for mobile installation');
+  const btn = document.getElementById('btnInstallApp');
+  if (btn) btn.classList.remove('d-none');
+});
+
+function triggerPwaInstall() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('[PWA] User accepted installation prompt');
+        showFacultySaveToast('App installing to home screen! Thank you.');
+      }
+      deferredInstallPrompt = null;
+    });
+  } else {
+    // Show instruction modal for iOS or manual install
+    openPwaModal();
+  }
+}
+
+function triggerNativeInstallPrompt() {
+  if (deferredInstallPrompt) {
+    triggerPwaInstall();
+    closePwaModal();
+  } else {
+    alert('To install on Android: Tap the 3 dots (Menu) in the top-right of Chrome and tap "Install app" or "Add to Home screen".');
+  }
+}
+
+function openPwaModal() {
+  const modal = document.getElementById('pwaModal');
+  if (modal) modal.classList.remove('d-none');
+}
+
+function closePwaModal() {
+  const modal = document.getElementById('pwaModal');
+  if (modal) modal.classList.add('d-none');
+}
+
+window.addEventListener('appinstalled', () => {
+  console.log('[PWA] SCSC Portal was successfully installed on the device!');
+  const btn = document.getElementById('btnInstallApp');
+  if (btn) btn.classList.add('d-none');
+  showFacultySaveToast('App installed on home screen successfully!');
+});

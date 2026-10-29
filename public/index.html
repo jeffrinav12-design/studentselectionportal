@@ -25,6 +25,17 @@
     }
   </script>
 
+    <!-- Progressive Web App (PWA) Mobile Installation Support -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#002B49">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SCSC Portal">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
+
   <!-- Main Styling -->
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -40,6 +51,9 @@
         <span>Dept. of CS with Data Analytics</span>
       </div>
       <div class="nav-bar-right">
+        <button id="btnInstallApp" class="btn-install-badge" onclick="triggerPwaInstall()" title="Install SCSC Portal App on Phone or PC">
+          <i class="fa-solid fa-mobile-screen-button"></i> <span>Install App</span>
+        </button>
         <button id="btnNetworkShare" class="btn-network-badge" onclick="openNetworkModal()" title="Connect from mobile phones / other devices">
           <i class="fa-solid fa-qrcode"></i> Multi-Device Sync (LAN)
         </button>
@@ -82,6 +96,19 @@
         <span class="sub-badge"><i class="fa-solid fa-landmark"></i> ACADEMIC YEAR 2026-2027</span>
         <h2 class="gateway-title">Welcome to the Academic Selection Portal</h2>
         <p class="gateway-subtitle">Please select your designated portal below to proceed with course and guide selection.</p>
+      </div>
+
+      <div class="pwa-mobile-callout" onclick="triggerPwaInstall()">
+        <div class="callout-icon">
+          <i class="fa-solid fa-mobile-screen-button"></i>
+        </div>
+        <div class="callout-text">
+          <strong>Install SCSC Portal on Your Mobile Phone (Android / iPhone)</strong>
+          <p>Add to your home screen for quick 1-tap access to your Project Guide & Elective selection.</p>
+        </div>
+        <button class="btn-gold-pro">
+          <i class="fa-solid fa-download"></i> Install App
+        </button>
       </div>
 
       <div class="gateway-cards-grid">
@@ -1261,5 +1288,57 @@
 
   <!-- Application Logic -->
   <script src="js/app.js"></script>
+
+  <!-- PWA INSTALL MODAL (ANDROID & IPHONE GUIDE) -->
+  <div id="pwaModal" class="modal-overlay d-none">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <div class="modal-icon-circle"><i class="fa-solid fa-mobile-screen-button"></i></div>
+          <div>
+            <h3>Install Mobile Application</h3>
+            <p>Sankara College of Science and Commerce (Autonomous)</p>
+          </div>
+        </div>
+        <button class="btn-close-modal" onclick="closePwaModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <img src="/assets/icon.svg" alt="SCSC Logo" style="width: 72px; height: 72px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0,0,0,0.15);">
+          <h4 style="margin: 10px 0 2px 0; font-family: 'Outfit', sans-serif;">SCSC Selection Portal</h4>
+          <span class="badge-tag">Progressive Web App • Instant 1-Tap Access</span>
+        </div>
+
+        <div id="pwaAndroidSection">
+          <div class="pwa-step-card">
+            <div class="pwa-step-num"><i class="fa-brands fa-android"></i></div>
+            <div class="pwa-step-desc">
+              <h5>Android (Google Chrome / Edge)</h5>
+              <p>Click the <strong>"Install Now"</strong> button below to instantly install the app icon onto your home screen.</p>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-block btn-lg" onclick="triggerNativeInstallPrompt()">
+            <i class="fa-solid fa-download"></i> Install Now to Home Screen
+          </button>
+        </div>
+
+        <div id="pwaIosSection" class="mt-3">
+          <div class="pwa-step-card">
+            <div class="pwa-step-num"><i class="fa-brands fa-apple"></i></div>
+            <div class="pwa-step-desc">
+              <h5>iPhone / iPad (Apple Safari)</h5>
+              <p>1. Tap the <strong>Share</strong> button <i class="fa-solid fa-arrow-up-from-bracket text-primary"></i> at the bottom of Safari.<br>
+              2. Scroll down and tap <strong>"Add to Home Screen"</strong> <i class="fa-regular fa-square-plus text-success"></i>.<br>
+              3. Tap <strong>"Add"</strong> in the top-right corner.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline btn-block" onclick="closePwaModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
